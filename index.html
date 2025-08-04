@@ -101,6 +101,8 @@
             cursor: pointer;
             transition: background-color 0.3s;
             font-size: 1.1rem;
+            text-transform: uppercase; /* Para que el texto sea en mayúsculas */
+            text-align: center;
         }
         .seccion-btn:hover {
             background-color: #217dbb;
@@ -116,10 +118,6 @@
             box-shadow: 0 3px 6px rgba(0,0,0,0.1);
             display: none;
             text-align: center;
-        }
-        .contenido-seccion h3 {
-            margin-top: 0;
-            color: #34495e;
         }
 
         /* Botones dentro de sección */
@@ -181,6 +179,43 @@
             background-color: #c0392b;
         }
 
+        /* Contenedor para el botón "más" */
+        .add-photo-block {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 80px;
+            height: 80px;
+            border-radius: 6px;
+            background-color: #f0f0f0;
+            border: 2px dashed #ccc;
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        .add-photo-block:hover {
+            background-color: #e0e0e0;
+            border-color: #999;
+        }
+        .add-more-button {
+            background: none;
+            border: none;
+            color: #555;
+            font-size: 3em;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            font-weight: 300;
+        }
+        .add-more-button:hover {
+            color: #007BFF;
+        }
+
         /* Comentario */
         textarea {
             width: 100%;
@@ -196,12 +231,12 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        /* Botón "Nuevo Reporte" (antes "Volver a portada") */
-        #btnNuevoReporte { /* Cambiado de #btnVolver */
+        /* Botón "Nuevo Reporte" */
+        #btnNuevoReporte { 
             background-color: #e74c3c;
-            margin-top: 20px; /* Ajuste para dar espacio si es necesario */
+            margin-top: 20px; 
         }
-        #btnNuevoReporte:hover { /* Cambiado de #btnVolver */
+        #btnNuevoReporte:hover { 
             background-color: #c0392b;
         }
 
@@ -241,9 +276,11 @@
                 width: 95%;
                 font-size: 1rem;
             }
-            .preview-images img {
+            .preview-images img, .add-photo-block {
                 max-width: 70px;
                 max-height: 70px;
+                width: 70px;
+                height: 70px;
             }
         }
     </style>
@@ -295,9 +332,10 @@
             "Recepción",
             "Sala de Recibo",
             "Eléctrico",
-            "Herraje",
+            "Herrajes", // Corregido: 'Herrajes'
             "Pintura",
-            "Fontanería"
+            "Fontanería",
+            "Herramientas"
         ];
 
         const LOGO_URL = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSroamFoZxhxDK8iAOsHT5NB7nFY9rlpPEr6w&s";
@@ -343,7 +381,6 @@
             });
         };
 
-        // --- NUEVA FUNCIÓN PARA COMPRIMIR IMÁGENES ---
         const compressImage = (file, maxWidth, maxHeight, quality) => {
             return new Promise((resolve, reject) => {
                 const img = new Image();
@@ -353,7 +390,6 @@
                     let width = img.width;
                     let height = img.height;
 
-                    // Calcular nuevas dimensiones, manteniendo la relación de aspecto
                     if (width > height) {
                         if (width > maxWidth) {
                             height = height * (maxWidth / width);
@@ -372,9 +408,8 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // Convertir a DataURL (Base64) con calidad JPEG
                     resolve(canvas.toDataURL('image/jpeg', quality));
-                    URL.revokeObjectURL(img.src); // Limpiar el objeto URL creado
+                    URL.revokeObjectURL(img.src); 
                 };
                 img.onerror = error => reject(error);
             });
@@ -402,7 +437,7 @@
             botonesSecciones.innerHTML = "";
             secciones.forEach(nombre => {
                 const btn = document.createElement("button");
-                btn.textContent = nombre;
+                btn.textContent = nombre; // El texto del botón es el nombre de la sección
                 btn.className = "seccion-btn";
                 btn.type = "button";
 
@@ -418,12 +453,8 @@
                 const inputGaleria = document.createElement("input");
                 inputGaleria.type = "file";
                 inputGaleria.accept = "image/*";
-                inputGaleria.multiple = true;
+                inputGaleria.multiple = true; 
                 inputGaleria.style.display = "none";
-
-                const titulo = document.createElement("h3");
-                titulo.textContent = nombre;
-                contenedor.appendChild(titulo);
 
                 const btnCamara = document.createElement("button");
                 btnCamara.textContent = "Tomar Foto";
@@ -432,7 +463,7 @@
                 contenedor.appendChild(btnCamara);
 
                 const btnGaleria = document.createElement("button");
-                btnGaleria.textContent = "Seleccionar Fotos";
+                btnGaleria.textContent = "Agregar Foto"; 
                 btnGaleria.className = "btn-foto";
                 btnGaleria.type = "button";
                 contenedor.appendChild(btnGaleria);
@@ -451,13 +482,13 @@
                     previewDiv.innerHTML = "";
                     const data = JSON.parse(localStorage.getItem(sectionKey));
                     if (data && data.photos) {
-                        data.photos.forEach((src, index) => { 
+                        data.photos.forEach((src) => { 
                             const imgContainer = document.createElement("div");
                             imgContainer.className = "image-container";
 
                             const img = document.createElement("img");
                             img.src = src;
-                            img.alt = `Imagen de ${nombre} ${index + 1}`;
+                            img.alt = `Imagen de ${nombre}`;
                             imgContainer.appendChild(img);
 
                             const deleteBtn = document.createElement("button");
@@ -466,7 +497,7 @@
                             deleteBtn.title = "Eliminar imagen";
                             deleteBtn.addEventListener("click", () => {
                                 let currentData = JSON.parse(localStorage.getItem(sectionKey));
-                                currentData.photos.splice(index, 1); 
+                                currentData.photos = currentData.photos.filter(photoSrc => photoSrc !== src); 
                                 localStorage.setItem(sectionKey, JSON.stringify(currentData));
                                 loadSectionData(); 
                             });
@@ -474,6 +505,19 @@
                             previewDiv.appendChild(imgContainer);
                         });
                     }
+
+                    const addMoreBlock = document.createElement("div");
+                    addMoreBlock.className = "add-photo-block";
+                    const addMoreBtn = document.createElement("button");
+                    addMoreBtn.textContent = "+";
+                    addMoreBtn.className = "add-more-button";
+                    addMoreBtn.title = "Agregar más fotos";
+                    addMoreBtn.addEventListener("click", () => {
+                        inputGaleria.click(); 
+                    });
+                    addMoreBlock.appendChild(addMoreBtn);
+                    previewDiv.appendChild(addMoreBlock);
+
                     comentario.value = (data && data.comment) ? data.comment : "";
                 };
                 loadSectionData(); 
@@ -500,21 +544,16 @@
                     inputGaleria.click();
                 });
 
-                // --- MODIFICACIÓN DE TU FUNCIÓN saveImages ---
-                // Hazla 'async' para poder usar 'await' con compressImage
                 const saveImages = async (files) => {
                     let currentData = JSON.parse(localStorage.getItem(sectionKey));
-                    if (!currentData) { // Asegúrate de que currentData exista
+                    if (!currentData) { 
                         currentData = { photos: [], comment: "" };
                     }
 
                     const compressedImages = [];
 
-                    // Itera sobre cada archivo y comprímelo antes de añadirlo
-                    for (let file of files) {
+                    for (let file of files) { 
                         try {
-                            // Ajusta estos valores si necesitas mayor o menor calidad/tamaño
-                            // 800px de ancho/alto máximo, 0.7 (70%) de calidad
                             const compressedBase64 = await compressImage(file, 800, 800, 0.7);
                             compressedImages.push(compressedBase64);
                         } catch (error) {
@@ -523,11 +562,11 @@
                         }
                     }
 
-                    currentData.photos = currentData.photos.concat(compressedImages); // Añadir las imágenes comprimidas
+                    currentData.photos = currentData.photos.concat(compressedImages); 
 
                     try {
                         localStorage.setItem(sectionKey, JSON.stringify(currentData));
-                        loadSectionData(); // Vuelve a cargar los datos para actualizar la interfaz
+                        loadSectionData(); 
                     } catch (e) {
                         if (e.name === 'QuotaExceededError') {
                             alert('¡El almacenamiento está lleno! No se pueden añadir más fotos. Elimina algunas fotos existentes o inicia un nuevo reporte.');
@@ -547,7 +586,7 @@
 
                 inputGaleria.addEventListener("change", e => {
                     if (e.target.files.length > 0) {
-                        saveImages(e.target.files);
+                        saveImages(e.target.files); 
                         inputGaleria.value = "";
                     }
                 });
@@ -563,7 +602,6 @@
             });
         });
 
-        // Event listener para el botón "Nuevo Reporte"
         btnNuevoReporte.addEventListener("click", () => {
             if (confirm("¿Estás seguro de que quieres iniciar un nuevo reporte? Todos los datos actuales se borrarán.")) {
                 secciones.forEach(nombre => {
@@ -581,7 +619,6 @@
             }
         });
 
-        // --- Función para añadir encabezado y pie de página ---
         const addHeaderAndFooter = (doc, pageNumber) => {
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
@@ -687,7 +724,6 @@
                     continue; 
                 }
 
-                // Si no es la primera sección de contenido, agregar nueva página
                 if (firstContentSectionDrawn) {
                     doc.addPage();
                     pageCounter++;
@@ -699,40 +735,31 @@
 
                 doc.setFontSize(18);
                 doc.setTextColor("#2c3e50");
-                doc.text(nombre, pageWidth / 2, currentY + 5, { align: "center" }); 
+                doc.text(nombre.toUpperCase(), pageWidth / 2, currentY + 5, { align: "center" }); // Texto del título de la sección en mayúsculas
                 currentY += 20; 
 
-                // --- Lógica para imágenes en fila y centradas (Máximo 2 por fila, ajustando tamaño) ---
-                const imagesPerRow = 2; // Máximo 2 imágenes por fila
-                const imgGap = 5;      // Espacio entre imágenes
+                const imagesPerRow = 2; 
+                const imgGap = 10;      
 
                 let calculatedImgWidth = 0;
                 let calculatedImgHeight = 0;
                 
-                // Si hay fotos, calculamos el tamaño dinámico
                 if (sectionData.photos.length > 0) {
-                    const minCommentHeight = 30; // Estimado para la caja de comentario si existe
-                    const spaceForComment = sectionData.comment.trim().length > 0 ? minCommentHeight + 15 : 0; // 15 de padding
+                    const minCommentHeight = 30; 
+                    const spaceForComment = sectionData.comment.trim().length > 0 ? minCommentHeight + 15 : 0; 
                     
-                    // Espacio vertical total disponible en la página para las imágenes
-                    // Consideramos el espacio restante hasta el margen inferior
-                    const availableSpaceForImages = pageHeight - currentY - margin - spaceForComment - 5; // -5 extra margin
+                    const availableSpaceForImages = pageHeight - currentY - margin - spaceForComment - 5; 
 
                     const numRows = Math.ceil(sectionData.photos.length / imagesPerRow);
                     const totalVerticalGap = (numRows - 1) * imgGap;
 
-                    // Calcular la altura máxima que puede tener cada imagen
                     calculatedImgHeight = (availableSpaceForImages - totalVerticalGap) / numRows;
                     
-                    // Asegurar que la imagen no sea más ancha de lo que cabe en 2 columnas con su espacio
                     const maxPossibleWidthForTwoImages = (pageWidth - (margin * 2) - imgGap) / imagesPerRow;
                     
-                    // Elegir el menor entre la altura calculada (para que quepa verticalmente) 
-                    // y el ancho máximo para 2 imágenes (para que quepa horizontalmente)
                     calculatedImgWidth = Math.min(calculatedImgHeight, maxPossibleWidthForTwoImages); 
-                    calculatedImgHeight = calculatedImgWidth; // Mantenerla cuadrada
+                    calculatedImgHeight = calculatedImgWidth; 
                     
-                    // Si calculatedImgWidth es muy pequeño, poner un mínimo para que no desaparezca
                     if (calculatedImgWidth < 20) { 
                         console.warn("Imágenes demasiado pequeñas, ajustando a un mínimo de 20x20mm.");
                         calculatedImgWidth = 20;
@@ -747,7 +774,6 @@
                 for (let i = 0; i < sectionData.photos.length; i++) {
                     const imgData = sectionData.photos[i];
 
-                    // Si es el inicio de una nueva fila o la imagen actual no cabe en la fila actual
                     if (imagesInCurrentRow === 0 || imagesInCurrentRow >= imagesPerRow) {
                         if (imagesInCurrentRow >= imagesPerRow) { 
                             currentY += currentRowMaxHeight + imgGap; 
@@ -779,7 +805,6 @@
                    currentY += currentRowMaxHeight + 15; 
                 }
 
-                // --- Comentario en Recuadro ---
                 if (sectionData.comment && sectionData.comment.trim().length > 0) {
                     doc.setFontSize(12);
                     const commentText = "Comentario: " + sectionData.comment;
