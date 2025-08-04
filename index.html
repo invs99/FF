@@ -287,7 +287,7 @@
         const mainApp = document.getElementById("mainApp");
         const inicioForm = document.getElementById("inicioForm");
         const botonesSecciones = document.getElementById("botonesSecciones");
-        const btnNuevoReporte = document.getElementById("btnNuevoReporte"); // Nuevo ID
+        const btnNuevoReporte = document.getElementById("btnNuevoReporte");
         const generarPDFBtn = document.getElementById("generarPDF");
         const loadingOverlay = document.getElementById("loadingOverlay");
 
@@ -343,6 +343,43 @@
             });
         };
 
+        // --- NUEVA FUNCIÓN PARA COMPRIMIR IMÁGENES ---
+        const compressImage = (file, maxWidth, maxHeight, quality) => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.src = URL.createObjectURL(file);
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    // Calcular nuevas dimensiones, manteniendo la relación de aspecto
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height = height * (maxWidth / width);
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width = width * (maxHeight / height);
+                            height = maxHeight;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Convertir a DataURL (Base64) con calidad JPEG
+                    resolve(canvas.toDataURL('image/jpeg', quality));
+                    URL.revokeObjectURL(img.src); // Limpiar el objeto URL creado
+                };
+                img.onerror = error => reject(error);
+            });
+        };
+
         inicioForm.addEventListener("submit", async e => {
             e.preventDefault();
             const tienda = document.getElementById("tienda").value.trim();
@@ -354,7 +391,7 @@
             localStorage.setItem("tienda", tienda);
             localStorage.setItem("persona", persona);
             
-            initializeSectionData(); 
+            initializeSectionData();
 
             document.getElementById("tienda").value = localStorage.getItem("tienda") || "";
             document.getElementById("persona").value = localStorage.getItem("persona") || "";
@@ -463,25 +500,42 @@
                     inputGaleria.click();
                 });
 
-                const saveImages = (files) => {
+                // --- MODIFICACIÓN DE TU FUNCIÓN saveImages ---
+                // Hazla 'async' para poder usar 'await' con compressImage
+                const saveImages = async (files) => {
                     let currentData = JSON.parse(localStorage.getItem(sectionKey));
-                    const readerPromises = [];
-
-                    for (let file of files) {
-                        const reader = new FileReader();
-                        readerPromises.push(new Promise(resolve => {
-                            reader.onload = e => {
-                                currentData.photos.push(e.target.result);
-                                resolve();
-                            };
-                            reader.readAsDataURL(file);
-                        }));
+                    if (!currentData) { // Asegúrate de que currentData exista
+                        currentData = { photos: [], comment: "" };
                     }
 
-                    Promise.all(readerPromises).then(() => {
+                    const compressedImages = [];
+
+                    // Itera sobre cada archivo y comprímelo antes de añadirlo
+                    for (let file of files) {
+                        try {
+                            // Ajusta estos valores si necesitas mayor o menor calidad/tamaño
+                            // 800px de ancho/alto máximo, 0.7 (70%) de calidad
+                            const compressedBase64 = await compressImage(file, 800, 800, 0.7);
+                            compressedImages.push(compressedBase64);
+                        } catch (error) {
+                            console.error("Error al comprimir la imagen:", file.name, error);
+                            alert(`No se pudo procesar la imagen ${file.name}. Intenta con otra.`);
+                        }
+                    }
+
+                    currentData.photos = currentData.photos.concat(compressedImages); // Añadir las imágenes comprimidas
+
+                    try {
                         localStorage.setItem(sectionKey, JSON.stringify(currentData));
-                        loadSectionData();
-                    });
+                        loadSectionData(); // Vuelve a cargar los datos para actualizar la interfaz
+                    } catch (e) {
+                        if (e.name === 'QuotaExceededError') {
+                            alert('¡El almacenamiento está lleno! No se pueden añadir más fotos. Elimina algunas fotos existentes o inicia un nuevo reporte.');
+                        } else {
+                            console.error('Error al guardar en localStorage:', e);
+                            alert('Ocurrió un error al guardar las fotos.');
+                        }
+                    }
                 };
 
                 inputCamara.addEventListener("change", e => {
@@ -650,7 +704,7 @@
 
                 // --- Lógica para imágenes en fila y centradas (Máximo 2 por fila, ajustando tamaño) ---
                 const imagesPerRow = 2; // Máximo 2 imágenes por fila
-                const imgGap = 5;     // Espacio entre imágenes
+                const imgGap = 5;      // Espacio entre imágenes
 
                 let calculatedImgWidth = 0;
                 let calculatedImgHeight = 0;
@@ -737,10 +791,7 @@
 
                     const commentBoxHeight = textHeight + padding * 2; 
 
-                    // Esta comprobación es más bien una salvaguarda, ya que el espacio de las fotos
-                    // ya considera el espacio para el comentario. Pero es bueno mantenerla.
                     if (currentY + commentBoxHeight + 5 > pageHeight - margin) {
-                        // En este escenario, si solo el comentario no cabe, lo movemos a una nueva página.
                         doc.addPage();
                         pageCounter++;
                         addHeaderAndFooter(doc, pageCounter);
