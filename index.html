@@ -20,12 +20,14 @@
         .container {
             background: #fff;
             padding: 25px;
+            padding-bottom: 40px; /* Ajustado para dar espacio al footer-text */
             margin: 15px;
             width: 100%;
             max-width: 420px;
             border-radius: 12px;
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
             text-align: center;
+            position: relative; /* Necesario para que el posicionamiento absoluto del footer-text funcione */
         }
         /* --- AJUSTES DE PORTADA WEB (NO PDF) --- */
         .logo {
@@ -270,6 +272,19 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Texto de "Powered by" */
+        .footer-text {
+            position: absolute;
+            bottom: 5px; /* Ajustado a 5px para pegarlo más a la orilla */
+            right: 15px;
+            color: #cccccc; /* Gris muy claro */
+            font-size: 0.75rem; /* Tamaño de fuente más pequeño */
+            font-weight: bold;
+            opacity: 0.6; /* Difuminado */
+            text-transform: uppercase;
+            z-index: 1;
+        }
+
         /* Responsive */
         @media (max-width: 420px) {
             .seccion-btn, .btn-foto {
@@ -281,6 +296,11 @@
                 max-height: 70px;
                 width: 70px;
                 height: 70px;
+            }
+            .footer-text {
+                font-size: 0.65rem; /* Ajuste para pantallas pequeñas */
+                bottom: 5px;
+                right: 10px;
             }
         }
     </style>
@@ -301,7 +321,7 @@
             </div>
             <button type="submit">Comenzar</button>
         </form>
-    </div>
+        <div class="footer-text">Powered by Jonathann</div> </div>
 
     <div class="container" id="mainApp" style="display:none; text-align:center;">
         <div id="botonesSecciones"></div>
@@ -332,7 +352,7 @@
             "Recepción",
             "Sala de Recibo",
             "Eléctrico",
-            "Herrajes", // Corregido: 'Herrajes'
+            "Herrajes", 
             "Pintura",
             "Fontanería",
             "Herramientas"
