@@ -28,12 +28,12 @@
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
             text-align: center;
             position: relative;
-        /* Necesario para que el posicionamiento absoluto del footer-text funcione */
+            /* Necesario para que el posicionamiento absoluto del footer-text funcione */
         }
         /* --- AJUSTES DE PORTADA WEB (NO PDF) --- */
         .logo {
             width: 200px;
-        /* Puedes ajustar este valor a tu gusto */
+            /* Puedes ajustar este valor a tu gusto */
             height: auto;
             display: block;
             margin: 0 auto 10px auto;
@@ -113,16 +113,25 @@
         }
         /* Estilo específico para el botón de OTRA AREA+ */
         .seccion-btn-otra-area {
-            background-color: #FFA500; /* Naranja */
+            background-color: #FFA500;
+            /* Naranja */
         }
         .seccion-btn-otra-area:hover {
-            background-color: #CC8400; /* Naranja más oscuro al pasar el ratón */
+            background-color: #CC8400;
+            /* Naranja más oscuro al pasar el ratón */
+        }
+        /* Estilo para las áreas dinámicas con nombre personalizado (celeste) */
+        .seccion-btn.dynamic-named {
+            background-color: #3498db; /* Celeste */
+        }
+        .seccion-btn.dynamic-named:hover {
+            background-color: #217dbb; /* Celeste más oscuro */
         }
 
         /* Estilos específicos para el input de "OTRA AREA" */
         .custom-area-name-input {
             width: calc(100% - 20px);
-        /* Ajusta el ancho para padding */
+            /* Ajusta el ancho para padding */
             padding: 10px;
             margin-bottom: 15px;
             border: 1px solid #ccc;
@@ -300,7 +309,7 @@
             right: 15px;
             color: #cccccc; /* Gris muy claro */
             font-size: 0.75rem;
-        /* Tamaño de fuente más pequeño */
+            /* Tamaño de fuente más pequeño */
             font-weight: bold;
             opacity: 0.6; /* Difuminado */
             text-transform: uppercase;
@@ -321,7 +330,7 @@
             }
             .footer-text {
                 font-size: 0.65rem;
-            /* Ajuste para pantallas pequeñas */
+                /* Ajuste para pantallas pequeñas */
                 bottom: 5px;
                 right: 10px;
             }
@@ -335,11 +344,11 @@
         <h1>Reporte de Impresores</h1>
         <form id="inicioForm">
             <div class="form-group">
-                <label for="tienda">Nombre de la tienda</label>
+                <label for="tienda">TIENDA / AREA</label>
                 <input type="text" id="tienda" name="tienda" required />
             </div>
             <div class="form-group">
-                <label for="persona">Responsable</label>
+                <label for="persona">RESPONSABLE</label>
                 <input type="text" id="persona" name="persona" required />
             </div>
             <button type="submit">Comenzar</button>
@@ -349,6 +358,8 @@
 
     <div class="container" id="mainApp" style="display:none; text-align:center;">
         <div id="botonesSecciones"></div>
+
+        <button id="addOtraAreaBtn" class="seccion-btn seccion-btn-otra-area" type="button" style="margin-top: 20px;">OTRA ÁREA +</button>
 
         <button id="generarPDF" style="margin-top:30px; background:#34495e;">Generar Reporte PDF</button>
 
@@ -371,21 +382,27 @@
         const btnNuevoReporte = document.getElementById("btnNuevoReporte");
         const generarPDFBtn = document.getElementById("generarPDF");
         const loadingOverlay = document.getElementById("loadingOverlay");
+        const addOtraAreaBtn = document.getElementById("addOtraAreaBtn"); // Referencia al nuevo botón
 
-        const secciones = [
+        // Secciones fijas: 'OTRA AREA' se gestionará dinámicamente
+        const seccionesFijas = [
             "Recepción",
             "Sala de Recibo",
             "Eléctrico",
             "Herrajes",
             "Pintura",
             "Fontanería",
-            "Herramientas",
-            "OTRA AREA"
+            "Herramientas"
         ];
+        // Array para almacenar los nombres de las secciones fijas y dinámicas
+        let todasLasSecciones = [];
+        let nextDynamicAreaId = 0; // Para asignar IDs únicos a las áreas dinámicas
+
         const LOGO_URL = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSroamFoZxhxDK8iAOsHT5NB7nFY9rlpPEr6w&s";
         let logoBase64 = null;
         let logoOriginalWidth = 0;
         let logoOriginalHeight = 0;
+
         const loadLogoAsBase64 = () => {
             return new Promise((resolve, reject) => {
                 const img = new Image();
@@ -402,7 +419,6 @@
                     ctx.drawImage(img, 0, 0);
                     logoBase64 = canvas.toDataURL("image/png");
                     console.log("Logo cargado y convertido a Base64 con éxito. Dimensiones originales:", logoOriginalWidth, "x", logoOriginalHeight);
-
                     resolve();
                 };
                 img.onerror = (error) => {
@@ -415,14 +431,23 @@
                 img.src = LOGO_URL;
             });
         };
+
         const initializeSectionData = () => {
-            secciones.forEach(nombre => {
+            // Inicializar solo las secciones fijas
+            seccionesFijas.forEach(nombre => {
                 const key = "seccionData_" + nombre;
                 if (!localStorage.getItem(key)) {
                     const data = { photos: [], comment: "" };
                     localStorage.setItem(key, JSON.stringify(data));
                 }
             });
+
+            // Cargar áreas dinámicas existentes
+            const savedDynamicAreas = JSON.parse(localStorage.getItem("dynamicAreas")) || [];
+            if (savedDynamicAreas.length > 0) {
+                // Encontrar el ID más alto para continuar desde ahí
+                nextDynamicAreaId = savedDynamicAreas.reduce((maxId, area) => Math.max(maxId, area.id + 1), 0);
+            }
         };
 
         const compressImage = (file, maxWidth, maxHeight, quality) => {
@@ -430,7 +455,6 @@
                 const img = new Image();
                 img.src = URL.createObjectURL(file);
                 img.onload = () => {
-
                     const canvas = document.createElement('canvas');
                     let width = img.width;
                     let height = img.height;
@@ -440,7 +464,6 @@
                             height = height * (maxWidth / width);
                             width = maxWidth;
                         }
-
                     } else {
                         if (height > maxHeight) {
                             width = width * (maxHeight / height);
@@ -451,7 +474,6 @@
                     canvas.width = width;
                     canvas.height = height;
 
-
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
@@ -461,6 +483,254 @@
                 img.onerror = error => reject(error);
             });
         };
+
+        // Función para crear y añadir una sección (fija o dinámica)
+        const createAndAppendSection = (nombre, isDynamic = false, dynamicId = null, activateImmediately = false) => {
+            const btn = document.createElement("button");
+            btn.className = "seccion-btn";
+            btn.type = "button";
+
+            const contenedor = document.createElement("div");
+            contenedor.className = "contenido-seccion";
+            contenedor.dataset.sectionName = nombre; // Identificar la sección por su nombre
+
+            let sectionKey = "seccionData_" + nombre;
+            let customNameInput = null;
+
+            if (isDynamic) {
+                sectionKey = `seccionData_OTRA AREA_${dynamicId}`; // Clave única para el localStorage
+
+                customNameInput = document.createElement("input");
+                customNameInput.type = "text";
+                customNameInput.placeholder = "Nombre de la otra área";
+                customNameInput.className = "custom-area-name-input";
+                customNameInput.dataset.sectionId = dynamicId; // Para identificar a qué área dinámica pertenece
+
+                // Cargar el nombre personalizado si existe y establecer el estilo inicial del botón
+                const savedCustomName = localStorage.getItem(`customAreaName_OTRA AREA_${dynamicId}`);
+                if (savedCustomName && savedCustomName.trim().length > 0) {
+                    customNameInput.value = savedCustomName;
+                    btn.textContent = savedCustomName.toUpperCase(); // Sin el "+"
+                    btn.classList.add("dynamic-named"); // Clase para el color celeste
+                    btn.classList.remove("seccion-btn-otra-area"); // Quitar clase naranja si ya tiene nombre
+                } else {
+                    btn.textContent = `OTRA AREA ${dynamicId}+`; // Nombre por defecto para nuevas dinámicas
+                    btn.classList.add("seccion-btn-otra-area"); // Clase naranja si no tiene nombre
+                    btn.classList.remove("dynamic-named");
+                }
+
+                // Actualizar el texto del botón y guardar en localStorage al escribir
+                customNameInput.addEventListener("input", () => {
+                    const newName = customNameInput.value.trim();
+                    if (newName) {
+                        btn.textContent = newName.toUpperCase();
+                        btn.classList.add("dynamic-named");
+                        btn.classList.remove("seccion-btn-otra-area");
+                    } else {
+                        btn.textContent = `OTRA AREA ${dynamicId}+`;
+                        btn.classList.add("seccion-btn-otra-area");
+                        btn.classList.remove("dynamic-named");
+                    }
+                    localStorage.setItem(`customAreaName_OTRA AREA_${dynamicId}`, newName);
+                });
+                contenedor.appendChild(customNameInput);
+            } else {
+                btn.textContent = nombre;
+            }
+
+            const inputCamara = document.createElement("input");
+            inputCamara.type = "file";
+            inputCamara.accept = "image/*";
+            inputCamara.capture = "environment";
+            inputCamara.style.display = "none";
+
+            const inputGaleria = document.createElement("input");
+            inputGaleria.type = "file";
+            inputGaleria.accept = "image/*";
+            inputGaleria.multiple = true;
+            inputGaleria.style.display = "none";
+
+            const btnCamara = document.createElement("button");
+            btnCamara.textContent = "Tomar Foto";
+            btnCamara.className = "btn-foto";
+            btnCamara.type = "button";
+            contenedor.appendChild(btnCamara);
+
+            const btnGaleria = document.createElement("button");
+            btnGaleria.textContent = "Agregar Foto";
+            btnGaleria.className = "btn-foto";
+            btnGaleria.type = "button";
+            contenedor.appendChild(btnGaleria);
+
+            const previewDiv = document.createElement("div");
+            previewDiv.className = "preview-images";
+            contenedor.appendChild(previewDiv);
+
+            const comentario = document.createElement("textarea");
+            comentario.placeholder = "Comentario para esta sección (opcional)";
+            contenedor.appendChild(comentario);
+
+            const loadSectionData = () => {
+                previewDiv.innerHTML = "";
+                const data = JSON.parse(localStorage.getItem(sectionKey));
+                if (data && data.photos) {
+                    data.photos.forEach((src) => {
+                        const imgContainer = document.createElement("div");
+                        imgContainer.className = "image-container";
+
+                        const img = document.createElement("img");
+                        img.src = src;
+                        img.alt = `Imagen de ${nombre}`;
+
+                        imgContainer.appendChild(img);
+
+                        const deleteBtn = document.createElement("button");
+                        deleteBtn.textContent = "x";
+                        deleteBtn.className = "delete-image-btn";
+                        deleteBtn.title = "Eliminar imagen";
+                        deleteBtn.addEventListener("click", () => {
+                            let currentData = JSON.parse(localStorage.getItem(sectionKey));
+                            currentData.photos = currentData.photos.filter(photoSrc => photoSrc !== src);
+                            localStorage.setItem(sectionKey, JSON.stringify(currentData));
+                            loadSectionData();
+                        });
+                        imgContainer.appendChild(deleteBtn);
+                        previewDiv.appendChild(imgContainer);
+                    });
+                }
+
+                const addMoreBlock = document.createElement("div");
+                addMoreBlock.className = "add-photo-block";
+                const addMoreBtn = document.createElement("button");
+                addMoreBtn.textContent = "+";
+                addMoreBtn.className = "add-more-button";
+                addMoreBtn.title = "Agregar más fotos";
+                addMoreBtn.addEventListener("click", () => {
+                    inputGaleria.click();
+                });
+                addMoreBlock.appendChild(addMoreBtn);
+                previewDiv.appendChild(addMoreBlock);
+
+                comentario.value = (data && data.comment) ? data.comment : "";
+            };
+            loadSectionData();
+
+            btn.addEventListener("click", () => {
+                const todas = document.querySelectorAll(".contenido-seccion");
+                todas.forEach(c => {
+                    if (c !== contenedor) c.style.display = "none";
+                });
+
+                if (contenedor.style.display === "block") {
+                    contenedor.style.display = "none";
+                } else {
+                    contenedor.style.display = "block";
+                }
+                if (contenedor.style.display === "block") {
+                    contenedor.scrollIntoView({ behavior: "smooth" });
+                }
+            });
+
+            btnCamara.addEventListener("click", () => {
+                inputCamara.click();
+            });
+            btnGaleria.addEventListener("click", () => {
+                inputGaleria.click();
+            });
+
+            const saveImages = async (files) => {
+                let currentData = JSON.parse(localStorage.getItem(sectionKey));
+                if (!currentData) {
+                    currentData = { photos: [], comment: "" };
+                }
+
+                const compressedImages = [];
+                for (let file of files) {
+                    try {
+                        const compressedBase64 = await compressImage(file, 800, 800, 0.7);
+                        compressedImages.push(compressedBase64);
+                    } catch (error) {
+                        console.error("Error al comprimir la imagen:", file.name, error);
+                        alert(`No se pudo procesar la imagen ${file.name}. Intenta con otra.`);
+                    }
+                }
+
+                currentData.photos = currentData.photos.concat(compressedImages);
+                try {
+                    localStorage.setItem(sectionKey, JSON.stringify(currentData));
+                    loadSectionData();
+                } catch (e) {
+                    if (e.name === 'QuotaExceededError') {
+                        alert('¡El almacenamiento está lleno! No se pueden añadir más fotos. Elimina algunas fotos existentes o inicia un nuevo reporte.');
+                    } else {
+                        console.error('Error al guardar en localStorage:', e);
+                        alert('Ocurrió un error al guardar las fotos.');
+                    }
+                }
+            };
+
+            inputCamara.addEventListener("change", e => {
+                if (e.target.files.length > 0) {
+                    saveImages(e.target.files);
+                    inputCamara.value = "";
+                }
+            });
+            inputGaleria.addEventListener("change", e => {
+                if (e.target.files.length > 0) {
+                    saveImages(e.target.files);
+                    inputGaleria.value = "";
+                }
+            });
+
+            comentario.addEventListener("input", () => {
+                let currentData = JSON.parse(localStorage.getItem(sectionKey));
+                currentData.comment = comentario.value;
+                localStorage.setItem(sectionKey, JSON.stringify(currentData));
+            });
+
+            botonesSecciones.appendChild(btn);
+            botonesSecciones.appendChild(contenedor);
+
+            // Añadir al array de todas las secciones (para el PDF)
+            todasLasSecciones.push({ name: nombre, isDynamic: isDynamic, dynamicId: dynamicId });
+
+            // Desplegar inmediatamente si se especifica
+            if (activateImmediately) {
+                const todas = document.querySelectorAll(".contenido-seccion");
+                todas.forEach(c => {
+                    if (c !== contenedor) c.style.display = "none";
+                });
+                contenedor.style.display = "block";
+                contenedor.scrollIntoView({ behavior: "smooth" });
+            }
+            return { btn: btn, contenedor: contenedor }; // Devuelve los elementos creados
+        };
+
+
+        // Función para añadir una nueva sección de "OTRA AREA" dinámicamente
+        const addDynamicAreaSection = () => {
+            const dynamicAreaName = `OTRA AREA_${nextDynamicAreaId}`;
+            const key = "seccionData_" + dynamicAreaName;
+            const data = { photos: [], comment: "" };
+            localStorage.setItem(key, JSON.stringify(data));
+
+            // Guardar el nuevo ID de área dinámica
+            let savedDynamicAreas = JSON.parse(localStorage.getItem("dynamicAreas")) || [];
+            savedDynamicAreas.push({ id: nextDynamicAreaId, name: dynamicAreaName });
+            localStorage.setItem("dynamicAreas", JSON.stringify(savedDynamicAreas));
+
+            const { btn: newBtn, contenedor: newContenedor } = createAndAppendSection(dynamicAreaName, true, nextDynamicAreaId, true);
+            nextDynamicAreaId++; // Incrementar para el próximo
+
+            // Enfocar el input de nombre personalizado en la nueva sección
+            const customInput = newContenedor.querySelector('.custom-area-name-input');
+            if (customInput) {
+                customInput.focus();
+            }
+        };
+
+
+        // Event Listener para el formulario de inicio
         inicioForm.addEventListener("submit", async e => {
             e.preventDefault();
             const tienda = document.getElementById("tienda").value.trim();
@@ -472,7 +742,7 @@
             localStorage.setItem("tienda", tienda);
             localStorage.setItem("persona", persona);
 
-            initializeSectionData();
+            initializeSectionData(); // Esto carga las áreas dinámicas existentes
 
             document.getElementById("tienda").value = localStorage.getItem("tienda") || "";
             document.getElementById("persona").value = localStorage.getItem("persona") || "";
@@ -480,208 +750,40 @@
             portada.style.display = "none";
             mainApp.style.display = "block";
 
-            botonesSecciones.innerHTML = "";
-            secciones.forEach(nombre => {
-                const btn = document.createElement("button");
-                btn.className = "seccion-btn";
-                btn.type = "button";
+            botonesSecciones.innerHTML = ""; // Limpiar secciones anteriores
+            todasLasSecciones = []; // Resetear para construir la lista completa
 
-                const contenedor = document.createElement("div");
-                contenedor.className = "contenido-seccion";
-                // Lógica para la sección "OTRA AREA"
-                if (nombre === "OTRA AREA") {
-                    // **Aplicar clase naranja al botón de "OTRA AREA+"**
-                    btn.classList.add("seccion-btn-otra-area");
-                    btn.textContent = "OTRA AREA+"; // Cambiar texto del botón
+            // Crear secciones fijas
+            seccionesFijas.forEach(nombre => createAndAppendSection(nombre));
 
-                    const customNameInput = document.createElement("input");
-                    customNameInput.type = "text";
-                    customNameInput.placeholder = "Nombre de la otra área";
-                    customNameInput.className = "custom-area-name-input";
-
-                    const savedCustomName = localStorage.getItem("customAreaName_OTRA AREA");
-                    if (savedCustomName) {
-                        customNameInput.value = savedCustomName;
-                        btn.textContent = savedCustomName.toUpperCase() + "+"; // Actualizar con +
-                    } else {
-                        btn.textContent = "OTRA AREA+";
-                        // Texto por defecto del botón
-                    }
-
-                    // Actualiza el texto del botón y guarda en localStorage al escribir
-                    customNameInput.addEventListener("input", () => {
-                        const newName = customNameInput.value.trim();
-                        btn.textContent = newName ? newName.toUpperCase() + "+" : "OTRA AREA+"; // Asegurarse de que tenga el +
-                        localStorage.setItem("customAreaName_OTRA AREA", newName);
-                    });
-                    contenedor.appendChild(customNameInput); // Agrega el input al contenido de la sección
-                } else {
-                    btn.textContent = nombre;
-                    // Para las otras secciones, el nombre es fijo
-                }
-
-                const inputCamara = document.createElement("input");
-                inputCamara.type = "file";
-                inputCamara.accept = "image/*";
-                inputCamara.capture = "environment";
-                inputCamara.style.display = "none";
-
-                const inputGaleria = document.createElement("input");
-                inputGaleria.type = "file";
-                inputGaleria.accept = "image/*";
-                inputGaleria.multiple = true;
-                inputGaleria.style.display = "none";
-
-                const btnCamara = document.createElement("button");
-                btnCamara.textContent = "Tomar Foto";
-                btnCamara.className = "btn-foto";
-                btnCamara.type = "button";
-                contenedor.appendChild(btnCamara);
-
-                const btnGaleria = document.createElement("button");
-                btnGaleria.textContent = "Agregar Foto";
-                btnGaleria.className = "btn-foto";
-                btnGaleria.type = "button";
-                contenedor.appendChild(btnGaleria);
-                const previewDiv = document.createElement("div");
-                previewDiv.className = "preview-images";
-                contenedor.appendChild(previewDiv);
-
-                const comentario = document.createElement("textarea");
-                comentario.placeholder = "Comentario para esta sección (opcional)";
-                contenedor.appendChild(comentario);
-                const sectionKey = "seccionData_" + nombre;
-
-                const loadSectionData = () => {
-                    previewDiv.innerHTML = "";
-                    const data = JSON.parse(localStorage.getItem(sectionKey));
-                    if (data && data.photos) {
-                        data.photos.forEach((src) => {
-                            const imgContainer = document.createElement("div");
-                            imgContainer.className = "image-container";
-
-                            const img = document.createElement("img");
-                            img.src = src;
-                            img.alt = `Imagen de ${nombre}`;
-
-
-                            imgContainer.appendChild(img);
-
-                            const deleteBtn = document.createElement("button");
-                            deleteBtn.textContent = "x";
-                            deleteBtn.className = "delete-image-btn";
-                            deleteBtn.title = "Eliminar imagen";
-                            deleteBtn.addEventListener("click", () => {
-                                let currentData = JSON.parse(localStorage.getItem(sectionKey));
-                                currentData.photos = currentData.photos.filter(photoSrc => photoSrc !== src);
-                                localStorage.setItem(sectionKey, JSON.stringify(currentData));
-                                loadSectionData();
-                            });
-                            imgContainer.appendChild(deleteBtn);
-                            previewDiv.appendChild(imgContainer);
-                        });
-                    }
-
-                    const addMoreBlock = document.createElement("div");
-                    addMoreBlock.className = "add-photo-block";
-                    const addMoreBtn = document.createElement("button");
-                    addMoreBtn.textContent = "+";
-                    addMoreBtn.className = "add-more-button";
-                    addMoreBtn.title = "Agregar más fotos";
-                    addMoreBtn.addEventListener("click", () => {
-                        inputGaleria.click();
-                    });
-                    addMoreBlock.appendChild(addMoreBtn);
-                    previewDiv.appendChild(addMoreBlock);
-
-                    comentario.value = (data && data.comment) ? data.comment : "";
-                };
-                loadSectionData();
-                btn.addEventListener("click", () => {
-                    const todas = document.querySelectorAll(".contenido-seccion");
-                    todas.forEach(c => {
-                        if (c !== contenedor) c.style.display = "none";
-                    });
-
-                    if (contenedor.style.display === "block") {
-                        contenedor.style.display = "none";
-                    } else {
-                        contenedor.style.display = "block";
-
-                    }
-                    if(contenedor.style.display === "block"){
-                        contenedor.scrollIntoView({behavior:"smooth"});
-                    }
-                });
-
-                btnCamara.addEventListener("click", () => {
-                    inputCamara.click();
-                });
-                btnGaleria.addEventListener("click", () => {
-                    inputGaleria.click();
-                });
-                const saveImages = async (files) => {
-                    let currentData = JSON.parse(localStorage.getItem(sectionKey));
-                    if (!currentData) {
-                        currentData = { photos: [], comment: "" };
-                    }
-
-                    const compressedImages = [];
-                    for (let file of files) {
-                        try {
-                            const compressedBase64 = await compressImage(file, 800, 800, 0.7);
-                            compressedImages.push(compressedBase64);
-                        } catch (error) {
-                            console.error("Error al comprimir la imagen:", file.name, error);
-                            alert(`No se pudo procesar la imagen ${file.name}. Intenta con otra.`);
-                        }
-                    }
-
-                    currentData.photos = currentData.photos.concat(compressedImages);
-                    try {
-                        localStorage.setItem(sectionKey, JSON.stringify(currentData));
-                        loadSectionData();
-                    } catch (e) {
-                        if (e.name === 'QuotaExceededError') {
-                            alert('¡El almacenamiento está lleno! No se pueden añadir más fotos. Elimina algunas fotos existentes o inicia un nuevo reporte.');
-                        } else {
-                            console.error('Error al guardar en localStorage:', e);
-                            alert('Ocurrió un error al guardar las fotos.');
-                        }
-                    }
-                };
-                inputCamara.addEventListener("change", e => {
-                    if (e.target.files.length > 0) {
-                        saveImages(e.target.files);
-                        inputCamara.value = "";
-                    }
-
-                });
-                inputGaleria.addEventListener("change", e => {
-                    if (e.target.files.length > 0) {
-                        saveImages(e.target.files);
-                        inputGaleria.value = "";
-                    }
-
-                });
-                comentario.addEventListener("input", () => {
-                    let currentData = JSON.parse(localStorage.getItem(sectionKey));
-                    currentData.comment = comentario.value;
-                    localStorage.setItem(sectionKey, JSON.stringify(currentData));
-                });
-                botonesSecciones.appendChild(btn);
-                botonesSecciones.appendChild(contenedor);
+            // Cargar y crear secciones dinámicas existentes
+            const savedDynamicAreas = JSON.parse(localStorage.getItem("dynamicAreas")) || [];
+            savedDynamicAreas.forEach(area => {
+                createAndAppendSection(area.name, true, area.id);
             });
         });
 
+        // Event Listener para el botón "AGREGAR OTRA ÁREA +"
+        addOtraAreaBtn.addEventListener("click", addDynamicAreaSection);
+
+
         btnNuevoReporte.addEventListener("click", () => {
             if (confirm("¿Estás seguro de que quieres iniciar un nuevo reporte? Todos los datos actuales se borrarán.")) {
-                secciones.forEach(nombre => {
+                // Eliminar datos de secciones fijas
+                seccionesFijas.forEach(nombre => {
                     localStorage.removeItem("seccionData_" + nombre);
                 });
+
+                // Eliminar datos de secciones dinámicas
+                const savedDynamicAreas = JSON.parse(localStorage.getItem("dynamicAreas")) || [];
+                savedDynamicAreas.forEach(area => {
+                    localStorage.removeItem(`seccionData_OTRA AREA_${area.id}`);
+                    localStorage.removeItem(`customAreaName_OTRA AREA_${area.id}`); // Borrar el nombre personalizado de cada dinámica
+                });
+                localStorage.removeItem("dynamicAreas"); // Eliminar el registro de áreas dinámicas
+
                 localStorage.removeItem("tienda");
                 localStorage.removeItem("persona");
-                localStorage.removeItem("customAreaName_OTRA AREA"); // <--- ¡Importante! Borrar el nombre personalizado
 
                 document.getElementById("tienda").value = "";
                 document.getElementById("persona").value = "";
@@ -689,8 +791,11 @@
                 mainApp.style.display = "none";
                 portada.style.display = "block";
                 botonesSecciones.innerHTML = "";
+                todasLasSecciones = []; // Resetear el array de secciones
+                nextDynamicAreaId = 0; // Resetear el contador de IDs dinámicos
             }
         });
+
         const addHeaderAndFooter = (doc, pageNumber) => {
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
@@ -716,10 +821,15 @@
 
             doc.setFontSize(18);
             doc.setTextColor("#2c3e50");
-            const titleX = margin + (finalLogoHeight > 0 ? 30 : 0) + textPadding;
             const titleY = logoStart_Y + (finalLogoHeight / 2) + 3;
 
-            doc.text("REPORTE DE IMPRESORES DE ETIQUETAS", titleX, titleY);
+            // Establecer la fuente a negrita antes de dibujar el texto del título
+            doc.setFont("helvetica", "bold");
+            // Centrar el título: usa pageWidth / 2 como coordenada X y 'center' como alineación
+            doc.text("REPORTE DE IMPRESORES", pageWidth / 2, titleY, { align: "center" });
+            // Restablecer la fuente a normal después del título para el resto del contenido
+            doc.setFont("helvetica", "normal");
+
 
             doc.setDrawColor(150);
             doc.setLineWidth(0.3);
@@ -740,13 +850,26 @@
             });
 
             let hasContent = false;
-            for (const nombre of secciones) {
-                const sectionData = JSON.parse(localStorage.getItem("seccionData_" + nombre));
+            // Verificar contenido para secciones fijas
+            for (const section of seccionesFijas) {
+                const sectionData = JSON.parse(localStorage.getItem("seccionData_" + section));
                 if (sectionData && (sectionData.photos.length > 0 || sectionData.comment.trim().length > 0)) {
                     hasContent = true;
                     break;
                 }
             }
+            // Verificar contenido para secciones dinámicas
+            if (!hasContent) {
+                const savedDynamicAreas = JSON.parse(localStorage.getItem("dynamicAreas")) || [];
+                for (const area of savedDynamicAreas) {
+                    const sectionData = JSON.parse(localStorage.getItem(`seccionData_OTRA AREA_${area.id}`));
+                    if (sectionData && (sectionData.photos.length > 0 || sectionData.comment.trim().length > 0)) {
+                        hasContent = true;
+                        break;
+                    }
+                }
+            }
+
 
             if (!hasContent) {
                 alert("No hay datos (fotos o comentarios) para generar el reporte. Por favor, añada contenido a alguna sección.");
@@ -756,7 +879,8 @@
             loadingOverlay.style.display = 'flex';
             try {
                 await loadLogoAsBase64();
-            } catch (error) {
+            }
+            catch (error) {
                 alert("No se pudo cargar el logo para el PDF. Se generará sin él. Por favor, verifica la URL del logo o tu conexión a internet. Si el problema persiste, es probable que la imagen tenga restricciones de seguridad (CORS).");
                 logoBase64 = null;
                 logoOriginalWidth = 0;
@@ -778,7 +902,8 @@
             doc.setFontSize(14);
             let currentY = contentStartY + 5;
 
-            doc.text(`Tienda: ${tienda}`, margin, currentY);
+            // --- CAMBIO APLICADO AQUÍ ---
+            doc.text(`Tienda / Area: ${tienda}`, margin, currentY);
             currentY += 10;
             doc.text(`Responsable: ${persona}`, margin, currentY);
             currentY += 10;
@@ -787,13 +912,29 @@
 
             let pageCounter = 1;
             let firstContentSectionDrawn = false;
-            for (const nombre of secciones) {
-                const sectionData = JSON.parse(localStorage.getItem("seccionData_" + nombre));
-                if (!sectionData || (sectionData.photos.length === 0 && sectionData.comment.trim().length === 0)) {
-                    continue;
+
+            // Recorrer TODAS las secciones (fijas y dinámicas)
+            for (const sectionInfo of todasLasSecciones) {
+                let sectionData;
+                let sectionNameForPdf;
+                let sectionKey;
+
+                if (sectionInfo.isDynamic) {
+                    sectionKey = `seccionData_OTRA AREA_${sectionInfo.dynamicId}`;
+                    sectionData = JSON.parse(localStorage.getItem(sectionKey));
+                    const customName = localStorage.getItem(`customAreaName_OTRA AREA_${sectionInfo.dynamicId}`);
+                    sectionNameForPdf = (customName && customName.trim().length > 0) ? customName.toUpperCase() : `OTRA AREA ${sectionInfo.dynamicId}`.toUpperCase();
+                } else {
+                    sectionKey = `seccionData_${sectionInfo.name}`;
+                    sectionData = JSON.parse(localStorage.getItem(sectionKey));
+                    sectionNameForPdf = sectionInfo.name.toUpperCase();
                 }
 
-                // Calculate comment height first
+                if (!sectionData || (sectionData.photos.length === 0 && sectionData.comment.trim().length === 0)) {
+                    continue; // Saltar secciones sin contenido
+                }
+
+                // Calcular altura del comentario primero
                 let commentBoxHeight = 0;
                 let commentTextLines = [];
                 if (sectionData.comment && sectionData.comment.trim().length > 0) {
@@ -806,20 +947,17 @@
                     commentBoxHeight = textHeight + padding * 2;
                 }
 
-                // Determine required height for images
+                // Determinar altura requerida para las imágenes
                 const imagesPerRow = 2;
                 const imgGap = 10;
                 let requiredImagesHeight = 0;
                 if (sectionData.photos.length > 0) {
                     const numRows = Math.ceil(sectionData.photos.length / imagesPerRow);
-                    // Estimate a default image height for calculation, will be refined later
-                    const estimatedImgHeight = 60; // A reasonable estimate
+                    const estimatedImgHeight = 60; // Una estimación razonable
                     requiredImagesHeight = (numRows * estimatedImgHeight) + ((numRows - 1) * imgGap);
                 }
 
-                // Check if current section (title, images, and comment) fits on the current page
-                // If it's the first content section, we might not need a new page yet.
-                // For subsequent sections, if the combined height exceeds remaining space, add a new page.
+                // Verificar si la sección actual cabe en la página actual
                 if (firstContentSectionDrawn && (currentY + 20 + requiredImagesHeight + commentBoxHeight + 15 + margin > pageHeight)) {
                     doc.addPage();
                     pageCounter++;
@@ -829,32 +967,19 @@
                     firstContentSectionDrawn = true;
                 }
 
-
                 doc.setFontSize(18);
                 doc.setTextColor("#2c3e50");
-                // Lógica para el título de la sección en el PDF (incluyendo "OTRA AREA")
-                let sectionTitleForPdf = nombre.toUpperCase();
-                if (nombre === "OTRA AREA") {
-                    const customName = localStorage.getItem("customAreaName_OTRA AREA");
-                    if (customName && customName.trim().length > 0) {
-                        sectionTitleForPdf = customName.toUpperCase();
-                    }
-                }
-                doc.text(sectionTitleForPdf, pageWidth / 2, currentY + 5, { align: "center" });
+                doc.text(sectionNameForPdf, pageWidth / 2, currentY + 5, { align: "center" });
                 currentY += 20;
 
                 let calculatedImgWidth = 0;
                 let calculatedImgHeight = 0;
-
                 if (sectionData.photos.length > 0) {
                     const availableSpaceForImages = pageHeight - currentY - margin - commentBoxHeight - (commentBoxHeight > 0 ? 15 : 0) - 5;
-
                     const numRows = Math.ceil(sectionData.photos.length / imagesPerRow);
                     const totalVerticalGap = (numRows - 1) * imgGap;
-
                     calculatedImgHeight = (availableSpaceForImages - totalVerticalGap) / numRows;
                     const maxPossibleWidthForTwoImages = (pageWidth - (margin * 2) - imgGap) / imagesPerRow;
-
                     calculatedImgWidth = Math.min(calculatedImgHeight, maxPossibleWidthForTwoImages);
                     calculatedImgHeight = calculatedImgWidth;
                     if (calculatedImgWidth < 20) {
@@ -889,7 +1014,7 @@
                         const imgType = imgData.substring("data:image/".length, imgData.indexOf(";base64")).toUpperCase();
                         doc.addImage(imgData, imgType, imgX, currentY, calculatedImgWidth, calculatedImgHeight);
                     } catch (error) {
-                        console.warn(`No se pudo añadir una imagen en sección "${nombre}":`, error);
+                        console.warn(`No se pudo añadir una imagen en sección "${sectionNameForPdf}":`, error);
                     }
 
                     imagesInCurrentRow++;
@@ -904,8 +1029,7 @@
                     doc.setFontSize(12);
                     const commentBoxWidth = pageWidth - margin * 2;
                     const padding = 5;
-
-                    // Use the pre-calculated commentTextLines
+                    // Usar las líneas de comentario pre-calculadas
                     doc.rect(margin, currentY, commentBoxWidth, commentBoxHeight, 'S');
                     doc.text(commentTextLines, margin + padding, currentY + padding + 5, { align: "left" });
                     currentY += commentBoxHeight + 15;
@@ -916,6 +1040,5 @@
             loadingOverlay.style.display = 'none';
         });
     </script>
-
 </body>
 </html>
