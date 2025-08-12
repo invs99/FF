@@ -94,7 +94,7 @@
         }
         .seccion-btn {
             display: block;
-            background-color: #3498db;
+            background-color: #3498db; /* Azul por defecto */
             color: white;
             border: none;
             border-radius: 8px;
@@ -111,6 +111,14 @@
         .seccion-btn:hover {
             background-color: #217dbb;
         }
+        /* Estilo específico para el botón de OTRA AREA+ */
+        .seccion-btn-otra-area {
+            background-color: #FFA500; /* Naranja */
+        }
+        .seccion-btn-otra-area:hover {
+            background-color: #CC8400; /* Naranja más oscuro al pasar el ratón */
+        }
+
         /* Estilos específicos para el input de "OTRA AREA" */
         .custom-area-name-input {
             width: calc(100% - 20px);
@@ -482,6 +490,10 @@
                 contenedor.className = "contenido-seccion";
                 // Lógica para la sección "OTRA AREA"
                 if (nombre === "OTRA AREA") {
+                    // **Aplicar clase naranja al botón de "OTRA AREA+"**
+                    btn.classList.add("seccion-btn-otra-area");
+                    btn.textContent = "OTRA AREA+"; // Cambiar texto del botón
+
                     const customNameInput = document.createElement("input");
                     customNameInput.type = "text";
                     customNameInput.placeholder = "Nombre de la otra área";
@@ -490,16 +502,16 @@
                     const savedCustomName = localStorage.getItem("customAreaName_OTRA AREA");
                     if (savedCustomName) {
                         customNameInput.value = savedCustomName;
-                        btn.textContent = savedCustomName.toUpperCase();
+                        btn.textContent = savedCustomName.toUpperCase() + "+"; // Actualizar con +
                     } else {
-                        btn.textContent = "OTRA AREA";
+                        btn.textContent = "OTRA AREA+";
                         // Texto por defecto del botón
                     }
 
                     // Actualiza el texto del botón y guarda en localStorage al escribir
                     customNameInput.addEventListener("input", () => {
                         const newName = customNameInput.value.trim();
-                        btn.textContent = newName ? newName.toUpperCase() : "OTRA AREA";
+                        btn.textContent = newName ? newName.toUpperCase() + "+" : "OTRA AREA+"; // Asegurarse de que tenga el +
                         localStorage.setItem("customAreaName_OTRA AREA", newName);
                     });
                     contenedor.appendChild(customNameInput); // Agrega el input al contenido de la sección
