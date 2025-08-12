@@ -387,7 +387,7 @@
 
         let seccionesDinamicas = [];
 
-        const LOGO_URL = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSroamFoZxhxDK8iAOsHT5NB7nFY9rlpPEr6w&s";
+        const LOGO_URL = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSroamFoZxhxDK8iAAsHT5NB7nFY9rlpPEr6w&s";
         let logoBase64 = null;
         let logoOriginalWidth = 0;
         let logoOriginalHeight = 0;
@@ -810,37 +810,32 @@
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
             const margin = 15;
-            const contentStartY = 35;
+            const contentStartY = 35; // Punto de inicio del contenido en cada página de sección
 
-            addHeaderAndFooter(doc, 1);
+            let pageCounter = 1;
 
+            // Página de detalles inicial (primera página del reporte)
+            addHeaderAndFooter(doc, pageCounter);
             doc.setFontSize(14);
             let currentY = contentStartY + 5;
-
             doc.text(`Tienda: ${tienda}`, margin, currentY);
             currentY += 10;
             doc.text(`Responsable: ${persona}`, margin, currentY);
             currentY += 10;
             doc.text(`Fecha del Reporte: ${currentDate}`, margin, currentY);
-            currentY += 20;
 
-            let pageCounter = 1;
-            let firstContentSectionDrawn = false;
-
+            // Bucle para cada sección
             for (const nombre of todasLasSecciones) {
                 const sectionData = JSON.parse(localStorage.getItem("seccionData_" + nombre));
                 if (!sectionData || (sectionData.photos.length === 0 && sectionData.comment.trim().length === 0)) {
-                    continue;
+                    continue; // Saltar secciones sin contenido
                 }
 
-                if (firstContentSectionDrawn) {
-                    doc.addPage();
-                    pageCounter++;
-                    addHeaderAndFooter(doc, pageCounter);
-                    currentY = contentStartY;
-                } else {
-                    firstContentSectionDrawn = true;
-                }
+                // Siempre añadir una nueva página para cada sección de contenido
+                doc.addPage();
+                pageCounter++;
+                addHeaderAndFooter(doc, pageCounter);
+                currentY = contentStartY; // Resetear Y para el contenido de la nueva página
 
                 doc.setFontSize(18);
                 doc.setTextColor("#2c3e50");
@@ -853,90 +848,143 @@
                     }
                 }
                 doc.text(sectionTitleForPdf, pageWidth / 2, currentY + 5, { align: "center" });
-                currentY += 20;
+                currentY += 20; // Espacio para el título y debajo
+
+                let availableContentHeight = pageHeight - currentY - margin;
 
                 const imagesPerRow = 2;
-                const imgGap = 10;
+                const imgGap = 8; // Espacio entre imágenes
+                const commentLineHeight = 7; // Altura aproximada de una línea de comentario
+                const commentPadding = 5; // Padding dentro del cuadro de comentario
+                const gapAfterImagesBeforeComment = 15; // Espacio entre las últimas imágenes y el comentario
 
+                let numImages = sectionData.photos.length;
                 let calculatedImgWidth = 0;
                 let calculatedImgHeight = 0;
-                if (sectionData.photos.length > 0) {
-                    const minCommentHeight = 30;
-                    const spaceForComment = sectionData.comment.trim().length > 0 ? minCommentHeight + 15 : 0;
-                    const availableSpaceForImages = pageHeight - currentY - margin - spaceForComment - 5;
+                let totalImageHeightUsed = 0;
+                let numImageRows = 0;
 
-                    const numRows = Math.ceil(sectionData.photos.length / imagesPerRow);
-                    const totalVerticalGap = (numRows - 1) * imgGap;
+                // --- Calcular espacio para el comentario primero (sin dibujar) ---
+                let commentText = sectionData.comment && sectionData.comment.trim().length > 0 ? "Comentario: " + sectionData.comment : "";
+                let splitCommentProvisional = [];
+                let provisionalCommentHeight = 0;
 
-                    calculatedImgHeight = (availableSpaceForImages - totalVerticalGap) / numRows;
-                    const maxPossibleWidthForTwoImages = (pageWidth - (margin * 2) - imgGap) / imagesPerRow;
+                if (commentText) {
+                    splitCommentProvisional = doc.splitTextToSize(commentText, pageWidth - margin * 2 - commentPadding * 2);
+                    provisionalCommentHeight = splitCommentProvisional.length * commentLineHeight + commentPadding * 2;
+                }
 
-                    calculatedImgWidth = Math.min(calculatedImgHeight, maxPossibleWidthForTwoImages);
-                    calculatedImgHeight = calculatedImgWidth;
-                    if (calculatedImgWidth < 20) {
-                        console.warn("Imágenes demasiado pequeñas, ajustando a un mínimo de 20x20mm.");
-                        calculatedImgWidth = 20;
-                        calculatedImgHeight = 20;
+                // --- Calcular dimensiones de imagen dinámicamente ---
+                let spaceForImagesOnly = availableContentHeight;
+
+                // Si hay comentario, reservar espacio para él + el espacio entre imágenes y comentario
+                if (commentText) {
+                    spaceForImagesOnly -= (provisionalCommentHeight + gapAfterImagesBeforeComment);
+                }
+
+                // Asegurar que el espacio para imágenes no sea negativo o muy pequeño
+                if (spaceForImagesOnly < 0) spaceForImagesOnly = 0;
+
+
+                if (numImages > 0 && spaceForImagesOnly > 0) {
+                    numImageRows = Math.ceil(numImages / imagesPerRow);
+
+                    const maxPossibleImgWidthForTwoImages = (pageWidth - (margin * 2) - imgGap) / imagesPerRow;
+                    const estimatedMaxImgHeightPerPhoto = (spaceForImagesOnly - ((numImageRows - 1) * imgGap)) / numImageRows;
+
+                    // La dimensión de la imagen será la menor entre la que cabe horizontalmente y la que cabe verticalmente por fila.
+                    calculatedImgWidth = Math.max(20, Math.min(maxPossibleImgWidthForTwoImages, estimatedMaxImgHeightPerPhoto)); // Mínimo de 20mm
+                    calculatedImgHeight = calculatedImgWidth; // Mantenerlas cuadradas o ajustar a relación de aspecto si se desea.
+
+                    // Recalcular la altura total que usarán las imágenes con las dimensiones calculadas
+                    totalImageHeightUsed = (calculatedImgHeight * numImageRows) + ((numImageRows - 1) * imgGap);
+
+                    // Si al recalcular, las imágenes no caben por exceso, reducir el espacio del comentario (si existe)
+                    if (totalImageHeightUsed > spaceForImagesOnly && commentText) {
+                        const overflow = totalImageHeightUsed - spaceForImagesOnly;
+                        provisionalCommentHeight = Math.max(0, provisionalCommentHeight - overflow); // Reducir el comentario
                     }
                 }
 
-                let imagesInCurrentRow = 0;
-                let currentRowStartX = 0;
-                let currentRowMaxHeight = 0;
+                // --- Dibujar Imágenes ---
+                let imagesDrawnCount = 0;
+                let currentRowY = currentY; // Y actual para dibujar las imágenes
 
-                for (let i = 0; i < sectionData.photos.length; i++) {
+                for (let i = 0; i < numImages; i++) {
                     const imgData = sectionData.photos[i];
-                    if (imagesInCurrentRow === 0 || imagesInCurrentRow >= imagesPerRow) {
-                        if (imagesInCurrentRow >= imagesPerRow) {
-                            currentY += currentRowMaxHeight + imgGap;
-                        }
 
-                        imagesInCurrentRow = 0;
-                        currentRowMaxHeight = 0;
-
-                        const numImagesForThisRow = Math.min(imagesPerRow, sectionData.photos.length - i);
-                        const totalRowWidth = (numImagesForThisRow * calculatedImgWidth) + ((numImagesForThisRow - 1) * imgGap);
-
-                        currentRowStartX = (pageWidth - totalRowWidth) / 2;
+                    if (calculatedImgWidth === 0 || calculatedImgHeight === 0) {
+                        console.warn(`Imágenes en sección "${nombre}" omitidas debido a dimensiones cero o espacio insuficiente.`);
+                        break; // No hay espacio para dibujar imágenes
                     }
 
-                    const imgX = currentRowStartX + (imagesInCurrentRow * (calculatedImgWidth + imgGap));
+                    if (i > 0 && i % imagesPerRow === 0) { // Nueva fila
+                        currentRowY += calculatedImgHeight + imgGap;
+                    }
+
+                    // Verificar si la fila actual de imágenes se sale de la página *antes* del comentario
+                    if (currentRowY + calculatedImgHeight + (commentText ? provisionalCommentHeight + gapAfterImagesBeforeComment : 0) + margin > pageHeight) {
+                        console.warn(`No hay más espacio vertical para imágenes en la sección "${nombre}". Se cortarán imágenes.`);
+                        break;
+                    }
+
+                    const numImagesInCurrentRow = Math.min(imagesPerRow, numImages - i);
+                    const totalRowWidth = (numImagesInCurrentRow * calculatedImgWidth) + ((numImagesInCurrentRow - 1) * imgGap);
+                    const currentRowStartX = (pageWidth - totalRowWidth) / 2;
+                    const imgX_centered = currentRowStartX + ((i % imagesPerRow) * (calculatedImgWidth + imgGap));
+
                     try {
                         const imgType = imgData.substring("data:image/".length, imgData.indexOf(";base64")).toUpperCase();
-                        doc.addImage(imgData, imgType, imgX, currentY, calculatedImgWidth, calculatedImgHeight);
+                        doc.addImage(imgData, imgType, imgX_centered, currentRowY, calculatedImgWidth, calculatedImgHeight);
+                        imagesDrawnCount++;
                     } catch (error) {
                         console.warn(`No se pudo añadir una imagen en sección "${nombre}":`, error);
                     }
-
-                    imagesInCurrentRow++;
-                    currentRowMaxHeight = Math.max(currentRowMaxHeight, calculatedImgHeight);
                 }
 
-                if (sectionData.photos.length > 0) {
-                   currentY += currentRowMaxHeight + 15;
+                // Actualizar currentY después de dibujar todas las imágenes (o hasta donde cupieron)
+                if (imagesDrawnCount > 0) {
+                    // Si se dibujó al menos una imagen, currentY se actualiza al final de la última fila de imágenes + gap
+                    currentY = currentRowY + calculatedImgHeight + gapAfterImagesBeforeComment;
+                } else if (numImages > 0 && imagesDrawnCount === 0) {
+                    // No se pudo dibujar ninguna imagen, pero había fotos. Añadir un pequeño buffer si el comentario es lo único
+                    currentY += 5;
+                } else if (numImages === 0 && commentText) {
+                    // Si no hay imágenes, pero hay comentario, empezar el comentario un poco más abajo del título
+                    currentY += 5;
                 }
 
-                if (sectionData.comment && sectionData.comment.trim().length > 0) {
+                // --- Dibujar Comentario ---
+                if (commentText) {
                     doc.setFontSize(12);
-                    const commentText = "Comentario: " + sectionData.comment;
                     const commentBoxWidth = pageWidth - margin * 2;
-                    const padding = 5;
+                    let remainingHeightForActualComment = pageHeight - currentY - margin;
 
-                    const splitComment = doc.splitTextToSize(commentText, commentBoxWidth - padding * 2);
-                    const textHeight = splitComment.length * 7;
+                    // Ajustar el comentario para que no se salga de la página con el espacio restante
+                    const maxLinesForComment = Math.floor((remainingHeightForActualComment - commentPadding * 2) / commentLineHeight);
 
-                    const commentBoxHeight = textHeight + padding * 2;
+                    if (maxLinesForComment > 0) {
+                        let finalSplitComment = doc.splitTextToSize(commentText, commentBoxWidth - commentPadding * 2);
 
-                    if (currentY + commentBoxHeight + 5 > pageHeight - margin) {
-                        doc.addPage();
-                        pageCounter++;
-                        addHeaderAndFooter(doc, pageCounter);
-                        currentY = contentStartY;
+                        if (finalSplitComment.length > maxLinesForComment) {
+                            finalSplitComment = finalSplitComment.slice(0, maxLinesForComment);
+                            // Añadir elipses si el comentario se trunca
+                            if (finalSplitComment.length > 0) {
+                                finalSplitComment[finalSplitComment.length - 1] += "...";
+                            }
+                        }
+                        const textHeight = finalSplitComment.length * commentLineHeight;
+                        const commentBoxHeight = textHeight + commentPadding * 2;
+
+                        if (currentY + commentBoxHeight + margin <= pageHeight) { // Verificar si el cuadro de comentario cabe
+                            doc.rect(margin, currentY, commentBoxWidth, commentBoxHeight, 'S');
+                            doc.text(finalSplitComment, margin + commentPadding, currentY + commentPadding + 5, { align: "left" });
+                        } else {
+                            console.warn(`El comentario para la sección "${nombre}" no cabe completamente y ha sido truncado/omitido.`);
+                        }
+                    } else {
+                        console.warn(`No hay espacio suficiente para el comentario en la sección "${nombre}". Se omitirá.`);
                     }
-
-                    doc.rect(margin, currentY, commentBoxWidth, commentBoxHeight, 'S');
-                    doc.text(splitComment, margin + padding, currentY + padding + 5, { align: "left" });
-                    currentY += commentBoxHeight + 15;
                 }
             }
 
