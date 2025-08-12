@@ -28,20 +28,20 @@
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
             text-align: center;
             position: relative;
-            /* Necesario para que el posicionamiento absoluto del footer-text funcione */
+        /* Necesario para que el posicionamiento absoluto del footer-text funcione */
         }
         /* --- AJUSTES DE PORTADA WEB (NO PDF) --- */
         .logo {
             width: 200px;
-            /* Puedes ajustar este valor a tu gusto */
+        /* Puedes ajustar este valor a tu gusto */
             height: auto;
             display: block;
-            margin: 0 auto 10px auto; 
-            object-fit: contain; 
+            margin: 0 auto 10px auto;
+            object-fit: contain;
         }
         h1 {
             font-size: 1.6rem;
-            margin-top: 0; 
+            margin-top: 0;
             margin-bottom: 25px;
             color: #2c3e50;
         }
@@ -113,7 +113,8 @@
         }
         /* Estilos específicos para el input de "OTRA AREA" */
         .custom-area-name-input {
-            width: calc(100% - 20px); /* Ajusta el ancho para padding */
+            width: calc(100% - 20px);
+        /* Ajusta el ancho para padding */
             padding: 10px;
             margin-bottom: 15px;
             border: 1px solid #ccc;
@@ -171,8 +172,8 @@
         }
         .delete-image-btn {
             position: absolute;
-            top: -5px; 
-            right: -5px; 
+            top: -5px;
+            right: -5px;
             background-color: #e74c3c;
             color: white;
             border: none;
@@ -185,7 +186,7 @@
             justify-content: center;
             align-items: center;
             font-weight: bold;
-            line-height: 1; 
+            line-height: 1;
             padding: 0;
             z-index: 10;
         }
@@ -246,11 +247,11 @@
         }
 
         /* Botón "Nuevo Reporte" */
-        #btnNuevoReporte { 
+        #btnNuevoReporte {
             background-color: #e74c3c;
-            margin-top: 20px; 
+            margin-top: 20px;
         }
-        #btnNuevoReporte:hover { 
+        #btnNuevoReporte:hover {
             background-color: #c0392b;
         }
 
@@ -280,10 +281,8 @@
             margin-bottom: 10px;
         }
         @keyframes spin {
-            0% { transform: rotate(0deg);
-            }
-            100% { transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         /* Texto de "Powered by" */
@@ -293,7 +292,7 @@
             right: 15px;
             color: #cccccc; /* Gris muy claro */
             font-size: 0.75rem;
-            /* Tamaño de fuente más pequeño */
+        /* Tamaño de fuente más pequeño */
             font-weight: bold;
             opacity: 0.6; /* Difuminado */
             text-transform: uppercase;
@@ -314,7 +313,7 @@
             }
             .footer-text {
                 font-size: 0.65rem;
-                /* Ajuste para pantallas pequeñas */
+            /* Ajuste para pantallas pequeñas */
                 bottom: 5px;
                 right: 10px;
             }
@@ -337,14 +336,15 @@
             </div>
             <button type="submit">Comenzar</button>
         </form>
-        <div class="footer-text">Powered by Jonathann</div> </div>
+        <div class="footer-text">Powered by Jonathann</div>
+    </div>
 
     <div class="container" id="mainApp" style="display:none; text-align:center;">
         <div id="botonesSecciones"></div>
 
         <button id="generarPDF" style="margin-top:30px; background:#34495e;">Generar Reporte PDF</button>
-        
-        <button id="btnNuevoReporte" type="button">Nuevo Reporte</button> 
+
+        <button id="btnNuevoReporte" type="button">Nuevo Reporte</button>
     </div>
 
     <div id="loadingOverlay">
@@ -372,16 +372,16 @@
             "Pintura",
             "Fontanería",
             "Herramientas",
-            "OTRA AREA" // ¡Aquí está la nueva sección!
+            "OTRA AREA"
         ];
         const LOGO_URL = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSroamFoZxhxDK8iAOsHT5NB7nFY9rlpPEr6w&s";
-        let logoBase64 = null; 
-        let logoOriginalWidth = 0; 
+        let logoBase64 = null;
+        let logoOriginalWidth = 0;
         let logoOriginalHeight = 0;
         const loadLogoAsBase64 = () => {
             return new Promise((resolve, reject) => {
                 const img = new Image();
-                img.crossOrigin = "Anonymous"; 
+                img.crossOrigin = "Anonymous";
                 img.onload = () => {
                     logoOriginalWidth = img.width;
                     logoOriginalHeight = img.height;
@@ -389,18 +389,18 @@
                     const canvas = document.createElement("canvas");
                     canvas.width = img.width;
                     canvas.height = img.height;
-        
+
                     const ctx = canvas.getContext("2d");
                     ctx.drawImage(img, 0, 0);
-                    logoBase64 = canvas.toDataURL("image/png"); 
+                    logoBase64 = canvas.toDataURL("image/png");
                     console.log("Logo cargado y convertido a Base64 con éxito. Dimensiones originales:", logoOriginalWidth, "x", logoOriginalHeight);
-        
+
                     resolve();
                 };
                 img.onerror = (error) => {
                     console.error("Error al cargar el logo para Base64. Esto puede ser un problema de CORS o la URL de la imagen no es accesible:", error);
                     logoBase64 = null;
-                    logoOriginalWidth = 0; 
+                    logoOriginalWidth = 0;
                     logoOriginalHeight = 0;
                     reject(error);
                 };
@@ -422,7 +422,7 @@
                 const img = new Image();
                 img.src = URL.createObjectURL(file);
                 img.onload = () => {
-                
+
                     const canvas = document.createElement('canvas');
                     let width = img.width;
                     let height = img.height;
@@ -432,7 +432,7 @@
                             height = height * (maxWidth / width);
                             width = maxWidth;
                         }
-       
+
                     } else {
                         if (height > maxHeight) {
                             width = width * (maxHeight / height);
@@ -443,12 +443,12 @@
                     canvas.width = width;
                     canvas.height = height;
 
-     
+
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
                     resolve(canvas.toDataURL('image/jpeg', quality));
-                    URL.revokeObjectURL(img.src); 
+                    URL.revokeObjectURL(img.src);
                 };
                 img.onerror = error => reject(error);
             });
@@ -463,7 +463,7 @@
             }
             localStorage.setItem("tienda", tienda);
             localStorage.setItem("persona", persona);
-            
+
             initializeSectionData();
 
             document.getElementById("tienda").value = localStorage.getItem("tienda") || "";
@@ -480,20 +480,20 @@
 
                 const contenedor = document.createElement("div");
                 contenedor.className = "contenido-seccion";
-
                 // Lógica para la sección "OTRA AREA"
                 if (nombre === "OTRA AREA") {
                     const customNameInput = document.createElement("input");
                     customNameInput.type = "text";
                     customNameInput.placeholder = "Nombre de la otra área";
                     customNameInput.className = "custom-area-name-input";
-                    
+
                     const savedCustomName = localStorage.getItem("customAreaName_OTRA AREA");
                     if (savedCustomName) {
                         customNameInput.value = savedCustomName;
                         btn.textContent = savedCustomName.toUpperCase();
                     } else {
-                        btn.textContent = "OTRA AREA"; // Texto por defecto del botón
+                        btn.textContent = "OTRA AREA";
+                        // Texto por defecto del botón
                     }
 
                     // Actualiza el texto del botón y guarda en localStorage al escribir
@@ -502,10 +502,10 @@
                         btn.textContent = newName ? newName.toUpperCase() : "OTRA AREA";
                         localStorage.setItem("customAreaName_OTRA AREA", newName);
                     });
-                    
                     contenedor.appendChild(customNameInput); // Agrega el input al contenido de la sección
                 } else {
-                    btn.textContent = nombre; // Para las otras secciones, el nombre es fijo
+                    btn.textContent = nombre;
+                    // Para las otras secciones, el nombre es fijo
                 }
 
                 const inputCamara = document.createElement("input");
@@ -525,13 +525,12 @@
                 btnCamara.className = "btn-foto";
                 btnCamara.type = "button";
                 contenedor.appendChild(btnCamara);
-                
+
                 const btnGaleria = document.createElement("button");
-                btnGaleria.textContent = "Agregar Foto"; 
+                btnGaleria.textContent = "Agregar Foto";
                 btnGaleria.className = "btn-foto";
                 btnGaleria.type = "button";
                 contenedor.appendChild(btnGaleria);
-
                 const previewDiv = document.createElement("div");
                 previewDiv.className = "preview-images";
                 contenedor.appendChild(previewDiv);
@@ -539,21 +538,21 @@
                 const comentario = document.createElement("textarea");
                 comentario.placeholder = "Comentario para esta sección (opcional)";
                 contenedor.appendChild(comentario);
-                
                 const sectionKey = "seccionData_" + nombre;
 
                 const loadSectionData = () => {
                     previewDiv.innerHTML = "";
                     const data = JSON.parse(localStorage.getItem(sectionKey));
                     if (data && data.photos) {
-                        data.photos.forEach((src) => { 
+                        data.photos.forEach((src) => {
                             const imgContainer = document.createElement("div");
                             imgContainer.className = "image-container";
 
                             const img = document.createElement("img");
                             img.src = src;
                             img.alt = `Imagen de ${nombre}`;
-           
+
+
                             imgContainer.appendChild(img);
 
                             const deleteBtn = document.createElement("button");
@@ -564,7 +563,7 @@
                                 let currentData = JSON.parse(localStorage.getItem(sectionKey));
                                 currentData.photos = currentData.photos.filter(photoSrc => photoSrc !== src);
                                 localStorage.setItem(sectionKey, JSON.stringify(currentData));
-                                loadSectionData(); 
+                                loadSectionData();
                             });
                             imgContainer.appendChild(deleteBtn);
                             previewDiv.appendChild(imgContainer);
@@ -578,7 +577,7 @@
                     addMoreBtn.className = "add-more-button";
                     addMoreBtn.title = "Agregar más fotos";
                     addMoreBtn.addEventListener("click", () => {
-                        inputGaleria.click(); 
+                        inputGaleria.click();
                     });
                     addMoreBlock.appendChild(addMoreBtn);
                     previewDiv.appendChild(addMoreBlock);
@@ -586,38 +585,37 @@
                     comentario.value = (data && data.comment) ? data.comment : "";
                 };
                 loadSectionData();
-                
                 btn.addEventListener("click", () => {
                     const todas = document.querySelectorAll(".contenido-seccion");
                     todas.forEach(c => {
                         if (c !== contenedor) c.style.display = "none";
                     });
-  
+
                     if (contenedor.style.display === "block") {
                         contenedor.style.display = "none";
                     } else {
                         contenedor.style.display = "block";
+
                     }
                     if(contenedor.style.display === "block"){
                         contenedor.scrollIntoView({behavior:"smooth"});
                     }
                 });
-                
+
                 btnCamara.addEventListener("click", () => {
                     inputCamara.click();
                 });
                 btnGaleria.addEventListener("click", () => {
                     inputGaleria.click();
                 });
-                
                 const saveImages = async (files) => {
                     let currentData = JSON.parse(localStorage.getItem(sectionKey));
-                    if (!currentData) { 
+                    if (!currentData) {
                         currentData = { photos: [], comment: "" };
                     }
 
                     const compressedImages = [];
-                    for (let file of files) { 
+                    for (let file of files) {
                         try {
                             const compressedBase64 = await compressImage(file, 800, 800, 0.7);
                             compressedImages.push(compressedBase64);
@@ -630,7 +628,7 @@
                     currentData.photos = currentData.photos.concat(compressedImages);
                     try {
                         localStorage.setItem(sectionKey, JSON.stringify(currentData));
-                        loadSectionData(); 
+                        loadSectionData();
                     } catch (e) {
                         if (e.name === 'QuotaExceededError') {
                             alert('¡El almacenamiento está lleno! No se pueden añadir más fotos. Elimina algunas fotos existentes o inicia un nuevo reporte.');
@@ -640,20 +638,20 @@
                         }
                     }
                 };
-                
                 inputCamara.addEventListener("change", e => {
                     if (e.target.files.length > 0) {
                         saveImages(e.target.files);
                         inputCamara.value = "";
                     }
+
                 });
                 inputGaleria.addEventListener("change", e => {
                     if (e.target.files.length > 0) {
-                        saveImages(e.target.files); 
+                        saveImages(e.target.files);
                         inputGaleria.value = "";
                     }
+
                 });
-                
                 comentario.addEventListener("input", () => {
                     let currentData = JSON.parse(localStorage.getItem(sectionKey));
                     currentData.comment = comentario.value;
@@ -678,48 +676,48 @@
 
                 mainApp.style.display = "none";
                 portada.style.display = "block";
-                botonesSecciones.innerHTML = ""; 
+                botonesSecciones.innerHTML = "";
             }
         });
         const addHeaderAndFooter = (doc, pageNumber) => {
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
             const margin = 15;
-            const textPadding = 5; 
-            const headerBottomLineY = 30; 
+            const textPadding = 5;
+            const headerBottomLineY = 30;
 
             let finalLogoHeight = 0;
-            const logoStart_Y = 10; 
+            const logoStart_Y = 10;
 
             if (logoBase64 && logoOriginalWidth > 0 && logoOriginalHeight > 0) {
                 const pdfLogoWidth = 30;
                 const calculatedLogoHeight = (pdfLogoWidth / logoOriginalWidth) * logoOriginalHeight;
-                const maxLogoHeight = 15; 
+                const maxLogoHeight = 15;
                 finalLogoHeight = Math.min(calculatedLogoHeight, maxLogoHeight);
                 doc.addImage(logoBase64, 'PNG', margin, logoStart_Y, pdfLogoWidth, finalLogoHeight);
             } else {
                 console.warn("No se pudo dibujar el logo en el encabezado porque logoBase64 es nulo o las dimensiones originales no se capturaron. Revisa la consola para más detalles.");
-                logoBase64 = null; 
-                logoOriginalWidth = 0; 
+                logoBase64 = null;
+                logoOriginalWidth = 0;
                 logoOriginalHeight = 0;
             }
 
-            doc.setFontSize(18); 
+            doc.setFontSize(18);
             doc.setTextColor("#2c3e50");
             const titleX = margin + (finalLogoHeight > 0 ? 30 : 0) + textPadding;
-            const titleY = logoStart_Y + (finalLogoHeight / 2) + 3; 
+            const titleY = logoStart_Y + (finalLogoHeight / 2) + 3;
 
             doc.text("REPORTE DE IMPRESORES DE ETIQUETAS", titleX, titleY);
-            
-            doc.setDrawColor(150); 
+
+            doc.setDrawColor(150);
             doc.setLineWidth(0.3);
-            doc.line(margin, headerBottomLineY, pageWidth - margin, headerBottomLineY); 
+            doc.line(margin, headerBottomLineY, pageWidth - margin, headerBottomLineY);
 
             doc.setFontSize(10);
-            doc.setTextColor(150); 
+            doc.setTextColor(150);
             doc.text(`Página ${pageNumber}`, pageWidth - margin, pageHeight - 10, { align: "right" });
-            doc.setTextColor(0); 
-            doc.setDrawColor(0); 
+            doc.setTextColor(0);
+            doc.setDrawColor(0);
         };
 
         generarPDFBtn.addEventListener("click", async () => {
@@ -748,8 +746,8 @@
                 await loadLogoAsBase64();
             } catch (error) {
                 alert("No se pudo cargar el logo para el PDF. Se generará sin él. Por favor, verifica la URL del logo o tu conexión a internet. Si el problema persiste, es probable que la imagen tenga restricciones de seguridad (CORS).");
-                logoBase64 = null; 
-                logoOriginalWidth = 0; 
+                logoBase64 = null;
+                logoOriginalWidth = 0;
                 logoOriginalHeight = 0;
             }
 
@@ -761,21 +759,21 @@
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
             const margin = 15;
-            const contentStartY = 35; 
+            const contentStartY = 35;
 
-            addHeaderAndFooter(doc, 1); 
-            
+            addHeaderAndFooter(doc, 1);
+
             doc.setFontSize(14);
-            let currentY = contentStartY + 5; 
+            let currentY = contentStartY + 5;
 
             doc.text(`Tienda: ${tienda}`, margin, currentY);
             currentY += 10;
             doc.text(`Responsable: ${persona}`, margin, currentY);
             currentY += 10;
             doc.text(`Fecha del Reporte: ${currentDate}`, margin, currentY);
-            currentY += 20; 
+            currentY += 20;
 
-            let pageCounter = 1; 
+            let pageCounter = 1;
             let firstContentSectionDrawn = false;
             for (const nombre of secciones) {
                 const sectionData = JSON.parse(localStorage.getItem("seccionData_" + nombre));
@@ -783,18 +781,45 @@
                     continue;
                 }
 
-                if (firstContentSectionDrawn) {
+                // Calculate comment height first
+                let commentBoxHeight = 0;
+                let commentTextLines = [];
+                if (sectionData.comment && sectionData.comment.trim().length > 0) {
+                    doc.setFontSize(12);
+                    const commentText = "Comentario: " + sectionData.comment;
+                    const commentBoxWidth = pageWidth - margin * 2;
+                    const padding = 5;
+                    commentTextLines = doc.splitTextToSize(commentText, commentBoxWidth - padding * 2);
+                    const textHeight = commentTextLines.length * 7;
+                    commentBoxHeight = textHeight + padding * 2;
+                }
+
+                // Determine required height for images
+                const imagesPerRow = 2;
+                const imgGap = 10;
+                let requiredImagesHeight = 0;
+                if (sectionData.photos.length > 0) {
+                    const numRows = Math.ceil(sectionData.photos.length / imagesPerRow);
+                    // Estimate a default image height for calculation, will be refined later
+                    const estimatedImgHeight = 60; // A reasonable estimate
+                    requiredImagesHeight = (numRows * estimatedImgHeight) + ((numRows - 1) * imgGap);
+                }
+
+                // Check if current section (title, images, and comment) fits on the current page
+                // If it's the first content section, we might not need a new page yet.
+                // For subsequent sections, if the combined height exceeds remaining space, add a new page.
+                if (firstContentSectionDrawn && (currentY + 20 + requiredImagesHeight + commentBoxHeight + 15 + margin > pageHeight)) {
                     doc.addPage();
                     pageCounter++;
                     addHeaderAndFooter(doc, pageCounter);
-                    currentY = contentStartY; 
-                } else {
+                    currentY = contentStartY;
+                } else if (!firstContentSectionDrawn) {
                     firstContentSectionDrawn = true;
                 }
 
+
                 doc.setFontSize(18);
                 doc.setTextColor("#2c3e50");
-                
                 // Lógica para el título de la sección en el PDF (incluyendo "OTRA AREA")
                 let sectionTitleForPdf = nombre.toUpperCase();
                 if (nombre === "OTRA AREA") {
@@ -805,26 +830,22 @@
                 }
                 doc.text(sectionTitleForPdf, pageWidth / 2, currentY + 5, { align: "center" });
                 currentY += 20;
-                
-                const imagesPerRow = 2; 
-                const imgGap = 10;      
 
                 let calculatedImgWidth = 0;
                 let calculatedImgHeight = 0;
+
                 if (sectionData.photos.length > 0) {
-                    const minCommentHeight = 30;
-                    const spaceForComment = sectionData.comment.trim().length > 0 ? minCommentHeight + 15 : 0;
-                    const availableSpaceForImages = pageHeight - currentY - margin - spaceForComment - 5; 
+                    const availableSpaceForImages = pageHeight - currentY - margin - commentBoxHeight - (commentBoxHeight > 0 ? 15 : 0) - 5;
 
                     const numRows = Math.ceil(sectionData.photos.length / imagesPerRow);
                     const totalVerticalGap = (numRows - 1) * imgGap;
 
                     calculatedImgHeight = (availableSpaceForImages - totalVerticalGap) / numRows;
                     const maxPossibleWidthForTwoImages = (pageWidth - (margin * 2) - imgGap) / imagesPerRow;
-                    
-                    calculatedImgWidth = Math.min(calculatedImgHeight, maxPossibleWidthForTwoImages); 
+
+                    calculatedImgWidth = Math.min(calculatedImgHeight, maxPossibleWidthForTwoImages);
                     calculatedImgHeight = calculatedImgWidth;
-                    if (calculatedImgWidth < 20) { 
+                    if (calculatedImgWidth < 20) {
                         console.warn("Imágenes demasiado pequeñas, ajustando a un mínimo de 20x20mm.");
                         calculatedImgWidth = 20;
                         calculatedImgHeight = 20;
@@ -832,29 +853,29 @@
                 }
 
                 let imagesInCurrentRow = 0;
-                let currentRowStartX = 0; 
-                let currentRowMaxHeight = 0; 
+                let currentRowStartX = 0;
+                let currentRowMaxHeight = 0;
 
                 for (let i = 0; i < sectionData.photos.length; i++) {
                     const imgData = sectionData.photos[i];
                     if (imagesInCurrentRow === 0 || imagesInCurrentRow >= imagesPerRow) {
-                        if (imagesInCurrentRow >= imagesPerRow) { 
+                        if (imagesInCurrentRow >= imagesPerRow) {
                             currentY += currentRowMaxHeight + imgGap;
                         }
-                        
+
                         imagesInCurrentRow = 0;
                         currentRowMaxHeight = 0;
 
                         const numImagesForThisRow = Math.min(imagesPerRow, sectionData.photos.length - i);
                         const totalRowWidth = (numImagesForThisRow * calculatedImgWidth) + ((numImagesForThisRow - 1) * imgGap);
-                        
+
                         currentRowStartX = (pageWidth - totalRowWidth) / 2;
                     }
 
                     const imgX = currentRowStartX + (imagesInCurrentRow * (calculatedImgWidth + imgGap));
                     try {
                         const imgType = imgData.substring("data:image/".length, imgData.indexOf(";base64")).toUpperCase();
-                        doc.addImage(imgData, imgType, imgX, currentY, calculatedImgWidth, calculatedImgHeight); 
+                        doc.addImage(imgData, imgType, imgX, currentY, calculatedImgWidth, calculatedImgHeight);
                     } catch (error) {
                         console.warn(`No se pudo añadir una imagen en sección "${nombre}":`, error);
                     }
@@ -862,34 +883,24 @@
                     imagesInCurrentRow++;
                     currentRowMaxHeight = Math.max(currentRowMaxHeight, calculatedImgHeight);
                 }
-                
+
                 if (sectionData.photos.length > 0) {
-                   currentY += currentRowMaxHeight + 15;
+                    currentY += currentRowMaxHeight + 15;
                 }
 
                 if (sectionData.comment && sectionData.comment.trim().length > 0) {
                     doc.setFontSize(12);
-                    const commentText = "Comentario: " + sectionData.comment;
-                    const commentBoxWidth = pageWidth - margin * 2; 
+                    const commentBoxWidth = pageWidth - margin * 2;
                     const padding = 5;
-                    const splitComment = doc.splitTextToSize(commentText, commentBoxWidth - padding * 2);
-                    const textHeight = splitComment.length * 7;
-                    const commentBoxHeight = textHeight + padding * 2; 
 
-                    if (currentY + commentBoxHeight + 5 > pageHeight - margin) {
-                        doc.addPage();
-                        pageCounter++;
-                        addHeaderAndFooter(doc, pageCounter);
-                        currentY = contentStartY; 
-                    }
-
+                    // Use the pre-calculated commentTextLines
                     doc.rect(margin, currentY, commentBoxWidth, commentBoxHeight, 'S');
-                    doc.text(splitComment, margin + padding, currentY + padding + 5, { align: "left" });
+                    doc.text(commentTextLines, margin + padding, currentY + padding + 5, { align: "left" });
                     currentY += commentBoxHeight + 15;
                 }
             }
 
-            doc.save(`Reporte_${tienda.replace(/\s/g, "_")}_${new Date().toISOString().slice(0,10)}.pdf`);
+            doc.save(`Reporte_${tienda.replace(/\s/g, "_")}_${new Date().toISOString().slice(0, 10)}.pdf`);
             loadingOverlay.style.display = 'none';
         });
     </script>
