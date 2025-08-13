@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MODEN WIFI</title>
+    <!-- Incluir Tailwind CSS para un diseño moderno y responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Incluir jsPDF para generar el documento PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        /* Estilos específicos para el canvas de la firma */
+        #signatureCanvas {
+            border: 1px solid #d1d5db; /* gray-300 */
+            border-radius: 0.375rem; /* rounded-md */
+            background-color: white;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-start min-h-screen p-4 font-sans">
+    <!-- Overlay de carga -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl flex items-center space-x-3">
+            <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2d000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-gray-700">Generando PDF...</p>
+        </div>
+    </div>
+    
+    <!-- Modal de confirmación para limpiar el formulario -->
+    <div id="confirmationModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-60 hidden">
+        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Confirmar</h3>
+            <p class="text-gray-700 text-center mb-6">¿Estás seguro que quieres limpiar el formulario? Los datos actuales se perderán.</p>
+            <div class="flex space-x-4">
+                <button id="cancelClearButton" class="flex-1 justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Cancelar
+                </button>
+                <button id="confirmClearButton" class="flex-1 justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg mb-6">
+        <div class="flex justify-center mb-6">
+             <!-- Logo de la empresa desde el repositorio de GitHub -->
+            <img src="https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png" alt="Logo Freund" class="h-16 w-auto" />
+        </div>
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Generador de Documentos</h1>
+        
+        <form id="documentForm" class="space-y-4">
+            <div>
+                <label for="marca" class="block text-sm font-medium text-gray-700">Marca</label>
+                <input type="text" id="marca" name="marca" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+            </div>
+            <div>
+                <label for="modelo" class="block text-sm font-medium text-gray-700">Modelo</label>
+                <input type="text" id="modelo" name="modelo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+            </div>
+            <div>
+                <label for="imei" class="block text-sm font-medium text-gray-700">IMEI</label>
+                <input type="text" id="imei" name="imei" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+            </div>
+            <div>
+                <label for="numeroTelefonico" class="block text-sm font-medium text-gray-700">Número Telefónico</label>
+                <input type="text" id="numeroTelefonico" name="numeroTelefonico" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+            </div>
+            <!-- Campo 'concepto' con opciones desplegables -->
+            <div>
+                <label for="concepto" class="block text-sm font-medium text-gray-700">En concepto de</label>
+                <select id="concepto" name="concepto" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border">
+                    <option value="Renovación">Renovación</option>
+                    <option value="Asignación">Asignación</option>
+                </select>
+            </div>
+            <div>
+                <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+                <input type="text" id="nombre" name="nombre" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+            </div>
+            <div>
+                <label for="codigoEmpleado" class="block text-sm font-medium text-gray-700">Código empleado</label>
+                <input type="text" id="codigoEmpleado" name="codigoEmpleado" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+            </div>
+            <div>
+                <label for="departamento" class="block text-sm font-medium text-gray-700">Departamento</label>
+                <input type="text" id="departamento" name="departamento" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+            </div>
+            <div>
+                <label for="ssd" class="block text-sm font-medium text-gray-700">SSD</label>
+                <input type="text" id="ssd" name="ssd" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+            </div>
+
+            <!-- Sección de firma -->
+            <div class="mt-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Firma Digital</label>
+                <div class="border rounded-md p-1">
+                    <canvas id="signatureCanvas" width="400" height="150" class="w-full h-auto"></canvas>
+                </div>
+                <button type="button" id="clearSignatureButton" class="mt-2 w-full justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Borrar Firma
+                </button>
+            </div>
+            
+            <div class="flex flex-col space-y-2 mt-4">
+                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Generar Documento
+                </button>
+                <!-- Botón para limpiar el formulario -->
+                <button type="button" id="clearFormButton" class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Nuevo Documento
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Mensaje temporal para mostrar notificaciones -->
+    <div id="messageBox" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 hidden">
+        Documento generado con éxito.
+    </div>
+
+    <script>
+        // Función para mostrar mensajes temporales
+        function showMessage(message, type = 'success') {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = message;
+            if (type === 'success') {
+                messageBox.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+            } else if (type === 'error') {
+                messageBox.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+            }
+            messageBox.classList.remove('hidden');
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Lógica para la firma digital
+        const canvas = document.getElementById('signatureCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.offsetWidth;
+            canvas.height = container.offsetHeight || 150;
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            [lastX, lastY] = [x, y];
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
+        });
+        canvas.addEventListener('touchstart', (e) => {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            [lastX, lastY] = [e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top];
+            e.preventDefault();
+        });
+
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('touchmove', draw);
+
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('touchend', () => isDrawing = false);
+        canvas.addEventListener('mouseout', () => isDrawing = false);
+
+        document.getElementById('clearSignatureButton').addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        });
+
+        document.getElementById('documentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.display = 'flex';
+
+            try {
+                // Importar jsPDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+
+                const margin = 15;
+                const pageWidth = doc.internal.pageSize.getWidth();
+                let y = margin;
+                const logoHeight = 17; // El 15% menos de 20
+                const logoWidth = 34;  // El 15% menos de 40
+
+                // Cargar y añadir el logo al PDF de forma asíncrona en la esquina superior izquierda
+                const logoUrl = 'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
+                try {
+                    const response = await fetch(logoUrl);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const blob = await response.blob();
+                    const reader = new FileReader();
+                    reader.readAsDataURL(blob);
+                    
+                    const base64Image = await new Promise((resolve, reject) => {
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                    });
+
+                    // Añadir el logo en la esquina superior izquierda, con tamaño ajustado
+                    const logoX = margin;
+                    doc.addImage(base64Image, 'PNG', logoX, y, logoWidth, logoHeight);
+                } catch (error) {
+                    console.warn('No se pudo cargar el logo para el PDF:', error);
+                }
+                
+                // Añadir el encabezado en la esquina superior derecha con fuente más pequeña (15% menos)
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
+                const headerX = pageWidth - margin;
+                
+                doc.text('Tiendas 01.001.0001.0001', headerX, y, null, null, 'right');
+                doc.text('Redes y Telecomunicaciones', headerX, y + 4, null, null, 'right');
+                doc.text('Responsable: CC', headerX, y + 8, null, null, 'right');
+                doc.text(`Fecha Modificación: ${new Date().toLocaleDateString()}`, headerX, y + 12, null, null, 'right');
+                
+                // Calcular la posición central vertical para el título en el área del encabezado
+                const headerHeight = 15; // Altura aproximada del bloque de texto a la derecha
+                const titleY = y + (Math.max(logoHeight, headerHeight) / 2) + 2;
+                
+                // Colocar el título en el centro horizontal y en la posición central vertical
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.text('RENOVACIÓN DE LÍNEA MODEM', pageWidth / 2, titleY, { align: 'center' });
+                
+                // Dibujar la línea separadora debajo del título y el encabezado
+                y = y + Math.max(logoHeight, headerHeight) + 10;
+                doc.line(margin, y, pageWidth - margin, y);
+                y += 12; // Aumentar el espacio 20% después de la línea
+                
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'normal');
+                const text = `Recibí de FREUND, S.A. de C.V. un MODEM wifi con las siguientes características:`;
+                doc.text(text, margin, y);
+                
+                // Mover más abajo y poner los detalles sin negrita
+                y += 10; // Espacio adicional después del texto
+                doc.setFontSize(12);
+                
+                // Primera línea de detalles
+                doc.text(`Marca: ${data.marca}`, margin, y);
+                doc.text(`Modelo: ${data.modelo}`, 105, y);
+                y += 7;
+                
+                // Segunda línea de detalles
+                doc.text(`IMEI: ${data.imei}`, margin, y);
+                doc.text(`Número Telefónico: ${data.numeroTelefonico}`, 105, y);
+                y += 7;
+                
+                // Tercera línea de detalles
+                doc.text(`En concepto de: ${data.concepto}`, margin, y);
+                
+                y += 20; // Espacio para la siguiente sección
+                
+                // Cláusula de responsabilidad
+                const clause = `El cual recibo completamente nuevo y en perfecto estado con todos sus accesorios, así mismo autorizo al departamento de Recursos Humanos de FREUND, S.A. de C.V. para que de mi salario mensual se me descuente el costo del dispositivo en caso de daño o extravío.`;
+                const splitClause = doc.splitTextToSize(clause, 180);
+                doc.text(splitClause, margin, y);
+                y += splitClause.length * 7 + 30;
+
+                // Sección de firma
+                const signatureY = y + 15;
+                const signatureData = canvas.toDataURL('image/png');
+
+                if (signatureData && signatureData !== 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYAAAACTCAYAAADg3pY/AAAAAXNSR0IArs4c6QAAAXxJREFUeJztwTEBAAAAwiD7p/r2CgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwD/y918bCgIAAAAZdEVYdFNvZnR3YXJlAE1pY3Jvc29mdCBPZmZpY2Ugb2YgR29vZ2xlIMq9qB8AAADhSURBVO3BAQ0AAADCoPdPbQoAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8H6/hQABAAAAAAAAAAAAAAAAAAAA+O3+sQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD8H+cW+10AAAD8N/4AAQAAwN/l4n/hBwADAAAAGqR0p2kAAAAASUVORK5CYII=') {
+                    const signatureWidth = 60; // Ancho en unidades de PDF (mm)
+                    const signatureHeight = (canvas.height / canvas.width) * signatureWidth;
+                    const signatureX = margin;
+                    // Posicionamos la firma en el centro del espacio vertical, donde solía estar la línea
+                    const signatureImageY = signatureY - signatureHeight / 2;
+
+                    doc.addImage(signatureData, 'PNG', signatureX, signatureImageY, signatureWidth, signatureHeight);
+                }
+                
+                y = signatureY + 15;
+                doc.text(`Nombre: ${data.nombre}`, margin, y);
+                y += 7;
+                doc.text(`Código empleado: ${data.codigoEmpleado}`, margin, y);
+                y += 7;
+                doc.text(`Departamento: ${data.departamento}`, margin, y);
+                y += 7;
+                doc.text(`SSD: ${data.ssd}`, margin, y);
+                
+                doc.save(`Documento_Freund_${data.nombre.replace(/\s/g, '_')}.pdf`);
+                
+                loadingOverlay.style.display = 'none';
+                showMessage('Documento generado con éxito.', 'success');
+
+            } catch (error) {
+                console.error('Error al generar el PDF:', error);
+                loadingOverlay.style.display = 'none';
+                showMessage('Error al generar el documento.', 'error');
+            }
+        });
+
+        // Event listener para mostrar el modal de confirmación
+        document.getElementById('clearFormButton').addEventListener('click', function() {
+            document.getElementById('confirmationModal').classList.remove('hidden');
+        });
+
+        // Event listener para el botón "Cancelar" del modal
+        document.getElementById('cancelClearButton').addEventListener('click', function() {
+            document.getElementById('confirmationModal').classList.add('hidden');
+        });
+
+        // Event listener para el botón "Confirmar" del modal
+        document.getElementById('confirmClearButton').addEventListener('click', function() {
+            // Reiniciar el formulario a sus valores predeterminados
+            document.getElementById('documentForm').reset();
+            // Borrar la firma del canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Ocultar el modal
+            document.getElementById('confirmationModal').classList.add('hidden');
+            showMessage('Formulario limpiado. Listo para un nuevo documento.', 'success');
+        });
+    </script>
+</body>
+</html>
