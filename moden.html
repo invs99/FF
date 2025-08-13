@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MODEN WIFI</title>
+    <title>Entrega de Modem</title>
     <!-- Incluir Tailwind CSS para un diseño moderno y responsive -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Incluir jsPDF para generar el documento PDF -->
@@ -51,6 +51,22 @@
                     Cancelar
                 </button>
                 <button id="confirmClearButton" class="flex-1 justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nuevo Modal de confirmación para borrar la firma -->
+    <div id="clearSignatureConfirmationModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-60 hidden">
+        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Confirmar</h3>
+            <p class="text-gray-700 text-center mb-6">¿Estás seguro que quieres borrar la firma?</p>
+            <div class="flex space-x-4">
+                <button id="cancelClearSignatureButton" class="flex-1 justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Cancelar
+                </button>
+                <button id="confirmClearSignatureButton" class="flex-1 justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                     Confirmar
                 </button>
             </div>
@@ -112,7 +128,8 @@
                 <div class="border rounded-md p-1">
                     <canvas id="signatureCanvas" width="400" height="150" class="w-full h-auto"></canvas>
                 </div>
-                <button type="button" id="clearSignatureButton" class="mt-2 w-full justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <!-- Botón para borrar la firma, ahora más pequeño y verde -->
+                <button type="button" id="clearSignatureButton" class="mt-2 w-1/2 mx-auto flex justify-center py-2 px-4 border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-800 bg-green-200 hover:bg-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-400">
                     Borrar Firma
                 </button>
             </div>
@@ -121,8 +138,8 @@
                 <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     Generar Documento
                 </button>
-                <!-- Botón para limpiar el formulario -->
-                <button type="button" id="clearFormButton" class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <!-- Botón para limpiar el formulario, ahora en rojo -->
+                <button type="button" id="clearFormButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                     Nuevo Documento
                 </button>
             </div>
@@ -202,13 +219,55 @@
         canvas.addEventListener('mouseup', () => isDrawing = false);
         canvas.addEventListener('touchend', () => isDrawing = false);
         canvas.addEventListener('mouseout', () => isDrawing = false);
-
+        
+        // Event listener para mostrar el modal de confirmación antes de borrar la firma
         document.getElementById('clearSignatureButton').addEventListener('click', () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('clearSignatureConfirmationModal').classList.remove('hidden');
         });
 
+        // Lógica para guardar y cargar los datos del formulario
+        const form = document.getElementById('documentForm');
+
+        function saveFormData() {
+            const formData = new FormData(form);
+            const data = {};
+            for (const [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            // Guardar también la firma digital
+            data.signature = canvas.toDataURL('image/png');
+            localStorage.setItem('documentFormData', JSON.stringify(data));
+        }
+
+        function loadFormData() {
+            const savedData = localStorage.getItem('documentFormData');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                for (const key in data) {
+                    const input = document.getElementById(key);
+                    if (input) {
+                        input.value = data[key];
+                    }
+                }
+                
+                // Cargar la firma digital si existe
+                if (data.signature) {
+                    const img = new Image();
+                    img.onload = function() {
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    };
+                    img.src = data.signature;
+                }
+            }
+        }
+
+        // Guardar el formulario cada vez que hay un cambio en un campo
+        form.addEventListener('input', saveFormData);
+
+        // Cargar los datos al iniciar la página
+        window.addEventListener('load', loadFormData);
+
+        // Generación del documento
         document.getElementById('documentForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -307,6 +366,7 @@
                 y += splitClause.length * 7 + 30;
 
                 // Sección de firma
+                // Se ha eliminado la línea de firma manual, manteniendo el espacio para la firma digital.
                 const signatureY = y + 15;
                 const signatureData = canvas.toDataURL('image/png');
 
@@ -362,6 +422,25 @@
             // Ocultar el modal
             document.getElementById('confirmationModal').classList.add('hidden');
             showMessage('Formulario limpiado. Listo para un nuevo documento.', 'success');
+
+            // Limpiar los datos guardados en localStorage
+            localStorage.removeItem('documentFormData');
+        });
+
+        // Event listener para el botón "Cancelar" del modal de firma
+        document.getElementById('cancelClearSignatureButton').addEventListener('click', function() {
+            document.getElementById('clearSignatureConfirmationModal').classList.add('hidden');
+        });
+
+        // Event listener para el botón "Confirmar" del modal de firma
+        document.getElementById('confirmClearSignatureButton').addEventListener('click', function() {
+            // Borrar la firma del canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Ocultar el modal
+            document.getElementById('clearSignatureConfirmationModal').classList.add('hidden');
+            showMessage('Firma borrada.', 'success');
         });
     </script>
 </body>
