@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Entrega de Modem</title>
+    <title>Entrega de Moden</title>
     <!-- Incluir Tailwind CSS para un diseño moderno y responsive -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Incluir jsPDF para generar el documento PDF -->
@@ -33,7 +33,7 @@
     <!-- Overlay de carga -->
     <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white p-6 rounded-lg shadow-xl flex items-center space-x-3">
-            <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2d000/svg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -125,7 +125,7 @@
             <!-- Sección de firma -->
             <div class="mt-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Firma Digital</label>
-                <div class="border rounded-md p-1">
+                <div class="border rounded-md p-1 relative">
                     <canvas id="signatureCanvas" width="400" height="150" class="w-full h-auto"></canvas>
                 </div>
                 <!-- Botón para borrar la firma, ahora más pequeño y verde -->
@@ -173,6 +173,22 @@
         let isDrawing = false;
         let lastX = 0;
         let lastY = 0;
+        let hasSigned = false;
+
+        // Función para dibujar el texto de marcador de posición
+        function drawPlaceholder() {
+            if (!hasSigned) {
+                ctx.save();
+                ctx.fillStyle = '#E5E7EB'; // Color gris claro
+                ctx.font = '24px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const x = canvas.width / 2;
+                const y = canvas.height / 2;
+                ctx.fillText('Introducir firma', x, y);
+                ctx.restore();
+            }
+        }
 
         function resizeCanvas() {
             const container = canvas.parentElement;
@@ -180,12 +196,22 @@
             canvas.height = container.offsetHeight || 150;
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Dibujar el marcador de posición al redimensionar
+            drawPlaceholder();
         }
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
         function draw(e) {
             if (!isDrawing) return;
+            // Borrar el marcador de posición en el primer toque/clic
+            if (!hasSigned) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                hasSigned = true;
+            }
+
             const rect = canvas.getBoundingClientRect();
             const x = (e.clientX || e.touches[0].clientX) - rect.left;
             const y = (e.clientY || e.touches[0].clientY) - rect.top;
@@ -235,7 +261,11 @@
                 data[key] = value;
             }
             // Guardar también la firma digital
-            data.signature = canvas.toDataURL('image/png');
+            if (hasSigned) {
+                 data.signature = canvas.toDataURL('image/png');
+            } else {
+                 data.signature = null;
+            }
             localStorage.setItem('documentFormData', JSON.stringify(data));
         }
 
@@ -252,12 +282,21 @@
                 
                 // Cargar la firma digital si existe
                 if (data.signature) {
+                    hasSigned = true;
                     const img = new Image();
                     img.onload = function() {
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     };
                     img.src = data.signature;
+                } else {
+                    // Si no hay firma guardada, mostrar el marcador de posición
+                    hasSigned = false;
+                    drawPlaceholder();
                 }
+            } else {
+                // Si no hay datos guardados, mostrar el marcador de posición
+                hasSigned = false;
+                drawPlaceholder();
             }
         }
 
@@ -366,11 +405,10 @@
                 y += splitClause.length * 7 + 30;
 
                 // Sección de firma
-                // Se ha eliminado la línea de firma manual, manteniendo el espacio para la firma digital.
                 const signatureY = y + 15;
                 const signatureData = canvas.toDataURL('image/png');
 
-                if (signatureData && signatureData !== 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAYAAAACTCAYAAADg3pY/AAAAAXNSR0IArs4c6QAAAXxJREFUeJztwTEBAAAAwiD7p/r2CgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwD/y918bCgIAAAAZdEVYdFNvZnR3YXJlAE1pY3Jvc29mdCBPZmZpY2Ugb2YgR29vZ2xlIMq9qB8AAADhSURBVO3BAQ0AAADCoPdPbQoAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8H6/hQABAAAAAAAAAAAAAAAAAAAA+O3+sQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD8H+cW+10AAAD8N/4AAQAAwN/l4n/hBwADAAAAGqR0p2kAAAAASUVORK5CYII=') {
+                if (hasSigned) {
                     const signatureWidth = 60; // Ancho en unidades de PDF (mm)
                     const signatureHeight = (canvas.height / canvas.width) * signatureWidth;
                     const signatureX = margin;
@@ -415,10 +453,13 @@
         document.getElementById('confirmClearButton').addEventListener('click', function() {
             // Reiniciar el formulario a sus valores predeterminados
             document.getElementById('documentForm').reset();
-            // Borrar la firma del canvas
+            // Borrar la firma del canvas, restaurar fondo y marcador de posición
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            hasSigned = false;
+            drawPlaceholder();
+
             // Ocultar el modal
             document.getElementById('confirmationModal').classList.add('hidden');
             showMessage('Formulario limpiado. Listo para un nuevo documento.', 'success');
@@ -434,10 +475,13 @@
 
         // Event listener para el botón "Confirmar" del modal de firma
         document.getElementById('confirmClearSignatureButton').addEventListener('click', function() {
-            // Borrar la firma del canvas
+            // Borrar la firma del canvas, restaurar fondo y marcador de posición
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            hasSigned = false;
+            drawPlaceholder();
+
             // Ocultar el modal
             document.getElementById('clearSignatureConfirmationModal').classList.add('hidden');
             showMessage('Firma borrada.', 'success');
