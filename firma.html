@@ -9,9 +9,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
-            /* Define variables CSS para tamaños de fuente y espaciado para fácil ajuste */
             --font-size-base: 16px;
-            --font-size-large: 2em; /* 32px basado en 16px base */
+            --font-size-large: 2em;
             --spacing-medium: 20px;
             --spacing-large: 30px;
         }
@@ -23,25 +22,26 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            gap: var(--spacing-medium); /* Usa variable */
-            padding: var(--spacing-medium); /* Usa variable */
+            gap: var(--spacing-medium);
+            padding: var(--spacing-medium);
             box-sizing: border-box;
             min-height: 100vh;
         }
         .editor-form, .card-container {
-            width: 100%; /* Ocupa el 100% del ancho disponible por defecto */
-            max-width: 700px; /* Limita el ancho máximo para pantallas grandes */
+            width: 100%;
+            max-width: 700px;
         }
         .card-container {
-            display: flex;
-            height: 300px; /* Altura fija para el formato de tarjeta */
+            display: flex; /* Mantiene la dirección horizontal por defecto */
+            flex-direction: row; /* Explícitamente horizontal */
+            height: 300px;
             background-color: white;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             overflow: hidden;
         }
         .card-left {
-            padding: var(--spacing-large); /* Usa variable */
+            padding: var(--spacing-large);
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -54,23 +54,23 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: var(--spacing-medium); /* Usa variable */
+            padding: var(--spacing-medium);
             position: relative;
             box-shadow: -3px 0 5px rgba(0, 0, 0, 0.08);
         }
         .name {
-            font-size: var(--font-size-large); /* Usa variable */
+            font-size: var(--font-size-large);
             font-weight: normal;
             color: #495057;
             margin: 0 0 5px 0;
         }
         .title {
-            font-size: var(--font-size-base); /* Usa variable */
+            font-size: var(--font-size-base);
             color: #007bff;
-            margin: 0 0 var(--spacing-large) 0; /* Usa variable */
+            margin: 0 0 var(--spacing-large) 0;
         }
         .contact-group {
-            margin-bottom: var(--spacing-medium); /* Usa variable */
+            margin-bottom: var(--spacing-medium);
         }
         .contact-item {
             display: flex;
@@ -79,7 +79,7 @@
         }
         .icon {
             margin-right: 8px;
-            font-size: var(--font-size-base); /* Usa variable */
+            font-size: var(--font-size-base);
             color: #495057;
         }
         .contact-link .icon {
@@ -95,18 +95,18 @@
             font-weight: normal;
             color: #495057;
             width: 70px;
-            font-size: var(--font-size-base); /* Usa variable */
+            font-size: var(--font-size-base);
         }
         .value {
             color: #495057;
-            font-size: var(--font-size-base); /* Usa variable */
+            font-size: var(--font-size-base);
         }
         .contact-link {
             color: #007bff;
             text-decoration: none;
             display: block;
             margin-bottom: 5px;
-            font-size: var(--font-size-base); /* Usa variable */
+            font-size: var(--font-size-base);
         }
         .social-media {
             margin-top: 0;
@@ -116,7 +116,7 @@
             display: flex;
             align-items: center;
             margin: 0;
-            font-size: var(--font-size-base); /* Usa variable */
+            font-size: var(--font-size-base);
         }
         .social-item + .social-item {
             margin-top: 5px;
@@ -130,11 +130,11 @@
             height: auto;
         }
         .slogan {
-            font-size: 14px; /* Mantener fijo o ajustar con variables si es necesario */
+            font-size: 14px;
             color: #495057;
             margin-top: 10px;
             position: absolute;
-            bottom: var(--spacing-medium); /* Usa variable */
+            bottom: var(--spacing-medium);
             left: 50%;
             transform: translateX(-50%);
             white-space: nowrap;
@@ -142,12 +142,12 @@
         /* Estilos del formulario de edición */
         .editor-form {
             background-color: white;
-            padding: var(--spacing-medium); /* Usa variable */
+            padding: var(--spacing-medium);
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: var(--spacing-medium); /* Usa variable */
+            gap: var(--spacing-medium);
         }
         .editor-form h3 {
             grid-column: 1 / -1;
@@ -178,7 +178,7 @@
         }
         .button-group button {
             padding: 10px 20px;
-            font-size: var(--font-size-base); /* Usa variable */
+            font-size: var(--font-size-base);
             border: none;
             border-radius: 5px;
             cursor: pointer;
@@ -204,69 +204,64 @@
         /* MEDIA QUERIES para responsividad en móviles */
         @media (max-width: 768px) {
             body {
-                padding: 10px; /* Un poco menos de padding en pantallas pequeñas */
-                gap: 20px; /* Reducir el espacio entre elementos */
+                padding: 10px;
+                gap: 20px;
             }
             .editor-form {
-                grid-template-columns: 1fr; /* Formulario en una sola columna */
+                grid-template-columns: 1fr;
             }
             .card-container {
-                flex-direction: column; /* Tarjeta apilada verticalmente */
-                height: auto; /* Altura automática para adaptarse al contenido apilado */
-                width: 100%; /* Ocupa todo el ancho */
-                max-width: 350px; /* Limitar el ancho de la tarjeta para móviles */
-                min-width: 300px; /* Ancho mínimo para evitar que se vea muy pequeña */
+                /* Se mantiene flex-direction: row; y height: 300px; */
+                /* Reducimos el tamaño de toda la tarjeta para que quepa */
+                transform: scale(0.45); /* Ajusta este valor (0.45 o 0.5) para que quepa bien en la pantalla */
+                transform-origin: center top; /* Escalar desde el centro y la parte superior para alinear */
+                width: 700px; /* Mantener el ancho original para que la escala funcione */
+                margin-top: -80px; /* Ajuste para subir la tarjeta y compensar la reducción */
+                margin-bottom: -80px; /* Ajuste similar para el espacio inferior */
             }
-            .card-left, .card-right {
-                padding: 15px; /* Reducir padding interno de la tarjeta */
-            }
+            /* Reiniciamos los estilos de card-right que se habian ajustado para column */
             .card-right {
-                flex-direction: column; /* Apilar logo y slogan si fuera necesario */
-                justify-content: center;
-                align-items: center;
-                box-shadow: 0 -3px 5px rgba(0, 0, 0, 0.08); /* Sombra en la parte superior al apilar */
+                flex-direction: column; /* Esto está bien para organizar el logo y slogan */
+                box-shadow: -3px 0 5px rgba(0, 0, 0, 0.08); /* Sombra lateral al mantener row */
             }
             .logo-container {
-                width: 60%; /* Logo un poco más grande en modo apilado */
-                max-width: 180px;
-            }
-            .name {
-                font-size: 1.8em; /* Ajustar tamaño de fuente para móviles */
-            }
-            .title {
-                font-size: 0.9em;
-                margin-bottom: 20px;
-            }
-            .contact-group {
-                margin-bottom: 15px;
-            }
-            .contact-item, .contact-link, .social-item {
-                font-size: 0.9em;
-            }
-            .label {
-                width: 60px; /* Ajustar ancho de la etiqueta */
+                width: 80%; /* Logo vuelve a su tamaño porcentual original */
+                max-width: 250px; /* Y su máximo */
             }
             .slogan {
-                position: static; /* Slogan no absoluto en móvil para que fluya con el contenido */
-                transform: none;
-                margin-top: 10px;
+                position: absolute; /* Vuelve a ser absoluto para estar abajo del logo */
+                transform: translateX(-50%);
+                bottom: var(--spacing-medium);
+                margin-top: 10px; /* Reinicia el margen */
+            }
+            .name {
+                font-size: var(--font-size-large); /* Vuelve a tamaños originales, escalará con la tarjeta */
+            }
+            .title {
+                font-size: var(--font-size-base);
+                margin-bottom: var(--spacing-large);
+            }
+            .contact-item, .contact-link, .social-item {
+                font-size: var(--font-size-base);
+            }
+            .label {
+                width: 70px;
             }
             .button-group {
-                flex-direction: column; /* Botones apilados verticalmente */
+                flex-direction: column;
                 gap: 10px;
             }
             .button-group button {
-                width: 100%; /* Botones de ancho completo */
+                width: 100%;
             }
         }
 
         /* Ajuste adicional para pantallas muy pequeñas (ej. iPhone SE) */
         @media (max-width: 375px) {
             .card-container {
-                max-width: 280px; /* Ajuste para pantallas muy pequeñas */
-            }
-            .logo-container {
-                width: 70%;
+                transform: scale(0.4); /* Escalar un poco más para pantallas muy pequeñas */
+                margin-top: -90px;
+                margin-bottom: -90px;
             }
         }
     </style>
