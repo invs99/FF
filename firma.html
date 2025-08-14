@@ -8,6 +8,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
+        :root {
+            /* Define variables CSS para tamaños de fuente y espaciado para fácil ajuste */
+            --font-size-base: 16px;
+            --font-size-large: 2em; /* 32px basado en 16px base */
+            --spacing-medium: 20px;
+            --spacing-large: 30px;
+        }
+
         body {
             font-family: Arial, sans-serif;
             background-color: #f0f2f5;
@@ -15,30 +23,25 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            gap: 30px;
-            padding: 20px;
+            gap: var(--spacing-medium); /* Usa variable */
+            padding: var(--spacing-medium); /* Usa variable */
             box-sizing: border-box;
             min-height: 100vh;
         }
+        .editor-form, .card-container {
+            width: 100%; /* Ocupa el 100% del ancho disponible por defecto */
+            max-width: 700px; /* Limita el ancho máximo para pantallas grandes */
+        }
         .card-container {
             display: flex;
-            width: 700px;
-            height: 300px;
+            height: 300px; /* Altura fija para el formato de tarjeta */
             background-color: white;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             overflow: hidden;
-
-            /* --- CAMBIO AQUÍ: Reducción de tamaño para previsualización --- */
-            transform: scale(0.5); /* Reduce la tarjeta al 50% */
-            transform-origin: center; /* Asegura que se escale desde el centro */
-            margin: -75px 0; /* Ajusta el margen para compensar la reducción y centrarla */
-            /* Se resta la mitad de lo que se reduciría del ancho/alto (300px * 0.5 = 150px / 2 = 75px) */
-            /* Es un ajuste visual para que no ocupe tanto espacio vertical */
-            /* ------------------------------------------------------------- */
         }
         .card-left {
-            padding: 30px;
+            padding: var(--spacing-large); /* Usa variable */
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -51,23 +54,23 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: var(--spacing-medium); /* Usa variable */
             position: relative;
             box-shadow: -3px 0 5px rgba(0, 0, 0, 0.08);
         }
         .name {
-            font-size: 32px;
+            font-size: var(--font-size-large); /* Usa variable */
             font-weight: normal;
             color: #495057;
             margin: 0 0 5px 0;
         }
         .title {
-            font-size: 16px;
+            font-size: var(--font-size-base); /* Usa variable */
             color: #007bff;
-            margin: 0 0 30px 0;
+            margin: 0 0 var(--spacing-large) 0; /* Usa variable */
         }
         .contact-group {
-            margin-bottom: 20px;
+            margin-bottom: var(--spacing-medium); /* Usa variable */
         }
         .contact-item {
             display: flex;
@@ -76,7 +79,7 @@
         }
         .icon {
             margin-right: 8px;
-            font-size: 16px;
+            font-size: var(--font-size-base); /* Usa variable */
             color: #495057;
         }
         .contact-link .icon {
@@ -92,18 +95,18 @@
             font-weight: normal;
             color: #495057;
             width: 70px;
-            font-size: 16px;
+            font-size: var(--font-size-base); /* Usa variable */
         }
         .value {
             color: #495057;
-            font-size: 16px;
+            font-size: var(--font-size-base); /* Usa variable */
         }
         .contact-link {
             color: #007bff;
             text-decoration: none;
             display: block;
             margin-bottom: 5px;
-            font-size: 16px;
+            font-size: var(--font-size-base); /* Usa variable */
         }
         .social-media {
             margin-top: 0;
@@ -113,7 +116,7 @@
             display: flex;
             align-items: center;
             margin: 0;
-            font-size: 16px;
+            font-size: var(--font-size-base); /* Usa variable */
         }
         .social-item + .social-item {
             margin-top: 5px;
@@ -127,11 +130,11 @@
             height: auto;
         }
         .slogan {
-            font-size: 14px;
+            font-size: 14px; /* Mantener fijo o ajustar con variables si es necesario */
             color: #495057;
             margin-top: 10px;
             position: absolute;
-            bottom: 20px;
+            bottom: var(--spacing-medium); /* Usa variable */
             left: 50%;
             transform: translateX(-50%);
             white-space: nowrap;
@@ -139,13 +142,12 @@
         /* Estilos del formulario de edición */
         .editor-form {
             background-color: white;
-            padding: 20px;
+            padding: var(--spacing-medium); /* Usa variable */
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 600px;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: var(--spacing-medium); /* Usa variable */
         }
         .editor-form h3 {
             grid-column: 1 / -1;
@@ -176,7 +178,7 @@
         }
         .button-group button {
             padding: 10px 20px;
-            font-size: 16px;
+            font-size: var(--font-size-base); /* Usa variable */
             border: none;
             border-radius: 5px;
             cursor: pointer;
@@ -199,39 +201,72 @@
             background-color: #218838;
         }
 
-        /* MEDIA QUERIES para responsividad */
+        /* MEDIA QUERIES para responsividad en móviles */
         @media (max-width: 768px) {
             body {
-                padding: 10px;
-            }
-            .card-container, .editor-form {
-                width: 100%;
-                flex-direction: column;
+                padding: 10px; /* Un poco menos de padding en pantallas pequeñas */
+                gap: 20px; /* Reducir el espacio entre elementos */
             }
             .editor-form {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr; /* Formulario en una sola columna */
+            }
+            .card-container {
+                flex-direction: column; /* Tarjeta apilada verticalmente */
+                height: auto; /* Altura automática para adaptarse al contenido apilado */
+                width: 100%; /* Ocupa todo el ancho */
+                max-width: 350px; /* Limitar el ancho de la tarjeta para móviles */
+                min-width: 300px; /* Ancho mínimo para evitar que se vea muy pequeña */
+            }
+            .card-left, .card-right {
+                padding: 15px; /* Reducir padding interno de la tarjeta */
             }
             .card-right {
-                flex-direction: row;
-                justify-content: space-around;
+                flex-direction: column; /* Apilar logo y slogan si fuera necesario */
+                justify-content: center;
                 align-items: center;
+                box-shadow: 0 -3px 5px rgba(0, 0, 0, 0.08); /* Sombra en la parte superior al apilar */
             }
             .logo-container {
-                width: 40%;
-                max-width: 200px;
+                width: 60%; /* Logo un poco más grande en modo apilado */
+                max-width: 180px;
+            }
+            .name {
+                font-size: 1.8em; /* Ajustar tamaño de fuente para móviles */
+            }
+            .title {
+                font-size: 0.9em;
+                margin-bottom: 20px;
+            }
+            .contact-group {
+                margin-bottom: 15px;
+            }
+            .contact-item, .contact-link, .social-item {
+                font-size: 0.9em;
+            }
+            .label {
+                width: 60px; /* Ajustar ancho de la etiqueta */
             }
             .slogan {
-                position: static;
+                position: static; /* Slogan no absoluto en móvil para que fluya con el contenido */
                 transform: none;
-                margin-top: 0;
+                margin-top: 10px;
             }
             .button-group {
-                flex-direction: column;
+                flex-direction: column; /* Botones apilados verticalmente */
+                gap: 10px;
             }
-            /* Ajuste para la previsualización en móviles */
+            .button-group button {
+                width: 100%; /* Botones de ancho completo */
+            }
+        }
+
+        /* Ajuste adicional para pantallas muy pequeñas (ej. iPhone SE) */
+        @media (max-width: 375px) {
             .card-container {
-                transform: scale(0.4); /* Podrías ajustarlo más para móviles si es necesario */
-                margin: -90px 0; /* Ajusta el margen para móviles */
+                max-width: 280px; /* Ajuste para pantallas muy pequeñas */
+            }
+            .logo-container {
+                width: 70%;
             }
         }
     </style>
@@ -351,9 +386,9 @@
             if (downloadImageButton && cardContainer) {
                 downloadImageButton.addEventListener('click', () => {
                     html2canvas(cardContainer, {
-                        scale: 2, // Mantiene la resolución de la imagen descargada alta
-                        useCORS: true,
-                        logging: false
+                        scale: 2, /* Mantiene la resolución de la imagen descargada alta */
+                        useCORS: true, /* Necesario si la imagen estuviera en un CDN, inofensivo si es local */
+                        logging: false /* Desactiva los logs detallados de html2canvas en la consola */
                     }).then(canvas => {
                         const link = document.createElement('a');
                         link.download = 'tarjeta_freund.png';
@@ -369,5 +404,3 @@
     </script>
 </body>
 </html>
-
-
