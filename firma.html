@@ -169,6 +169,32 @@
             font-weight: bold;
             color: #333;
         }
+        /* Estilos para el campo de entrada del móvil */
+        .form-group.movil-input {
+            position: relative;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+        .form-group.movil-input .prefix {
+            padding: 8px 0;
+            border: 1px solid #ccc;
+            border-right: none;
+            border-radius: 4px 0 0 4px;
+            background-color: #e9ecef;
+            color: #495057;
+            font-family: monospace;
+            text-align: center;
+            line-height: 1.5;
+            flex-shrink: 0; /* No se encoge */
+            padding-left: 8px; /* Espacio para el (503) */
+            padding-right: 5px; /* Espacio antes del input */
+        }
+        .form-group.movil-input input {
+            border-radius: 0 4px 4px 0;
+            flex-grow: 1; /* Ocupa el espacio restante */
+        }
+
         .form-group input {
             padding: 8px;
             border: 1px solid #ccc;
@@ -239,6 +265,8 @@
             gap: 15px; /* Espacio entre botones */
             padding: 20px 0;
             align-items: center; /* Centrar botones */
+            margin-top: -30px; /* --- NUEVO: Sube el contenedor de botones un 15% más (ajuste visual) --- */
+            margin-bottom: 20px; /* Añade un poco de margen inferior si es necesario */
         }
         .bottom-buttons-container button {
             width: 80%; /* Ancho de los botones en este contenedor */
@@ -256,12 +284,9 @@
                 grid-template-columns: 1fr;
             }
             .card-container {
-                /* --- AJUSTE CLAVE AQUÍ --- */
-                /* Escala del 0.7115625 (anterior) * 0.95 (5% menos) = 0.675984375 */
-                transform: scale(0.676); /* Redondeamos a 3 decimales para más limpieza */
+                transform: scale(0.676); /* Se mantiene la escala calculada */
                 transform-origin: center top; 
-                width: 700px; /* Mantener el ancho original para que la escala funcione */
-                
+                width: 700px; 
                 margin-top: 0; 
                 margin-bottom: 0; 
             }
@@ -292,27 +317,29 @@
             .label {
                 width: 70px;
             }
-            /* Los botones ahora se manejan en .bottom-buttons-container */
             .button-group {
-                display: none; /* Ocultamos el button-group del formulario si no lo vamos a usar */
+                display: none; 
             }
             .bottom-buttons-container {
                 padding: 15px 0;
+                margin-top: -20px; /* --- NUEVO: Ajuste para móvil para subir más los botones --- */
             }
             .bottom-buttons-container button {
-                width: 90%; /* Los botones pueden ser un poco más anchos en móvil */
-                max-width: 300px; /* Asegura que no crezcan demasiado */
+                width: 90%; 
+                max-width: 300px; 
             }
         }
 
         /* Ajuste adicional para pantallas muy pequeñas (ej. iPhone SE) */
         @media (max-width: 375px) {
             .card-container {
-                /* Para pantallas muy pequeñas, ajusta la escala para que quepa bien */
-                transform: scale(0.6); /* Un poco más pequeña para estos dispositivos */
+                transform: scale(0.6); 
             }
             .bottom-buttons-container button {
-                width: 95%; /* Un poco más de ancho en las pantallas más pequeñas */
+                width: 95%; 
+            }
+            .bottom-buttons-container {
+                margin-top: -15px; /* Ajuste fino para pantallas muy pequeñas */
             }
         }
     </style>
@@ -328,9 +355,10 @@
             <label for="input-title">Cargo:</label>
             <input type="text" id="input-title" value="Representante de ventas">
         </div>
-        <div class="form-group">
+        <div class="form-group movil-input">
             <label for="input-movil">Móvil:</label>
-            <input type="text" id="input-movil" value="(503) 7839-0032">
+            <span class="prefix">(503)</span>
+            <input type="text" id="input-movil" value=" 7839-0032">
         </div>
         <div class="form-group">
             <label for="input-email">E-mail:</label>
@@ -399,22 +427,26 @@
             const inputEmail = document.getElementById('input-email');
 
             const downloadImageButton = document.getElementById('downloadImage');
-            const newSignatureButton = document.getElementById('newSignature'); // Nuevo botón
+            const newSignatureButton = document.getElementById('newSignature');
             const cardContainer = document.querySelector('.card-container');
             const freundLogo = document.getElementById('freund-logo');
 
-            // Valores predeterminados para resetear
+            // Prefijo fijo para el número de móvil
+            const mobilePrefix = "(503)"; 
+
+            // Valores por defecto para resetear
             const defaultValues = {
                 name: "Alberto Martínez",
                 title: "Representante de ventas",
-                movil: "(503) 7839-0032",
+                movil: " 7839-0032", // Solo la parte editable
                 email: "albertomg@freundsa.com"
             };
 
             function updateCard() {
+                // Combina el prefijo fijo con el valor editable del input
+                cardMovil.textContent = mobilePrefix + inputMovil.value; 
                 cardName.textContent = inputName.value;
                 cardTitle.textContent = inputTitle.value;
-                cardMovil.textContent = inputMovil.value;
                 cardEmail.textContent = inputEmail.value;
                 cardEmailLink.href = `mailto:${inputEmail.value}`;
             }
@@ -422,9 +454,9 @@
             function resetFields() {
                 inputName.value = "";
                 inputTitle.value = "";
-                inputMovil.value = "";
+                inputMovil.value = ""; // Resetea solo la parte editable
                 inputEmail.value = "";
-                updateCard(); // Actualiza la tarjeta para mostrar campos vacíos
+                updateCard(); 
             }
 
             // Habilitar el botón de imagen solo cuando el logo haya cargado (incluye caso caché)
@@ -432,13 +464,11 @@
                 downloadImageButton.disabled = false;
                 downloadImageButton.classList.add('enabled');
             };
-            // Si la imagen ya está en caché, dispara el onload manualmente
             if (freundLogo.complete) {
                 freundLogo.onload();
             } else {
                 freundLogo.onerror = () => {
                     console.error("Error al cargar 'freund1.png'. Verifica ubicación/archivo.");
-                    // En caso de error de carga, aún así habilitamos el botón, pero con una advertencia.
                     downloadImageButton.disabled = false;
                     downloadImageButton.classList.add('enabled');
                 };
@@ -454,9 +484,9 @@
             if (downloadImageButton && cardContainer) {
                 downloadImageButton.addEventListener('click', () => {
                     html2canvas(cardContainer, {
-                        scale: 2, /* Mantiene la resolución de la imagen descargada alta */
-                        useCORS: true, /* Necesario si la imagen estuviera en un CDN, inofensivo si es local */
-                        logging: false /* Desactiva los logs detallados de html2canvas en la consola */
+                        scale: 2, 
+                        useCORS: true, 
+                        logging: false 
                     }).then(canvas => {
                         const link = document.createElement('a');
                         link.download = 'tarjeta_freund.png';
