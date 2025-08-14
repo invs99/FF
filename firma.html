@@ -28,11 +28,13 @@
             box-sizing: border-box;
             min-height: 100vh;
         }
-        .editor-form, .card-container {
-            width: 100%; /* Ocupa el 100% del ancho disponible por defecto */
-            max-width: 700px; /* Limita el ancho máximo para pantallas grandes */
+        .editor-form {
+            width: 100%;
+            max-width: 700px;
         }
         .card-container {
+            width: 100%; /* Ocupa el 100% del ancho disponible por defecto */
+            max-width: 700px; /* Limita el ancho máximo para pantallas grandes */
             display: flex; /* Mantiene la dirección horizontal por defecto */
             flex-direction: row; /* Explícitamente horizontal */
             height: 300px; /* Altura fija para el formato de tarjeta */
@@ -40,6 +42,9 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             overflow: hidden;
+            /* Elimina los márgenes negativos para que la tarjeta no se superponga */
+            margin-top: var(--spacing-medium); /* Añade un margen estándar */
+            margin-bottom: var(--spacing-medium); /* Añade un margen estándar */
         }
         .card-left {
             padding: var(--spacing-large); /* Usa variable */
@@ -171,6 +176,9 @@
             border-radius: 4px;
         }
         .button-group {
+            /* Este grupo de botones ya no contendrá el de descarga en móviles,
+               o podemos dejarlo aquí y simplemente ocultarlo para móviles y tener uno abajo.
+               Pero para simplicidad, lo moveremos completamente en el HTML. */
             grid-column: 1 / -1;
             display: flex;
             justify-content: center;
@@ -202,6 +210,15 @@
             background-color: #218838;
         }
 
+        /* Nuevo contenedor para el botón de descarga en la parte inferior */
+        .bottom-button-container {
+            width: 100%;
+            max-width: 700px;
+            display: flex;
+            justify-content: center;
+            padding: 20px 0;
+        }
+
         /* MEDIA QUERIES para responsividad en móviles */
         @media (max-width: 768px) {
             body {
@@ -213,18 +230,14 @@
             }
             .card-container {
                 /* --- AJUSTE CLAVE AQUÍ --- */
-                /* Escala del 0.5625 (anterior) * 1.10 (10% más grande) = 0.61875 */
-                transform: scale(0.61875); 
+                /* Escala del 0.61875 (anterior) * 1.15 (15% más grande) = 0.7115625 */
+                transform: scale(0.7115625); 
                 transform-origin: center top; 
                 width: 700px; /* Mantener el ancho original para que la escala funcione */
                 
-                /* Recalcular margen negativo para asegurar el espacio */
-                /* Altura original de la tarjeta: 300px. Nueva escala: 0.61875 */
-                /* Altura visual: 300px * 0.61875 = 185.625px */
-                /* Espacio "recuperado": (300px - 185.625px) / 2 = 57.1875px */
-                /* Ajuste el margen superior e inferior para evitar que se monte */
-                margin-top: -55px; 
-                margin-bottom: -55px; 
+                /* Eliminar márgenes negativos ya que el botón se mueve abajo */
+                margin-top: 0; 
+                margin-bottom: 0; /* Aseguramos que no haya margen negativo para no superponer */
             }
             .card-right {
                 flex-direction: column;
@@ -260,15 +273,17 @@
             .button-group button {
                 width: 100%;
             }
+            /* Asegura que el contenedor del botón inferior se muestre bien en móvil */
+            .bottom-button-container {
+                padding: 15px 0;
+            }
         }
 
         /* Ajuste adicional para pantallas muy pequeñas (ej. iPhone SE) */
         @media (max-width: 375px) {
             .card-container {
-                /* Para pantallas muy pequeñas, ajusta la escala y el margen para que quepa bien */
-                transform: scale(0.55); /* Ligeramente más pequeña para estos dispositivos */
-                margin-top: -60px; 
-                margin-bottom: -60px;
+                /* Para pantallas muy pequeñas, ajusta la escala para que quepa bien */
+                transform: scale(0.65); /* Un poco más pequeña para estos dispositivos */
             }
         }
     </style>
@@ -292,9 +307,8 @@
             <label for="input-email">E-mail:</label>
             <input type="email" id="input-email" value="albertomg@freundsa.com">
         </div>
-        <div class="button-group">
-            <button id="downloadImage" disabled>Descargar Imagen</button>
-        </div>
+        <div class="button-group" style="grid-column: 1 / -1; display: none;">
+            </div>
     </div>
 
     <div class="card-container">
@@ -339,6 +353,10 @@
         </div>
     </div>
 
+    <div class="bottom-button-container">
+        <button id="downloadImage" disabled>Descargar Imagen</button>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const cardName = document.getElementById('card-name');
@@ -373,6 +391,7 @@
             } else {
                 freundLogo.onerror = () => {
                     console.error("Error al cargar 'freund1.png'. Verifica ubicación/archivo.");
+                    // En caso de error de carga, aún así habilitamos el botón, pero con una advertencia.
                     downloadImageButton.disabled = false;
                     downloadImageButton.classList.add('enabled');
                 };
