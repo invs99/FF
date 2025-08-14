@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarjeta de Presentación Freund</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 30px;
+            padding: 20px;
+            box-sizing: border-box;
+            min-height: 100vh;
+        }
+        .card-container {
+            display: flex;
+            width: 700px;
+            height: 300px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .card-left {
+            padding: 30px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .card-right {
+            background-color: white;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            box-shadow: -3px 0 5px rgba(0, 0, 0, 0.08);
+        }
+        .name {
+            font-size: 32px;
+            font-weight: normal;
+            color: #495057;
+            margin: 0 0 5px 0;
+        }
+        .title {
+            font-size: 16px;
+            color: #007bff;
+            margin: 0 0 30px 0;
+        }
+        .contact-group {
+            margin-bottom: 20px;
+        }
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .icon {
+            margin-right: 8px;
+            font-size: 16px;
+            color: #495057;
+        }
+        .contact-link .icon {
+            color: #007bff;
+        }
+        .social-item .fa-facebook {
+            color: #3b5998;
+        }
+        .social-item .fa-instagram {
+            color: #c13584;
+        }
+        .label {
+            font-weight: normal;
+            color: #495057;
+            width: 70px;
+            font-size: 16px;
+        }
+        .value {
+            color: #495057;
+            font-size: 16px;
+        }
+        .contact-link {
+            color: #007bff;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        .social-media {
+            margin-top: 0;
+        }
+        .social-item {
+            color: #007bff;
+            display: flex;
+            align-items: center;
+            margin: 0;
+            font-size: 16px;
+        }
+        .social-item + .social-item {
+            margin-top: 5px;
+        }
+        .logo-container {
+            width: 80%;
+            max-width: 250px;
+        }
+        .logo {
+            width: 100%;
+            height: auto;
+        }
+        .slogan {
+            font-size: 14px;
+            color: #495057;
+            margin-top: 10px;
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+        /* Estilos del formulario de edición */
+        .editor-form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 600px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .editor-form h3 {
+            grid-column: 1 / -1;
+            margin-top: 0;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .form-group label {
+            font-weight: bold;
+            color: #333;
+        }
+        .form-group input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .button-group {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .button-group button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #downloadPdf, #downloadImage {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        #downloadPdf.enabled, #downloadImage.enabled {
+            opacity: 1;
+            cursor: pointer;
+        }
+        #downloadPdf.enabled {
+            background-color: #dc3545;
+            color: white;
+        }
+        #downloadPdf.enabled:hover {
+            background-color: #c82333;
+        }
+        #downloadImage.enabled {
+            background-color: #28a745;
+            color: white;
+        }
+        #downloadImage.enabled:hover {
+            background-color: #218838;
+        }
+
+        /* MEDIA QUERIES para responsividad */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .card-container, .editor-form {
+                width: 100%;
+                flex-direction: column;
+            }
+            .editor-form {
+                grid-template-columns: 1fr;
+            }
+            .card-right {
+                flex-direction: row;
+                justify-content: space-around;
+                align-items: center;
+            }
+            .logo-container {
+                width: 40%;
+                max-width: 200px;
+            }
+            .slogan {
+                position: static;
+                transform: none;
+                margin-top: 0;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-form">
+        <h3>Editar Datos de la Tarjeta</h3>
+        <div class="form-group">
+            <label for="input-name">Nombre:</label>
+            <input type="text" id="input-name" value="Alberto Martínez">
+        </div>
+        <div class="form-group">
+            <label for="input-title">Cargo:</label>
+            <input type="text" id="input-title" value="Representante de ventas">
+        </div>
+        <div class="form-group">
+            <label for="input-movil">Móvil:</label>
+            <input type="text" id="input-movil" value="(503) 7839-0032">
+        </div>
+        <div class="form-group">
+            <label for="input-email">E-mail:</label>
+            <input type="email" id="input-email" value="albertomg@freundsa.com">
+        </div>
+        <div class="button-group">
+            <button id="downloadPdf" disabled>Descargar PDF</button>
+            <button id="downloadImage" disabled>Descargar Imagen</button>
+        </div>
+    </div>
+
+    <div class="card-container">
+        <div class="card-left">
+            <h1 class="name" id="card-name">Alberto Martínez</h1>
+            <p class="title" id="card-title">Representante de ventas</p>
+            <div class="contact-group">
+                <div class="contact-item">
+                    <i class="icon fa-solid fa-phone"></i>
+                    <span class="label">PBX:</span>
+                    <span class="value" id="card-pbx">(503) 2304-1888</span>
+                </div>
+                <div class="contact-item">
+                    <i class="icon fa-solid fa-mobile-screen-button"></i>
+                    <span class="label">Móvil:</span>
+                    <span class="value" id="card-movil">(503) 7839-0032</span>
+                </div>
+            </div>
+            <a href="mailto:albertomg@freundsa.com" class="contact-link" id="card-email-link">
+                <i class="icon fa-solid fa-envelope"></i>
+                E-mail: <span id="card-email">albertomg@freundsa.com</span>
+            </a>
+            <a href="http://www.freundferreteria.com" class="contact-link">
+                <i class="icon fa-solid fa-globe"></i>
+                www.freundferreteria.com
+            </a>
+            <div class="social-media">
+                <p class="social-item">
+                    <i class="icon fa-brands fa-facebook"></i>
+                    Freund El Salvador
+                </p>
+                <p class="social-item">
+                    <i class="icon fa-brands fa-instagram"></i>
+                    freundferreteria
+                </p>
+            </div>
+        </div>
+        <div class="card-right">
+            <div class="logo-container">
+                <!-- LOGO LOCAL EN LA MISMA CARPETA -->
+                <img src="freund1.png" alt="Logo de Freund" class="logo" id="freund-logo">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const cardName = document.getElementById('card-name');
+            const cardTitle = document.getElementById('card-title');
+            const cardMovil = document.getElementById('card-movil');
+            const cardEmail = document.getElementById('card-email');
+            const cardEmailLink = document.getElementById('card-email-link');
+            const inputName = document.getElementById('input-name');
+            const inputTitle = document.getElementById('input-title');
+            const inputMovil = document.getElementById('input-movil');
+            const inputEmail = document.getElementById('input-email');
+
+            const downloadPdfButton = document.getElementById('downloadPdf');
+            const downloadImageButton = document.getElementById('downloadImage');
+            const cardContainer = document.querySelector('.card-container');
+            const freundLogo = document.getElementById('freund-logo');
+
+            function updateCard() {
+                cardName.textContent = inputName.value;
+                cardTitle.textContent = inputTitle.value;
+                cardMovil.textContent = inputMovil.value;
+                cardEmail.textContent = inputEmail.value;
+                cardEmailLink.href = `mailto:${inputEmail.value}`;
+            }
+
+            // Habilitar botones solo cuando el logo haya cargado (incluye caso caché)
+            freundLogo.onload = () => {
+                downloadPdfButton.disabled = false;
+                downloadPdfButton.classList.add('enabled');
+                downloadImageButton.disabled = false;
+                downloadImageButton.classList.add('enabled');
+            };
+            if (freundLogo.complete) {
+                // Si ya estaba en caché, dispara onload manualmente
+                freundLogo.onload();
+            } else {
+                freundLogo.onerror = () => {
+                    console.error("Error al cargar 'freund1.png'. Verifica ubicación/archivo.");
+                    // Si quieres permitir descarga sin logo, puedes habilitar de todos modos:
+                    downloadPdfButton.disabled = false;
+                    downloadPdfButton.classList.add('enabled');
+                    downloadImageButton.disabled = false;
+                    downloadImageButton.classList.add('enabled');
+                };
+            }
+
+            // Actualizar tarjeta al escribir
+            inputName.addEventListener('input', updateCard);
+            inputTitle.addEventListener('input', updateCard);
+            inputMovil.addEventListener('input', updateCard);
+            inputEmail.addEventListener('input', updateCard);
+
+            // Descargar PDF
+            if (downloadPdfButton && cardContainer) {
+                downloadPdfButton.addEventListener('click', () => {
+                    html2canvas(cardContainer, {
+                        scale: 2,            // Alta resolución
+                        useCORS: true,       // Inofensivo; local no necesita CORS
+                        logging: false
+                    }).then(canvas => {
+                        const imgData = canvas.toDataURL('image/png');
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF({
+                            orientation: 'landscape',
+                            unit: 'px',
+                            format: [canvas.width, canvas.height]
+                        });
+                        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                        pdf.save('tarjeta_freund.pdf');
+                    }).catch(err => {
+                        console.error('Error al generar PDF:', err);
+                        alert('Hubo un error al generar el PDF.');
+                    });
+                });
+            }
+
+            // Descargar Imagen (PNG)
+            if (downloadImageButton && cardContainer) {
+                downloadImageButton.addEventListener('click', () => {
+                    html2canvas(cardContainer, {
+                        scale: 2,
+                        useCORS: true,
+                        logging: false
+                    }).then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = 'tarjeta_freund.png';
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    }).catch(err => {
+                        console.error('Error al generar imagen:', err);
+                        alert('Hubo un error al generar la imagen.');
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
