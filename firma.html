@@ -174,23 +174,21 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
-        #downloadPdf, #downloadImage {
+        /* Solo el botón de imagen será afectado por enabled/disabled */
+        #downloadImage {
             opacity: 0.6;
             cursor: not-allowed;
         }
-        #downloadPdf.enabled, #downloadImage.enabled {
+        #downloadImage.enabled {
             opacity: 1;
             cursor: pointer;
         }
-        #downloadPdf.enabled {
-            background-color: #dc3545;
-            color: white;
-        }
-        #downloadPdf.enabled:hover {
-            background-color: #c82333;
-        }
+        /* Remueve los estilos de #downloadPdf para que no afecten si se reintroduce */
+        /* Si quieres que el botón de PDF esté visible, podrías quitar este bloque */
+        /* o ajustar para que solo #downloadImage tenga los estilos de enabled/disabled */
+        
         #downloadImage.enabled {
-            background-color: #28a745;
+            background-color: #28a745; /* Verde para imagen */
             color: white;
         }
         #downloadImage.enabled:hover {
@@ -249,7 +247,6 @@
             <input type="email" id="input-email" value="albertomg@freundsa.com">
         </div>
         <div class="button-group">
-            <button id="downloadPdf" disabled>Descargar PDF</button>
             <button id="downloadImage" disabled>Descargar Imagen</button>
         </div>
     </div>
@@ -291,7 +288,6 @@
         </div>
         <div class="card-right">
             <div class="logo-container">
-                <!-- LOGO LOCAL EN LA MISMA CARPETA -->
                 <img src="freund1.png" alt="Logo de Freund" class="logo" id="freund-logo">
             </div>
         </div>
@@ -309,7 +305,7 @@
             const inputMovil = document.getElementById('input-movil');
             const inputEmail = document.getElementById('input-email');
 
-            const downloadPdfButton = document.getElementById('downloadPdf');
+            // Eliminado: const downloadPdfButton = document.getElementById('downloadPdf');
             const downloadImageButton = document.getElementById('downloadImage');
             const cardContainer = document.querySelector('.card-container');
             const freundLogo = document.getElementById('freund-logo');
@@ -322,22 +318,17 @@
                 cardEmailLink.href = `mailto:${inputEmail.value}`;
             }
 
-            // Habilitar botones solo cuando el logo haya cargado (incluye caso caché)
+            // Habilitar el botón de imagen solo cuando el logo haya cargado
             freundLogo.onload = () => {
-                downloadPdfButton.disabled = false;
-                downloadPdfButton.classList.add('enabled');
                 downloadImageButton.disabled = false;
                 downloadImageButton.classList.add('enabled');
+                console.log("Logo de Freund cargado. Botón de descarga de imagen habilitado.");
             };
             if (freundLogo.complete) {
-                // Si ya estaba en caché, dispara onload manualmente
-                freundLogo.onload();
+                freundLogo.onload(); // Si ya estaba en caché, dispara onload manualmente
             } else {
                 freundLogo.onerror = () => {
                     console.error("Error al cargar 'freund1.png'. Verifica ubicación/archivo.");
-                    // Si quieres permitir descarga sin logo, puedes habilitar de todos modos:
-                    downloadPdfButton.disabled = false;
-                    downloadPdfButton.classList.add('enabled');
                     downloadImageButton.disabled = false;
                     downloadImageButton.classList.add('enabled');
                 };
@@ -349,36 +340,14 @@
             inputMovil.addEventListener('input', updateCard);
             inputEmail.addEventListener('input', updateCard);
 
-            // Descargar PDF
-            if (downloadPdfButton && cardContainer) {
-                downloadPdfButton.addEventListener('click', () => {
-                    html2canvas(cardContainer, {
-                        scale: 2,            // Alta resolución
-                        useCORS: true,       // Inofensivo; local no necesita CORS
-                        logging: false
-                    }).then(canvas => {
-                        const imgData = canvas.toDataURL('image/png');
-                        const { jsPDF } = window.jspdf;
-                        const pdf = new jsPDF({
-                            orientation: 'landscape',
-                            unit: 'px',
-                            format: [canvas.width, canvas.height]
-                        });
-                        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-                        pdf.save('tarjeta_freund.pdf');
-                    }).catch(err => {
-                        console.error('Error al generar PDF:', err);
-                        alert('Hubo un error al generar el PDF.');
-                    });
-                });
-            }
+            // Removido el bloque de descarga de PDF.
 
             // Descargar Imagen (PNG)
             if (downloadImageButton && cardContainer) {
                 downloadImageButton.addEventListener('click', () => {
                     html2canvas(cardContainer, {
                         scale: 2,
-                        useCORS: true,
+                        useCORS: true, // Inofensivo si es local, necesario si es externa con CORS permitido
                         logging: false
                     }).then(canvas => {
                         const link = document.createElement('a');
