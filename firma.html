@@ -28,6 +28,14 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             overflow: hidden;
+
+            /* --- CAMBIO AQUÍ: Reducción de tamaño para previsualización --- */
+            transform: scale(0.5); /* Reduce la tarjeta al 50% */
+            transform-origin: center; /* Asegura que se escale desde el centro */
+            margin: -75px 0; /* Ajusta el margen para compensar la reducción y centrarla */
+            /* Se resta la mitad de lo que se reduciría del ancho/alto (300px * 0.5 = 150px / 2 = 75px) */
+            /* Es un ajuste visual para que no ocupe tanto espacio vertical */
+            /* ------------------------------------------------------------- */
         }
         .card-left {
             padding: 30px;
@@ -174,7 +182,6 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
-        /* Solo el botón de imagen será afectado por enabled/disabled */
         #downloadImage {
             opacity: 0.6;
             cursor: not-allowed;
@@ -183,12 +190,9 @@
             opacity: 1;
             cursor: pointer;
         }
-        /* Remueve los estilos de #downloadPdf para que no afecten si se reintroduce */
-        /* Si quieres que el botón de PDF esté visible, podrías quitar este bloque */
-        /* o ajustar para que solo #downloadImage tenga los estilos de enabled/disabled */
         
         #downloadImage.enabled {
-            background-color: #28a745; /* Verde para imagen */
+            background-color: #28a745;
             color: white;
         }
         #downloadImage.enabled:hover {
@@ -223,6 +227,11 @@
             }
             .button-group {
                 flex-direction: column;
+            }
+            /* Ajuste para la previsualización en móviles */
+            .card-container {
+                transform: scale(0.4); /* Podrías ajustarlo más para móviles si es necesario */
+                margin: -90px 0; /* Ajusta el margen para móviles */
             }
         }
     </style>
@@ -305,7 +314,6 @@
             const inputMovil = document.getElementById('input-movil');
             const inputEmail = document.getElementById('input-email');
 
-            // Eliminado: const downloadPdfButton = document.getElementById('downloadPdf');
             const downloadImageButton = document.getElementById('downloadImage');
             const cardContainer = document.querySelector('.card-container');
             const freundLogo = document.getElementById('freund-logo');
@@ -318,14 +326,13 @@
                 cardEmailLink.href = `mailto:${inputEmail.value}`;
             }
 
-            // Habilitar el botón de imagen solo cuando el logo haya cargado
+            // Habilitar el botón de imagen solo cuando el logo haya cargado (incluye caso caché)
             freundLogo.onload = () => {
                 downloadImageButton.disabled = false;
                 downloadImageButton.classList.add('enabled');
-                console.log("Logo de Freund cargado. Botón de descarga de imagen habilitado.");
             };
             if (freundLogo.complete) {
-                freundLogo.onload(); // Si ya estaba en caché, dispara onload manualmente
+                freundLogo.onload();
             } else {
                 freundLogo.onerror = () => {
                     console.error("Error al cargar 'freund1.png'. Verifica ubicación/archivo.");
@@ -340,14 +347,12 @@
             inputMovil.addEventListener('input', updateCard);
             inputEmail.addEventListener('input', updateCard);
 
-            // Removido el bloque de descarga de PDF.
-
             // Descargar Imagen (PNG)
             if (downloadImageButton && cardContainer) {
                 downloadImageButton.addEventListener('click', () => {
                     html2canvas(cardContainer, {
-                        scale: 2,
-                        useCORS: true, // Inofensivo si es local, necesario si es externa con CORS permitido
+                        scale: 2, // Mantiene la resolución de la imagen descargada alta
+                        useCORS: true,
                         logging: false
                     }).then(canvas => {
                         const link = document.createElement('a');
