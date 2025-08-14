@@ -9,8 +9,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
+            /* Define variables CSS para tamaños de fuente y espaciado para fácil ajuste */
             --font-size-base: 16px;
-            --font-size-large: 2em;
+            --font-size-large: 2em; /* 32px basado en 16px base */
             --spacing-medium: 20px;
             --spacing-large: 30px;
         }
@@ -22,26 +23,26 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            gap: var(--spacing-medium);
-            padding: var(--spacing-medium);
+            gap: var(--spacing-medium); /* Usa variable */
+            padding: var(--spacing-medium); /* Usa variable */
             box-sizing: border-box;
             min-height: 100vh;
         }
         .editor-form, .card-container {
-            width: 100%;
-            max-width: 700px;
+            width: 100%; /* Ocupa el 100% del ancho disponible por defecto */
+            max-width: 700px; /* Limita el ancho máximo para pantallas grandes */
         }
         .card-container {
             display: flex; /* Mantiene la dirección horizontal por defecto */
             flex-direction: row; /* Explícitamente horizontal */
-            height: 300px;
+            height: 300px; /* Altura fija para el formato de tarjeta */
             background-color: white;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             overflow: hidden;
         }
         .card-left {
-            padding: var(--spacing-large);
+            padding: var(--spacing-large); /* Usa variable */
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -54,23 +55,23 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: var(--spacing-medium);
+            padding: var(--spacing-medium); /* Usa variable */
             position: relative;
             box-shadow: -3px 0 5px rgba(0, 0, 0, 0.08);
         }
         .name {
-            font-size: var(--font-size-large);
+            font-size: var(--font-size-large); /* Usa variable */
             font-weight: normal;
             color: #495057;
             margin: 0 0 5px 0;
         }
         .title {
-            font-size: var(--font-size-base);
+            font-size: var(--font-size-base); /* Usa variable */
             color: #007bff;
-            margin: 0 0 var(--spacing-large) 0;
+            margin: 0 0 var(--spacing-large) 0; /* Usa variable */
         }
         .contact-group {
-            margin-bottom: var(--spacing-medium);
+            margin-bottom: var(--spacing-medium); /* Usa variable */
         }
         .contact-item {
             display: flex;
@@ -79,7 +80,7 @@
         }
         .icon {
             margin-right: 8px;
-            font-size: var(--font-size-base);
+            font-size: var(--font-size-base); /* Usa variable */
             color: #495057;
         }
         .contact-link .icon {
@@ -95,18 +96,18 @@
             font-weight: normal;
             color: #495057;
             width: 70px;
-            font-size: var(--font-size-base);
+            font-size: var(--font-size-base); /* Usa variable */
         }
         .value {
             color: #495057;
-            font-size: var(--font-size-base);
+            font-size: var(--font-size-base); /* Usa variable */
         }
         .contact-link {
             color: #007bff;
             text-decoration: none;
             display: block;
             margin-bottom: 5px;
-            font-size: var(--font-size-base);
+            font-size: var(--font-size-base); /* Usa variable */
         }
         .social-media {
             margin-top: 0;
@@ -116,7 +117,7 @@
             display: flex;
             align-items: center;
             margin: 0;
-            font-size: var(--font-size-base);
+            font-size: var(--font-size-base); /* Usa variable */
         }
         .social-item + .social-item {
             margin-top: 5px;
@@ -130,11 +131,11 @@
             height: auto;
         }
         .slogan {
-            font-size: 14px;
+            font-size: 14px; /* Mantener fijo o ajustar con variables si es necesario */
             color: #495057;
             margin-top: 10px;
             position: absolute;
-            bottom: var(--spacing-medium);
+            bottom: var(--spacing-medium); /* Usa variable */
             left: 50%;
             transform: translateX(-50%);
             white-space: nowrap;
@@ -142,12 +143,12 @@
         /* Estilos del formulario de edición */
         .editor-form {
             background-color: white;
-            padding: var(--spacing-medium);
+            padding: var(--spacing-medium); /* Usa variable */
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: var(--spacing-medium);
+            gap: var(--spacing-medium); /* Usa variable */
         }
         .editor-form h3 {
             grid-column: 1 / -1;
@@ -211,31 +212,32 @@
                 grid-template-columns: 1fr;
             }
             .card-container {
-                /* Se mantiene flex-direction: row; y height: 300px; */
-                /* Reducimos el tamaño de toda la tarjeta para que quepa */
-                transform: scale(0.45); /* Ajusta este valor (0.45 o 0.5) para que quepa bien en la pantalla */
-                transform-origin: center top; /* Escalar desde el centro y la parte superior para alinear */
+                /* --- AJUSTE CLAVE AQUÍ --- */
+                transform: scale(0.5625); /* 0.45 * 1.25 = 0.5625 (25% más grande que el 0.45 anterior) */
+                transform-origin: center top; 
                 width: 700px; /* Mantener el ancho original para que la escala funcione */
-                margin-top: -80px; /* Ajuste para subir la tarjeta y compensar la reducción */
-                margin-bottom: -80px; /* Ajuste similar para el espacio inferior */
+                
+                /* Recalcular margen negativo para más espacio */
+                /* (300px de alto * (1 - 0.5625)) / 2 = 65.625. Redondeamos para que quede bien */
+                margin-top: -65px; 
+                margin-bottom: -65px; 
             }
-            /* Reiniciamos los estilos de card-right que se habian ajustado para column */
             .card-right {
-                flex-direction: column; /* Esto está bien para organizar el logo y slogan */
-                box-shadow: -3px 0 5px rgba(0, 0, 0, 0.08); /* Sombra lateral al mantener row */
+                flex-direction: column;
+                box-shadow: -3px 0 5px rgba(0, 0, 0, 0.08);
             }
             .logo-container {
-                width: 80%; /* Logo vuelve a su tamaño porcentual original */
-                max-width: 250px; /* Y su máximo */
+                width: 80%;
+                max-width: 250px;
             }
             .slogan {
-                position: absolute; /* Vuelve a ser absoluto para estar abajo del logo */
+                position: absolute;
                 transform: translateX(-50%);
                 bottom: var(--spacing-medium);
-                margin-top: 10px; /* Reinicia el margen */
+                margin-top: 10px;
             }
             .name {
-                font-size: var(--font-size-large); /* Vuelve a tamaños originales, escalará con la tarjeta */
+                font-size: var(--font-size-large);
             }
             .title {
                 font-size: var(--font-size-base);
@@ -259,9 +261,10 @@
         /* Ajuste adicional para pantallas muy pequeñas (ej. iPhone SE) */
         @media (max-width: 375px) {
             .card-container {
-                transform: scale(0.4); /* Escalar un poco más para pantallas muy pequeñas */
-                margin-top: -90px;
-                margin-bottom: -90px;
+                /* --- AJUSTE CLAVE AQUÍ --- */
+                transform: scale(0.5); /* Reajuste la escala para pantallas muy pequeñas */
+                margin-top: -75px; /* Reajuste el margen */
+                margin-bottom: -75px;
             }
         }
     </style>
