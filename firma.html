@@ -62,7 +62,6 @@
             padding: var(--spacing-medium); /* Usa variable */
             position: relative;
             box-shadow: -3px 0 5px rgba(0, 0, 0, 0.08);
-            /* No necesitamos 'gap' aquí si .right-content maneja el espacio */
         }
         .name {
             font-size: var(--font-size-large); /* Usa variable */
@@ -139,19 +138,20 @@
         .right-content {
             display: flex;
             flex-direction: column; /* Apila el logo y la línea */
-            /* align-items: center;  No es necesario aquí, ya lo hace .card-right */
+            justify-content: space-evenly; /* Distribuye el espacio uniformemente entre los elementos */
+            align-items: center; /* Centra horizontalmente logo y línea dentro de este contenedor */
             height: 100%; /* Asegura que ocupe toda la altura disponible de .card-right */
             width: 100%; /* Asegura que ocupe todo el ancho disponible */
-            
-            /* --- CLAVE PARA CENTRAR MEJOR EL CONTENIDO --- */
-            justify-content: space-evenly; /* Distribuye el espacio uniformemente entre los elementos */
+            position: relative; /* Necesario para que 'left' en .line-image funcione */
         }
 
         .line-image {
             height: 100%; /* La línea abarca toda la altura disponible del .right-content */
             width: auto; /* Mantiene su proporción de ancho */
-            display: block; /* Asegura el comportamiento de bloque */
-            margin: 0; /* Elimina cualquier margen externo que pudiera interferir */
+            display: block;
+            margin: 0; /* Elimina márgenes automáticos para control manual */
+            position: relative; /* Permite usar la propiedad 'left' */
+            left: -30%; /* Mueve la línea 30% a la izquierda de su posición normal */
             flex-shrink: 0; /* Evita que se encoja si no hay espacio */
         }
         /* --- FIN ESTILOS MODIFICADOS PARA LA IMAGEN DE LÍNEA Y SU CONTENEDOR --- */
@@ -304,8 +304,8 @@
             }
             /* Ajustes para móviles para la línea (si es necesario) */
             .line-image {
-                /* Puedes ajustar el height si necesitas que sea menor en móviles */
                 height: 90%; /* Por ejemplo, para que sea un poco más pequeña */
+                left: -20%; /* Ajuste el desplazamiento para móviles si es necesario */
             }
             .slogan {
                 position: absolute;
@@ -418,7 +418,7 @@
                 </div>
                 <img src="linea.png" alt="Línea decorativa" class="line-image">
             </div>
-            </div>
+        </div>
     </div>
 
     <div class="bottom-buttons-container">
@@ -450,12 +450,11 @@
             const defaultValues = {
                 name: "Alberto Martínez",
                 title: "Representante de ventas",
-                movil: "7839-0032", // Solo la parte editable, sin espacio inicial ahora
+                movil: "7839-0032",
                 email: "albertomg@freundsa.com"
             };
 
             function updateCard() {
-                // Combina el prefijo fijo con el valor del input para mostrar en la tarjeta
                 cardMovil.textContent = `${mobilePrefix} ${inputMovil.value}`;
                 cardName.textContent = inputName.value;
                 cardTitle.textContent = inputTitle.value;
@@ -466,22 +465,19 @@
             function resetFields() {
                 inputName.value = "";
                 inputTitle.value = "";
-                inputMovil.value = ""; // Resetea solo la parte editable
+                inputMovil.value = "";
                 inputEmail.value = "";
                 updateCard();
             }
 
-            // --- NUEVO: Función para manejar el input del móvil ---
             function handleMobileInput() {
                 const prefixLength = mobilePrefix.length;
                 let currentValue = inputMovil.value;
 
-                // Si el input está vacío o no empieza con el prefijo, lo añade
                 if (!currentValue.startsWith(mobilePrefix)) {
                     inputMovil.value = mobilePrefix + currentValue;
                 }
 
-                // Asegura que el cursor esté después del prefijo
                 if (inputMovil.selectionStart < prefixLength) {
                     inputMovil.selectionStart = prefixLength;
                     inputMovil.selectionEnd = prefixLength;
@@ -489,7 +485,7 @@
                 updateCard();
             }
 
-            // Habilitar el botón de imagen solo cuando el logo haya cargado (incluye caso caché)
+            // Enable the image download button when the logo loads
             freundLogo.onload = () => {
                 downloadImageButton.disabled = false;
                 downloadImageButton.classList.add('enabled');
@@ -499,21 +495,18 @@
             } else {
                 freundLogo.onerror = () => {
                     console.error("Error al cargar 'freund1.png'. Verifica ubicación/archivo.");
-                    downloadImageButton.disabled = false; // Habilitar igual, pero con error de consola
+                    downloadImageButton.disabled = false;
                     downloadImageButton.classList.add('enabled');
                 };
             }
 
-            // Event listeners para actualizar la tarjeta
+            // Event listeners for card updates
             inputName.addEventListener('input', updateCard);
             inputTitle.addEventListener('input', updateCard);
             inputEmail.addEventListener('input', updateCard);
-
-            // --- NUEVO: Event listeners para el campo de móvil ---
             inputMovil.addEventListener('input', handleMobileInput);
-            inputMovil.addEventListener('focus', handleMobileInput); // Asegura que el prefijo esté al enfocar
+            inputMovil.addEventListener('focus', handleMobileInput);
             inputMovil.addEventListener('keydown', (e) => {
-                // Previene borrar el prefijo con backspace o delete
                 const prefixLength = mobilePrefix.length;
                 if ((e.key === 'Backspace' && inputMovil.selectionStart <= prefixLength) ||
                     (e.key === 'Delete' && inputMovil.selectionStart < prefixLength)) {
@@ -521,8 +514,7 @@
                 }
             });
 
-
-            // Descargar Imagen (PNG)
+            // Download Image (PNG)
             if (downloadImageButton && cardContainer) {
                 downloadImageButton.addEventListener('click', () => {
                     html2canvas(cardContainer, {
@@ -541,13 +533,13 @@
                 });
             }
 
-            // Evento para el nuevo botón "Nueva Firma"
+            // "Nueva Firma" button event
             if (newSignatureButton) {
                 newSignatureButton.addEventListener('click', resetFields);
             }
 
-            // Inicializar la tarjeta y el campo de móvil al cargar la página
-            inputMovil.value = defaultValues.movil; // Setea el valor editable del input
+            // Initialize card and mobile field on page load
+            inputMovil.value = defaultValues.movil;
             updateCard();
         });
     </script>
