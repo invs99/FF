@@ -56,12 +56,14 @@
             background-color: white;
             flex: 1;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center; /* Alinea los ítems horizontalmente al centro */
+            flex-direction: column; /* Cambiado a columna para apilar elementos */
+            justify-content: center; /* Centra los elementos verticalmente */
+            align-items: center; /* Centra los elementos horizontalmente */
             padding: var(--spacing-medium); /* Usa variable */
             position: relative;
             box-shadow: -3px 0 5px rgba(0, 0, 0, 0.08);
+            /* NUEVO: Permite que los elementos internos controlen mejor el espacio */
+            gap: 10px; /* Espacio entre el logo y la línea, si quieres */
         }
         .name {
             font-size: var(--font-size-large); /* Usa variable */
@@ -136,11 +138,11 @@
         }
         /* --- ESTILOS MODIFICADOS PARA LA IMAGEN DE LÍNEA --- */
         .line-image {
-            /* No definimos 'width' o 'max-width' para que mantenga su tamaño original */
-            height: auto; /* Mantiene la proporción */
-            display: block; /* Permite usar margin: auto para centrar */
-            margin: 20px auto; /* Centra horizontalmente y añade espacio arriba y abajo */
-            /* Eliminamos 'opacity' si quieres que se vea con su opacidad original */
+            height: 100%; /* La línea abarca toda la altura disponible */
+            width: auto; /* Mantiene su proporción de ancho */
+            display: block; /* Asegura el comportamiento de bloque */
+            /* Quitar márgenes explícitos ya que Flexbox se encarga de la alineación */
+            margin: 0;
         }
         /* --- FIN ESTILOS MODIFICADOS PARA LA IMAGEN DE LÍNEA --- */
         .slogan {
@@ -292,7 +294,8 @@
             }
             /* Ajustes para móviles para la línea (si es necesario) */
             .line-image {
-                margin: 15px auto; /* Ajusta el margen en móviles */
+                /* Puedes ajustar el height si necesitas que sea menor en móviles */
+                height: 90%; /* Por ejemplo, para que sea un poco más pequeña */
             }
             .slogan {
                 position: absolute;
@@ -399,10 +402,12 @@
             </div>
         </div>
         <div class="card-right">
-            <div class="logo-container">
-                <img src="freund1.png" alt="Logo de Freund" class="logo" id="freund-logo">
+            <div class="right-content">
+                <div class="logo-container">
+                    <img src="freund1.png" alt="Logo de Freund" class="logo" id="freund-logo">
+                </div>
+                <img src="linea.png" alt="Línea decorativa" class="line-image">
             </div>
-            <img src="linea.png" alt="Línea decorativa" class="line-image">
             </div>
     </div>
 
