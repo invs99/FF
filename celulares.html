@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Renovación de Línea Telefónica</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        /* Estilos específicos para el canvas de la firma */
+        #signatureCanvas {
+            border: 1px solid #d1d5db; /* gray-300 */
+            border-radius: 0.375rem; /* rounded-md */
+            background-color: white;
+            cursor: crosshair;
+            touch-action: none; /* Previene el comportamiento predeterminado del navegador en dispositivos táctiles */
+        }
+        /* Garantiza que el contenedor del canvas tenga una altura mínima */
+        #signatureCanvasContainer {
+            min-height: 120px; /* Reducido para que sea 20% más pequeño */
+        }
+        /*
+          Ajuste del z-index para asegurar que los modales de confirmación
+          estén siempre por encima de todos los demás elementos,
+          incluyendo el canvas de firma.
+        */
+        .modal-overlay {
+            z-index: 999;
+        }
+        .main-content {
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-start min-h-screen p-3 font-sans text-sm"> <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-[998] hidden">
+        <div class="bg-white p-5 rounded-lg shadow-xl flex items-center space-x-2"> <svg class="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"> <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-gray-700 text-sm">Generando PDF...</p> </div>
+    </div>
+    
+        <div id="confirmationModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
+        <div class="bg-white rounded-xl shadow-lg p-5 w-full max-w-xs"> <h3 class="text-lg font-bold text-gray-800 mb-3 text-center">Confirmar</h3> <p class="text-gray-700 text-center mb-5 text-sm">¿Estás seguro que quieres limpiar el formulario? Los datos actuales se perderán.</p> <div class="flex space-x-3"> <button id="cancelClearButton" class="flex-1 justify-center py-1.5 px-3 border border-gray-300 rounded-md shadow-sm text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"> Cancelar
+                </button>
+                <button id="confirmClearButton" class="flex-1 justify-center py-1.5 px-3 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"> Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+            <div id="clearSignatureConfirmationModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
+        <div class="bg-white rounded-xl shadow-lg p-5 w-full max-w-xs"> <h3 class="text-lg font-bold text-gray-800 mb-3 text-center">Confirmar</h3> <p class="text-gray-700 text-center mb-5 text-sm">¿Estás seguro que quieres borrar la firma?</p> <div class="flex space-x-3"> <button id="cancelClearSignatureButton" class="flex-1 justify-center py-1.5 px-3 border border-gray-300 rounded-md shadow-sm text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"> Cancelar
+                </button>
+                <button id="confirmClearSignatureButton" class="flex-1 justify-center py-1.5 px-3 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"> Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+    
+        <div class="bg-white rounded-xl shadow-lg p-5 w-full max-w-md mb-5 main-content"> <div class="flex justify-center mb-5"> <img src="https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png" alt="Logo Freund" class="h-14 w-auto" /> </div>
+        <h1 class="text-xl font-bold text-center text-gray-800 mb-5">Renovación de Línea Telefónica
+        </h1> <form id="documentForm" class="space-y-3"> <div>
+                <label for="modelo" class="block text-xs font-medium text-gray-700">Modelo del Teléfono</label> <input type="text" id="modelo" name="modelo" class="mt-0.5 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-1.5 border" /> </div>
+            <div>
+                <label for="imei" class="block text-xs font-medium text-gray-700">IMEI</label>
+                <input type="text" id="imei" name="imei" class="mt-0.5 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-1.5 border" /> </div>
+            <div>
+                <label for="numeroTelefonico" class="block text-xs font-medium text-gray-700">Número Telefónico</label>
+                <input type="text" id="numeroTelefonico" name="numeroTelefonico" class="mt-0.5 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-1.5 border" /> </div>
+                        <div>
+                <label for="concepto" class="block text-xs font-medium text-gray-700">En concepto de</label>
+                <select id="concepto" name="concepto" class="mt-0.5 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-1.5 border">
+                    <option value="Renovación">Renovación</option> <option value="Asignación">Asignación</option>
+                </select>
+            </div>
+            <div>
+                <label for="nombre" class="block text-xs font-medium text-gray-700">Nombre</label>
+                <input type="text" id="nombre" name="nombre" class="mt-0.5 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-1.5 border" /> </div>
+            <div>
+                <label for="codigoEmpleado" class="block text-xs font-medium text-gray-700">Código empleado</label>
+                <input type="text" id="codigoEmpleado" name="codigoEmpleado" class="mt-0.5 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-1.5 border" /> </div>
+            <div>
+                <label for="departamento" class="block text-xs font-medium text-gray-700">Departamento</label>
+                <input type="text" id="departamento" name="departamento" class="mt-0.5 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-1.5 border" /> </div>
+
+                        <div class="mt-5"> <label class="block text-xs font-medium text-gray-700 mb-1.5">Firma Digital</label> <div id="signatureCanvasContainer" class="border rounded-md p-1 relative w-full h-auto">
+                                        <canvas id="signatureCanvas" class="w-full"></canvas>
+                </div>
+                                <button type="button" id="clearSignatureButton" class="mt-1.5 w-1/2 mx-auto flex justify-center py-1.5 px-3 border border-green-300 rounded-md shadow-sm text-xs font-medium text-green-800 bg-green-200 hover:bg-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-400"> Borrar Firma
+                </button>
+            </div>
+            
+            <div class="flex flex-col space-y-1.5 mt-3"> <button type="submit" class="w-full flex justify-center py-1.5 px-3 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"> Generar Documento
+                </button>
+                                <button type="button" id="clearFormButton" class="w-full flex justify-center py-1.5 px-3 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"> Nuevo Documento
+                </button>
+            </div>
+        </form>
+    </div>
+
+        <div id="messageBox" class="fixed bottom-3 right-3 bg-green-500 text-white px-5 py-2.5 rounded-lg shadow-lg z-50 text-sm hidden"> Documento generado con éxito.
+    </div>
+
+    <script>
+        // Función para mostrar mensajes temporales
+        function showMessage(message, type = 'success') {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = message;
+            if (type === 'success') {
+                messageBox.className = 'fixed bottom-3 right-3 bg-green-500 text-white px-5 py-2.5 rounded-lg shadow-lg z-50 text-sm';
+            } else if (type === 'error') {
+                messageBox.className = 'fixed bottom-3 right-3 bg-red-500 text-white px-5 py-2.5 rounded-lg shadow-lg z-50 text-sm';
+            }
+            messageBox.classList.remove('hidden');
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Lógica para la firma digital
+        const canvas = document.getElementById('signatureCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let hasSigned = false;
+
+        // Función para dibujar el texto de marcador de posición
+        function drawPlaceholder() {
+            if (!hasSigned) {
+                ctx.save();
+                ctx.fillStyle = '#E5E7EB'; // Color gris claro
+                ctx.font = '18px Inter, sans-serif'; // Tamaño de fuente reducido 20%
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const x = canvas.width / 2;
+                const y = canvas.height / 2;
+                ctx.fillText('Introducir firma', x, y);
+                ctx.restore();
+            }
+        }
+
+        // Función para redimensionar el canvas y redibujar el contenido
+        function resizeCanvas() {
+            const container = document.getElementById('signatureCanvasContainer');
+            const newWidth = container.offsetWidth;
+            const newHeight = container.offsetHeight; // Usar la altura del contenedor
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, newWidth, newHeight);
+            
+            // Si no hay firma, dibujar el marcador de posición
+            if (!hasSigned) {
+                drawPlaceholder();
+            } else {
+                // Si hay una firma, redibujarla
+                const savedData = localStorage.getItem('documentFormData');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    if (data.signature) {
+                        const img = new Image();
+                        img.onload = function() {
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        };
+                        img.src = data.signature;
+                    }
+                }
+            }
+        }
+        
+        // Llamar a resizeCanvas en el evento 'DOMContentLoaded' y al cambiar el tamaño de la ventana
+        document.addEventListener('DOMContentLoaded', resizeCanvas);
+        window.addEventListener('resize', resizeCanvas);
+
+
+        function draw(e) {
+            if (!isDrawing) return;
+            // Borrar el marcador de posición en el primer toque/clic
+            if (!hasSigned) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                hasSigned = true;
+            }
+
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            [lastX, lastY] = [x, y];
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
+        });
+        canvas.addEventListener('touchstart', (e) => {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            [lastX, lastY] = [e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top];
+            e.preventDefault();
+        });
+
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('touchmove', draw);
+
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('touchend', () => isDrawing = false);
+        canvas.addEventListener('mouseout', () => isDrawing = false);
+        
+        // Event listener para mostrar el modal de confirmación antes de borrar la firma
+        document.getElementById('clearSignatureButton').addEventListener('click', () => {
+            document.getElementById('clearSignatureConfirmationModal').classList.remove('hidden');
+        });
+
+        // Lógica para guardar y cargar los datos del formulario
+        const form = document.getElementById('documentForm');
+
+        function saveFormData() {
+            const formData = new FormData(form);
+            const data = {};
+            for (const [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            // Guardar también la firma digital
+            if (hasSigned) {
+                    data.signature = canvas.toDataURL('image/png');
+            } else {
+                    data.signature = null;
+            }
+            localStorage.setItem('documentFormData', JSON.stringify(data));
+        }
+
+        function loadFormData() {
+            const savedData = localStorage.getItem('documentFormData');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                for (const key in data) {
+                    const input = document.getElementById(key);
+                    // Para el select de 'concepto', aseguramos que la opción correcta esté seleccionada
+                    if (input && input.tagName === 'SELECT') {
+                        input.value = data[key];
+                    } else if (input) { // Para los inputs de texto
+                        input.value = data[key];
+                    }
+                }
+                
+                // Cargar la firma digital si existe
+                if (data.signature) {
+                    hasSigned = true;
+                    const img = new Image();
+                    img.onload = function() {
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    };
+                    img.src = data.signature;
+                } else {
+                    // Si no hay firma guardada, mostrar el marcador de posición
+                    hasSigned = false;
+                    drawPlaceholder();
+                }
+            } else {
+                // Si no hay datos guardados, asegurarse de que los campos estén vacíos y mostrar placeholder de firma
+                form.reset(); // Limpiar cualquier valor por defecto del HTML
+                // Establecer el valor por defecto de 'concepto' si no hay datos guardados
+                document.getElementById('concepto').value = "Renovación";
+                hasSigned = false;
+                drawPlaceholder();
+            }
+        }
+
+        // Guardar el formulario cada vez que hay un cambio en un campo
+        form.addEventListener('input', saveFormData);
+
+        // Cargar los datos al iniciar la página
+        window.addEventListener('load', loadFormData);
+
+        // Generación del documento
+        document.getElementById('documentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.display = 'flex';
+
+            try {
+                // Importar jsPDF
+                // Cambiar el formato a "letter" (carta)
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ unit: 'mm', format: 'letter' });
+                
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+
+                let signatureData = null;
+                if (hasSigned) {
+                    signatureData = canvas.toDataURL('image/png');
+                }
+
+                const margin = 12; // Reducido 20% (de 15 a 12)
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                let y = margin;
+                const logoHeight = (13.6 * 1.15) * 1.20; // AHORA +20% sobre el tamaño actual (que ya era +15%)
+                const logoWidth = (27.2 * 1.15) * 1.20;  // AHORA +20% sobre el tamaño actual (que ya era +15%)
+
+                // Cargar y añadir el logo al PDF de forma asíncrona en la esquina superior izquierda
+                const logoUrl = 'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
+                try {
+                    const response = await fetch(logoUrl);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const blob = await response.blob();
+                    const reader = new FileReader();
+                    reader.readAsDataURL(blob);
+                    
+                    const base64Image = await new Promise((resolve, reject) => {
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                    });
+
+                    // Añadir el logo en la esquina superior izquierda, con tamaño ajustado
+                    const logoX = margin;
+                    doc.addImage(base64Image, 'PNG', logoX, y, logoWidth, logoHeight);
+                } catch (error) {
+                    console.warn('No se pudo cargar el logo para el PDF:', error);
+                }
+                
+                // Añadir el encabezado en la esquina superior derecha con fuente más grande (20% más)
+                doc.setFontSize(7.68); // Aumentado 20% de 6.4 (6.4 * 1.20 = 7.68)
+                doc.setFont('helvetica', 'normal');
+                const headerX = pageWidth - margin;
+                
+                // *** Modificación aquí para bajar el bloque un renglón ***
+                const headerBlockOffsetY = 3.2 * 2; // Bajamos dos renglones (el pedido actual es 1 mas, entonces 1 * 3.2 + 3.2 = 6.4)
+                
+                doc.text('Tiendas 01.001.0001.0001', headerX, y + headerBlockOffsetY, null, null, 'right');
+                doc.text('Redes y Telecomunicaciones', headerX, y + headerBlockOffsetY + 3.2, null, null, 'right');
+                doc.text(`Fecha de Entrega: ${new Date().toLocaleDateString()}`, headerX, y + headerBlockOffsetY + 3.2 + 3.2, null, null, 'right');
+                // *** Fin de modificación ***
+
+                // Calcular la posición central vertical para el título en el área del encabezado
+                const headerHeight = 12; // Altura aproximada del bloque de texto a la derecha, ajustado
+                const titleYStart = margin + (Math.max(logoHeight, headerHeight + headerBlockOffsetY) / 2) - 1.5; // Ajustado para dos líneas y reducido, también sumando el offset
+
+                // Colocar el título en el centro horizontal y en dos líneas
+                doc.setFontSize(12.8); // 20% menos de 16
+                doc.setFont('helvetica', 'bold');
+                doc.text('RENOVACIÓN DE LÍNEA TELEFÓNICA', pageWidth / 2, titleYStart, { align: 'center' });
+                doc.text('CON INTELLIGENT HUB', pageWidth / 2, titleYStart + 5.6, { align: 'center' }); // Ajuste de línea y reducido
+                
+                // Dibujar la línea separadora debajo del título y el encabezado
+                // Asegurarse que la línea se dibuje después de que todo el encabezado y el logo hayan terminado, incluyendo el offset
+                y = margin + Math.max(logoHeight, headerHeight + headerBlockOffsetY) + 8 + 5.6; // Ajuste para el título de dos líneas y reducido, sumando el offset
+                doc.line(margin, y, pageWidth - margin, y);
+                y += 6.4; // Espacio reducido después de la línea (de 8 a 6.4)
+                
+                doc.setFontSize(9.6); // 20% menos de 12
+                doc.setFont('helvetica', 'normal');
+                const text = `Recibí de FREUND, S.A. de C.V. un teléfono celular con las siguientes características:`;
+                const splitText = doc.splitTextToSize(text, 180);
+                doc.text(splitText, margin, y);
+                y += splitText.length * 5.6; // Reducido (de 7 a 5.6)
+                
+                // Mover más abajo y poner los detalles sin negrita
+                y += 5.6; // Espacio adicional después del texto, reducido (de 7 a 5.6)
+                doc.setFontSize(9.6); // 20% menos de 12
+                
+                // Detalles del teléfono
+                doc.text(`Modelo: ${data.modelo}`, margin, y);
+                y += 4.8; // Espacio entre líneas reducido (de 6 a 4.8)
+                doc.text(`IMEI: ${data.imei}`, margin, y);
+                y += 4.8; // Espacio entre líneas reducido (de 6 a 4.8)
+                doc.text(`Número Telefónico: ${data.numeroTelefonico}`, margin, y);
+                y += 4.8; // Espacio entre líneas reducido (de 6 a 4.8)
+                doc.text(`En concepto de: ${data.concepto}`, margin, y);
+                
+                y += 12; // Espacio para la siguiente sección, reducido (de 15 a 12)
+                
+                // Cláusula de responsabilidad y uso
+                let clause = `El cual recibo completamente nuevo y en perfecto estado con todos sus accesorios, así mismo autorizo al departamento de Recursos Humanos de FREUND, S.A. de C.V. para que de mi salario mensual se me descuente el valor del consumo que este número genere en factura, y al mismo tiempo autorizo que en caso de ser despedido, dejar de laborar en la empresa o extraviar el teléfono celular pagar el servicio de datos y la diferencia del contrato de 18 meses, que inicia a partir de esta fecha.`;
+                let splitClause = doc.splitTextToSize(clause, 180);
+                doc.text(splitClause, margin, y);
+                y += splitClause.length * 4.8 + 12.8; // Aumentado para dos renglones más de separación (3.2 + 9.6 = 12.8)
+
+                clause = `Dicho teléfono celular se le instalará INTELLIGENT HUB MDM, el cual es un administrador de dispositivos móviles que permite proteger y dar soporte a los Smartphone, en caso que se detecte que la SIM esté siendo utilizada en otro teléfono celular se bloqueará la línea de su teléfono celular.`;
+                splitClause = doc.splitTextToSize(clause, 180);
+                doc.text(splitClause, margin, y);
+                y += splitClause.length * 4.8 + 12.8; // Aumentado para dos renglones más de separación (3.2 + 9.6 = 12.8)
+
+                clause = `Queda estrictamente prohibido la configuración del correo electrónico empresarial de Freund en un teléfono diferente al entregado o autorizado por el departamento de sistemas, al detectarse dicha configuración puede ser sancionado por Recursos Humanos de FREUND, S.A. de C.V.`;
+                splitClause = doc.splitTextToSize(clause, 180);
+                doc.text(splitClause, margin, y);
+                y += splitClause.length * 4.8 + 12.8; // Aumentado para dos renglones más de separación (3.2 + 9.6 = 12.8)
+                
+                clause = `Este teléfono celular NO PUEDE VENDERSE y se debe usar por lo menos 18 meses, después de ese tiempo el teléfono celular pertenecerá al USUARIO.`;
+                splitClause = doc.splitTextToSize(clause, 180);
+                doc.text(splitClause, margin, y);
+                y += splitClause.length * 4.8 + 25.6; // Más espacio antes de la firma, aumentado para dos renglones más (16 + 9.6 = 25.6)
+
+                // Sección de firma
+                const signatureAreaHeight = 40; // Altura estimada para la firma y el texto debajo, reducida
+                let currentY = pageHeight - margin - signatureAreaHeight; // Calcular la posición inicial de la firma para que quepa todo abajo
+
+                if (signatureData) {
+                    const signatureWidth = 48; // Ancho en unidades de PDF (mm), reducido (de 60 a 48)
+                    const signatureHeight = (canvas.height / canvas.width) * signatureWidth;
+                    const signatureX = margin; // Alineado a la izquierda
+
+                    // Posicionamos la firma para que el texto de abajo no se salga
+                    // Asegurarse de que la imagen de la firma no se superponga con el texto de arriba
+                    // y que haya suficiente espacio para la línea y el texto de la firma abajo
+                    const imageY = currentY - (signatureHeight / 2); // Centrar la imagen en el espacio reservado para la firma
+                    doc.addImage(signatureData, 'PNG', signatureX, imageY, signatureWidth, signatureHeight);
+                }
+
+                // Ajustar la posición de la línea y el texto de la firma para que estén cerca de la imagen
+                currentY += 12; // Mover hacia abajo para la línea de la firma, ajustado (de 15 a 12)
+                doc.line(margin, currentY, margin + 56, currentY); // Línea para la firma, reducido (de 70 a 56)
+                currentY += 3.2; // Espacio después de la línea (de 4 a 3.2)
+
+                doc.text(`Nombre: ${data.nombre}`, margin, currentY);
+                currentY += 5.6; // Reducido (de 7 a 5.6)
+                doc.text(`Código empleado: ${data.codigoEmpleado}`, margin, currentY);
+                currentY += 5.6; // Reducido (de 7 a 5.6)
+                doc.text(`Departamento: ${data.departamento}`, margin, currentY);
+                
+                doc.save(`Renovacion_Telefono_${data.nombre.replace(/\s/g, '_')}.pdf`);
+                
+                loadingOverlay.style.display = 'none';
+                showMessage('Documento generado con éxito.', 'success');
+
+            } catch (error) {
+                console.error('Error al generar el PDF:', error);
+                loadingOverlay.style.display = 'none';
+                showMessage('Error al generar el documento.', 'error');
+            }
+        });
+
+        // Event listener para mostrar el modal de confirmación
+        document.getElementById('clearFormButton').addEventListener('click', function() {
+            document.getElementById('confirmationModal').classList.remove('hidden');
+        });
+
+        // Event listener para el botón "Cancelar" del modal
+        document.getElementById('cancelClearButton').addEventListener('click', function() {
+            document.getElementById('confirmationModal').classList.add('hidden');
+        });
+
+        // Event listener para el botón "Confirmar" del modal
+        document.getElementById('confirmClearButton').addEventListener('click', function() {
+            // Reiniciar el formulario a sus valores predeterminados
+            document.getElementById('documentForm').reset();
+            // Asegurarse de que el select de 'concepto' vuelva a su valor por defecto si no hay datos guardados
+            document.getElementById('concepto').value = "Renovación";
+
+            // Borrar la firma del canvas, restaurar fondo y marcador de posición
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            hasSigned = false;
+            drawPlaceholder();
+
+            // Ocultar el modal
+            document.getElementById('confirmationModal').classList.add('hidden');
+            showMessage('Formulario limpiado. Listo para un nuevo documento.', 'success');
+
+            // Limpiar los datos guardados en localStorage
+            localStorage.removeItem('documentFormData');
+        });
+
+        // Event listener para el botón "Cancelar" del modal de firma
+        document.getElementById('cancelClearSignatureButton').addEventListener('click', function() {
+            document.getElementById('clearSignatureConfirmationModal').classList.add('hidden');
+        });
+
+        // Event listener para el botón "Confirmar" del modal de firma
+        document.getElementById('confirmClearSignatureButton').addEventListener('click', function() {
+            // Borrar la firma del canvas, restaurar fondo y marcador de posición
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            hasSigned = false;
+            drawPlaceholder();
+            saveFormData(); // Guardar el estado sin firma
+
+            // Ocultar el modal
+            document.getElementById('clearSignatureConfirmationModal').classList.add('hidden');
+            showMessage('Firma borrada.', 'success');
+        });
+    </script>
+</body>
+</html>
