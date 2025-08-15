@@ -58,7 +58,7 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            align-items: center;
+            align-items: center; /* Alinea los ítems horizontalmente al centro */
             padding: var(--spacing-medium); /* Usa variable */
             position: relative;
             box-shadow: -3px 0 5px rgba(0, 0, 0, 0.08);
@@ -134,16 +134,15 @@
             width: 100%;
             height: auto;
         }
-        /* --- NUEVOS ESTILOS PARA LA IMAGEN DE LÍNEA --- */
+        /* --- ESTILOS MODIFICADOS PARA LA IMAGEN DE LÍNEA --- */
         .line-image {
-            width: 100%; /* La línea ocupará el 100% del ancho disponible en card-right */
-            max-width: 150px; /* Limita su ancho máximo para que no sea demasiado grande */
+            /* No definimos 'width' o 'max-width' para que mantenga su tamaño original */
             height: auto; /* Mantiene la proporción */
-            margin-top: 20px; /* Espacio encima de la línea */
-            margin-bottom: 20px; /* Espacio debajo de la línea */
-            opacity: 0.8; /* Hace la línea ligeramente transparente */
+            display: block; /* Permite usar margin: auto para centrar */
+            margin: 20px auto; /* Centra horizontalmente y añade espacio arriba y abajo */
+            /* Eliminamos 'opacity' si quieres que se vea con su opacidad original */
         }
-        /* --- FIN NUEVOS ESTILOS PARA LA IMAGEN DE LÍNEA --- */
+        /* --- FIN ESTILOS MODIFICADOS PARA LA IMAGEN DE LÍNEA --- */
         .slogan {
             font-size: 14px; /* Mantener fijo o ajustar con variables si es necesario */
             color: #495057;
@@ -291,11 +290,9 @@
                 width: 100%;
                 height: auto;
             }
-            /* Ajustes para móviles si es necesario para la línea */
+            /* Ajustes para móviles para la línea (si es necesario) */
             .line-image {
-                max-width: 120px; /* Un poco más pequeña en móviles */
-                margin-top: 15px;
-                margin-bottom: 15px;
+                margin: 15px auto; /* Ajusta el margen en móviles */
             }
             .slogan {
                 position: absolute;
