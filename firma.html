@@ -56,14 +56,13 @@
             background-color: white;
             flex: 1;
             display: flex;
-            flex-direction: column; /* Cambiado a columna para apilar elementos */
+            flex-direction: column;
             justify-content: center; /* Centra los elementos verticalmente */
             align-items: center; /* Centra los elementos horizontalmente */
             padding: var(--spacing-medium); /* Usa variable */
             position: relative;
             box-shadow: -3px 0 5px rgba(0, 0, 0, 0.08);
-            /* NUEVO: Permite que los elementos internos controlen mejor el espacio */
-            gap: 10px; /* Espacio entre el logo y la línea, si quieres */
+            /* No necesitamos 'gap' aquí si .right-content maneja el espacio */
         }
         .name {
             font-size: var(--font-size-large); /* Usa variable */
@@ -136,15 +135,26 @@
             width: 100%;
             height: auto;
         }
-        /* --- ESTILOS MODIFICADOS PARA LA IMAGEN DE LÍNEA --- */
+        /* --- ESTILOS MODIFICADOS PARA LA IMAGEN DE LÍNEA Y SU CONTENEDOR --- */
+        .right-content {
+            display: flex;
+            flex-direction: column; /* Apila el logo y la línea */
+            /* align-items: center;  No es necesario aquí, ya lo hace .card-right */
+            height: 100%; /* Asegura que ocupe toda la altura disponible de .card-right */
+            width: 100%; /* Asegura que ocupe todo el ancho disponible */
+            
+            /* --- CLAVE PARA CENTRAR MEJOR EL CONTENIDO --- */
+            justify-content: space-evenly; /* Distribuye el espacio uniformemente entre los elementos */
+        }
+
         .line-image {
-            height: 100%; /* La línea abarca toda la altura disponible */
+            height: 100%; /* La línea abarca toda la altura disponible del .right-content */
             width: auto; /* Mantiene su proporción de ancho */
             display: block; /* Asegura el comportamiento de bloque */
-            /* Quitar márgenes explícitos ya que Flexbox se encarga de la alineación */
-            margin: 0;
+            margin: 0; /* Elimina cualquier margen externo que pudiera interferir */
+            flex-shrink: 0; /* Evita que se encoja si no hay espacio */
         }
-        /* --- FIN ESTILOS MODIFICADOS PARA LA IMAGEN DE LÍNEA --- */
+        /* --- FIN ESTILOS MODIFICADOS PARA LA IMAGEN DE LÍNEA Y SU CONTENEDOR --- */
         .slogan {
             font-size: 14px; /* Mantener fijo o ajustar con variables si es necesario */
             color: #495057;
