@@ -152,7 +152,7 @@
             display: block;
             margin: 0;
             position: absolute;
-            left: -20%; /* CÓDIGO CORREGIDO: SE MUEVE UN 20% MÁS A LA IZQUIERDA */
+            left: calc(50% - 1px); /* CÓDIGO CORREGIDO: COLOCA LA LÍNEA EN EL CENTRO DE LA SECCIÓN DERECHA */
             top: 0;
             z-index: 10;
             pointer-events: none;
@@ -307,7 +307,7 @@
             /* Ajustes para la línea en móviles */
             .line-image {
                 height: 100%;
-                left: -20%;
+                left: calc(50% - 1px);
             }
             .slogan {
                 position: absolute;
