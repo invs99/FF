@@ -430,18 +430,41 @@
             };
 
             function updateCard() {
-                cardMovil.textContent = `${mobilePrefix} ${inputMovil.value}`;
+                const movilValue = inputMovil.value.startsWith(mobilePrefix) ? inputMovil.value.substring(mobilePrefix.length).trim() : inputMovil.value;
+                cardMovil.textContent = `${mobilePrefix} ${movilValue}`;
                 cardName.textContent = inputName.value;
                 cardTitle.textContent = inputTitle.value;
                 cardEmail.textContent = inputEmail.value;
                 cardEmailLink.href = `mailto:${inputEmail.value}`;
             }
 
+            function saveToLocalStorage() {
+                localStorage.setItem('user-name', inputName.value);
+                localStorage.setItem('user-title', inputTitle.value);
+                localStorage.setItem('user-movil', inputMovil.value);
+                localStorage.setItem('user-email', inputEmail.value);
+            }
+
+            function loadFromLocalStorage() {
+                const savedName = localStorage.getItem('user-name');
+                const savedTitle = localStorage.getItem('user-title');
+                const savedMovil = localStorage.getItem('user-movil');
+                const savedEmail = localStorage.getItem('user-email');
+
+                if (savedName) inputName.value = savedName;
+                if (savedTitle) inputTitle.value = savedTitle;
+                if (savedMovil) inputMovil.value = savedMovil;
+                if (savedEmail) inputEmail.value = savedEmail;
+                
+                updateCard();
+            }
+
             function resetFields() {
-                inputName.value = "";
-                inputTitle.value = "";
-                inputMovil.value = "";
-                inputEmail.value = "";
+                inputName.value = defaultValues.name;
+                inputTitle.value = defaultValues.title;
+                inputMovil.value = defaultValues.movil;
+                inputEmail.value = defaultValues.email;
+                localStorage.clear();
                 updateCard();
             }
 
@@ -459,12 +482,22 @@
                 }
                 updateCard();
             }
-            
-            const inputsToClear = document.querySelectorAll('#input-name, #input-title, #input-email, #input-movil');
-            inputsToClear.forEach(input => {
-                input.addEventListener('focus', function() {
-                    this.value = '';
+
+            const inputs = document.querySelectorAll('#input-name, #input-title, #input-movil, #input-email');
+            inputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    updateCard();
+                    saveToLocalStorage();
                 });
+            });
+
+            inputMovil.addEventListener('focus', handleMobileInput);
+            inputMovil.addEventListener('keydown', (e) => {
+                const prefixLength = mobilePrefix.length;
+                if ((e.key === 'Backspace' && inputMovil.selectionStart <= prefixLength) ||
+                    (e.key === 'Delete' && inputMovil.selectionStart < prefixLength)) {
+                    e.preventDefault();
+                }
             });
 
             freundLogo.onload = () => {
@@ -503,8 +536,11 @@
                 newSignatureButton.addEventListener('click', resetFields);
             }
 
-            inputMovil.value = defaultValues.movil;
-            updateCard();
+            if (localStorage.getItem('user-name') !== null) {
+                loadFromLocalStorage();
+            } else {
+                updateCard();
+            }
         });
     </script>
 </body>
