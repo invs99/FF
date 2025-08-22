@@ -459,6 +459,13 @@
                 }
                 updateCard();
             }
+            
+            const inputsToClear = document.querySelectorAll('#input-name, #input-title, #input-email, #input-movil');
+            inputsToClear.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.value = '';
+                });
+            });
 
             freundLogo.onload = () => {
                 downloadImageButton.disabled = false;
