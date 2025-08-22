@@ -137,32 +137,34 @@
         /* --- ESTILOS PARA LA IMAGEN DE LÍNEA Y SU CONTENEDOR --- */
         .right-content {
             display: flex;
-            flex-direction: column; /* Apila el logo y la línea */
-            justify-content: space-evenly; /* Distribuye el espacio uniformemente entre los elementos */
-            align-items: center; /* Centra horizontalmente logo y línea dentro de este contenedor */
-            height: 100%; /* Asegura que ocupe toda la altura disponible de .card-right */
-            width: 100%; /* Asegura que ocupe todo el ancho disponible */
-            position: relative; /* Necesario para que 'left' en .line-image funcione */
-            overflow: hidden; /* Oculta la parte de la imagen que se sale del contenedor */
+            flex-direction: column;
+            justify-content: space-evenly;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
         }
 
         .line-image {
-            height: 100%; /* La línea abarca toda la altura disponible del .right-content */
-            width: auto; /* Mantiene su proporción de ancho */
+            height: 100%;
+            width: auto;
             display: block;
-            margin: 0; /* Elimina márgenes automáticos para control manual */
-            position: absolute; /* Permite usar 'left' para el posicionamiento exacto */
-            left: -60%; /* Mueve la línea 60% a la izquierda de su posición normal */
-            top: 0; /* Asegura que esté pegada a la parte superior */
-            pointer-events: none; /* Evita que la imagen interfiera con los clics */
+            margin: 0;
+            position: absolute;
+            left: 50%; /* CENTRA LA IMAGEN HORIZONTALMENTE */
+            transform: translateX(-50%); /* AJUSTA PARA EL CENTRADO PERFECTO */
+            top: 0;
+            z-index: 10; /* LA COLOCA SOBRE EL LOGO */
+            pointer-events: none;
         }
         /* --- FIN ESTILOS PARA LA IMAGEN DE LÍNEA Y SU CONTENEDOR --- */
         .slogan {
-            font-size: 14px; /* Mantener fijo o ajustar con variables si es necesario */
+            font-size: 14px;
             color: #495057;
             margin-top: 10px;
             position: absolute;
-            bottom: var(--spacing-medium); /* Usa variable */
+            bottom: var(--spacing-medium);
             left: 50%;
             transform: translateX(-50%);
             white-space: nowrap;
@@ -170,12 +172,12 @@
         /* Estilos del formulario de edición */
         .editor-form {
             background-color: white;
-            padding: var(--spacing-medium); /* Usa variable */
+            padding: var(--spacing-medium);
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: var(--spacing-medium); /* Usa variable */
+            gap: var(--spacing-medium);
         }
         .editor-form h3 {
             grid-column: 1 / -1;
@@ -275,7 +277,6 @@
             max-width: 300px;
         }
 
-
         /* MEDIA QUERIES para responsividad en móviles */
         @media (max-width: 768px) {
             body {
@@ -294,7 +295,7 @@
             }
             .card-right {
                 flex-direction: column;
-                box-shadow: none; /* --- TAMBIÉN SE QUITA LA SOMBRA EN MÓVILES --- */
+                box-shadow: none;
             }
             .logo-container {
                 width: 80%;
@@ -304,10 +305,10 @@
                 width: 100%;
                 height: auto;
             }
-            /* Ajustes para móviles para la línea (si es necesario) */
+            /* Ajustes para la línea en móviles */
             .line-image {
-                height: 90%; /* Por ejemplo, para que sea un poco más pequeña */
-                left: -40%; /* Ajuste el desplazamiento para móviles si es necesario (2/3 de -60%) */
+                left: 50%;
+                transform: translateX(-50%);
             }
             .slogan {
                 position: absolute;
@@ -334,7 +335,7 @@
             }
             .bottom-buttons-container {
                 padding: 15px 0;
-                margin-top: -40px; /* --- CORRECCIÓN: Ajuste para móvil para subir más los botones --- */
+                margin-top: -40px;
             }
             .bottom-buttons-container button {
                 width: 90%;
@@ -351,7 +352,7 @@
                 width: 95%;
             }
             .bottom-buttons-container {
-                margin-top: -30px; /* Ajuste fino para pantallas muy pequeñas */
+                margin-top: -30px;
             }
         }
     </style>
