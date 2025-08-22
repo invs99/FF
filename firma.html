@@ -510,12 +510,18 @@
             if (downloadImageButton && cardContainer) {
                 downloadImageButton.addEventListener('click', () => {
                     html2canvas(cardContainer, {
-                        scale: 2,
+                        width: 688,
+                        height: 328,
                         useCORS: true,
                         logging: false
                     }).then(canvas => {
                         const link = document.createElement('a');
-                        link.download = 'tarjeta_freund.png';
+                        
+                        // Genera un nombre de archivo dinámico
+                        const userName = inputName.value.trim().replace(/\s+/g, '_');
+                        const fileName = userName ? `tarjeta_${userName}.png` : `tarjeta_freund.png`;
+
+                        link.download = fileName;
                         link.href = canvas.toDataURL('image/png');
                         link.click();
                     }).catch(err => {
@@ -529,7 +535,6 @@
                 newSignatureButton.addEventListener('click', resetFields);
             }
             
-            // Cargar datos guardados si existen al iniciar
             loadFromLocalStorage();
         });
     </script>
