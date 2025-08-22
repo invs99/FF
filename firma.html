@@ -147,12 +147,12 @@
         }
 
         .line-image {
-            height: 100%; /* SE AJUSTA A TODA LA ALTURA DEL CONTENEDOR */
+            height: 100%; 
             width: auto;
             display: block;
             margin: 0;
             position: absolute;
-            left: 0;
+            left: -20%; /* CÓDIGO CORREGIDO: SE MUEVE UN 20% MÁS A LA IZQUIERDA */
             top: 0;
             z-index: 10;
             pointer-events: none;
@@ -307,7 +307,7 @@
             /* Ajustes para la línea en móviles */
             .line-image {
                 height: 100%;
-                left: 0;
+                left: -20%;
             }
             .slogan {
                 position: absolute;
