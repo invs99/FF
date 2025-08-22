@@ -147,13 +147,13 @@
         }
 
         .line-image {
-            height: 100%;
+            /* height: 100%; /* COMENTADO EL VALOR ANTERIOR */
+            height: 130%; /* NUEVO VALOR: AUMENTA LA ALTURA EN UN 30% */
             width: auto;
             display: block;
             margin: 0;
             position: absolute;
-            left: 0; /* CÓDIGO CORREGIDO: SE MUEVE AL BORDE IZQUIERDO */
-            /* transform: translateX(-50%); SE ELIMINA PARA QUE NO LA MUEVA FUERA DE POSICIÓN */
+            left: 0;
             top: 0;
             z-index: 10;
             pointer-events: none;
@@ -307,6 +307,7 @@
             }
             /* Ajustes para la línea en móviles */
             .line-image {
+                height: 130%;
                 left: 0;
             }
             .slogan {
