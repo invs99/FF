@@ -9,9 +9,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
-            /* Define variables CSS para tamaños de fuente y espaciado para fácil ajuste */
             --font-size-base: 16px;
-            --font-size-large: 2em; /* 32px basado en 16px base */
+            --font-size-large: 2em;
             --spacing-medium: 20px;
             --spacing-large: 30px;
         }
@@ -23,8 +22,8 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            gap: var(--spacing-medium); /* Usa variable */
-            padding: var(--spacing-medium); /* Usa variable */
+            gap: var(--spacing-medium);
+            padding: var(--spacing-medium);
             box-sizing: border-box;
             min-height: 100vh;
         }
@@ -33,20 +32,20 @@
             max-width: 700px;
         }
         .card-container {
-            width: 100%; /* Ocupa el 100% del ancho disponible por defecto */
-            max-width: 700px; /* Limita el ancho máximo para pantallas grandes */
-            display: flex; /* Mantiene la dirección horizontal por defecto */
-            flex-direction: row; /* Explícitamente horizontal */
-            height: 300px; /* Altura fija para el formato de tarjeta */
+            width: 100%;
+            max-width: 700px;
+            display: flex;
+            flex-direction: row;
+            height: 300px;
             background-color: white;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             overflow: hidden;
-            margin-top: var(--spacing-medium); /* Añade un margen estándar */
-            margin-bottom: var(--spacing-medium); /* Añade un margen estándar */
+            margin-top: var(--spacing-medium);
+            margin-bottom: var(--spacing-medium);
         }
         .card-left {
-            padding: var(--spacing-large); /* Usa variable */
+            padding: var(--spacing-large);
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -57,25 +56,25 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: center; /* Centra los elementos verticalmente */
-            align-items: center; /* Centra los elementos horizontalmente */
-            padding: var(--spacing-medium); /* Usa variable */
+            justify-content: center;
+            align-items: center;
+            padding: var(--spacing-medium);
             position: relative;
-            box-shadow: none; /* Se quita la sombra vertical */
+            box-shadow: none;
         }
         .name {
-            font-size: var(--font-size-large); /* Usa variable */
+            font-size: var(--font-size-large);
             font-weight: normal;
             color: #495057;
             margin: 0 0 5px 0;
         }
         .title {
-            font-size: var(--font-size-base); /* Usa variable */
+            font-size: var(--font-size-base);
             color: #007bff;
-            margin: 0 0 var(--spacing-large) 0; /* Usa variable */
+            margin: 0 0 var(--spacing-large) 0;
         }
         .contact-group {
-            margin-bottom: var(--spacing-medium); /* Usa variable */
+            margin-bottom: var(--spacing-medium);
         }
         .contact-item {
             display: flex;
@@ -84,7 +83,7 @@
         }
         .icon {
             margin-right: 8px;
-            font-size: var(--font-size-base); /* Usa variable */
+            font-size: var(--font-size-base);
             color: #495057;
         }
         .contact-link .icon {
@@ -100,18 +99,18 @@
             font-weight: normal;
             color: #495057;
             width: 70px;
-            font-size: var(--font-size-base); /* Usa variable */
+            font-size: var(--font-size-base);
         }
         .value {
             color: #495057;
-            font-size: var(--font-size-base); /* Usa variable */
+            font-size: var(--font-size-base);
         }
         .contact-link {
             color: #007bff;
             text-decoration: none;
             display: block;
             margin-bottom: 5px;
-            font-size: var(--font-size-base); /* Usa variable */
+            font-size: var(--font-size-base);
         }
         .social-media {
             margin-top: 0;
@@ -121,7 +120,7 @@
             display: flex;
             align-items: center;
             margin: 0;
-            font-size: var(--font-size-base); /* Usa variable */
+            font-size: var(--font-size-base);
         }
         .social-item + .social-item {
             margin-top: 5px;
@@ -134,20 +133,17 @@
             width: 100%;
             height: auto;
         }
-        /* --- ESTILOS PARA LA IMAGEN DE LÍNEA Y SU CONTENEDOR --- */
-        /* Eliminamos .right-content por completo para simplificar la estructura */
         .line-image {
-            height: 100%;  /* Esto hace que la línea se estire a la altura completa del contenedor .card-right */
+            height: 100%;
             width: auto;
             display: block;
             margin: 0;
             position: absolute;
-            left: 0; /* Esto centra la línea en la tarjeta porque .card-right empieza en el 50% del total. */
+            left: 0;
             top: 0;
             z-index: 10;
             pointer-events: none;
         }
-        /* --- FIN ESTILOS PARA LA IMAGEN DE LÍNEA Y SU CONTENEDOR --- */
         .slogan {
             font-size: 14px;
             color: #495057;
@@ -158,7 +154,6 @@
             transform: translateX(-50%);
             white-space: nowrap;
         }
-        /* Estilos del formulario de edición */
         .editor-form {
             background-color: white;
             padding: var(--spacing-medium);
@@ -188,7 +183,6 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
-        /* Eliminar estilos del prefijo separado, ahora el input lo manejará */
         .form-group.movil-input .prefix {
             display: none;
         }
@@ -200,7 +194,6 @@
             gap: 15px;
             margin-top: 10px;
         }
-        /* Estilos generales para botones de acción */
         .action-button {
             padding: 12px 25px;
             font-size: 17px;
@@ -213,7 +206,6 @@
             text-transform: uppercase;
         }
 
-        /* Estilos específicos para el botón de descargar imagen */
         #downloadImage {
             background-color: #28a745;
             color: white;
@@ -234,7 +226,6 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
         }
 
-        /* Estilos específicos para el botón de nueva firma */
         #newSignature {
             background-color: #dc3545;
             color: white;
@@ -249,7 +240,6 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
         }
 
-        /* Contenedor de botones en la parte inferior */
         .bottom-buttons-container {
             width: 100%;
             max-width: 700px;
@@ -258,7 +248,7 @@
             gap: 15px;
             padding: 20px 0;
             align-items: center;
-            margin-top: 40px; /* --- CORRECCIÓN: Valor positivo para bajar los botones --- */
+            margin-top: 40px;
             margin-bottom: 20px;
         }
         .bottom-buttons-container button {
@@ -266,7 +256,6 @@
             max-width: 300px;
         }
 
-        /* MEDIA QUERIES para responsividad en móviles */
         @media (max-width: 768px) {
             body {
                 padding: 10px;
@@ -294,7 +283,6 @@
                 width: 100%;
                 height: auto;
             }
-            /* Ajustes para la línea en móviles */
             .line-image {
                 height: 100%;
                 left: 0;
@@ -332,7 +320,6 @@
             }
         }
 
-        /* Ajuste adicional para pantallas muy pequeñas (ej. iPhone SE) */
         @media (max-width: 375px) {
             .card-container {
                 transform: scale(0.6);
@@ -433,10 +420,8 @@
             const cardContainer = document.querySelector('.card-container');
             const freundLogo = document.getElementById('freund-logo');
 
-            // Prefijo fijo para el número de móvil
             const mobilePrefix = "(503)";
 
-            // Valores por defecto para resetear
             const defaultValues = {
                 name: "Alberto Martínez",
                 title: "Representante de ventas",
@@ -475,7 +460,6 @@
                 updateCard();
             }
 
-            // Enable the image download button when the logo loads
             freundLogo.onload = () => {
                 downloadImageButton.disabled = false;
                 downloadImageButton.classList.add('enabled');
@@ -490,21 +474,6 @@
                 };
             }
 
-            // Event listeners for card updates
-            inputName.addEventListener('input', updateCard);
-            inputTitle.addEventListener('input', updateCard);
-            inputEmail.addEventListener('input', updateCard);
-            inputMovil.addEventListener('input', handleMobileInput);
-            inputMovil.addEventListener('focus', handleMobileInput);
-            inputMovil.addEventListener('keydown', (e) => {
-                const prefixLength = mobilePrefix.length;
-                if ((e.key === 'Backspace' && inputMovil.selectionStart <= prefixLength) ||
-                    (e.key === 'Delete' && inputMovil.selectionStart < prefixLength)) {
-                    e.preventDefault();
-                }
-            });
-
-            // Download Image (PNG)
             if (downloadImageButton && cardContainer) {
                 downloadImageButton.addEventListener('click', () => {
                     html2canvas(cardContainer, {
@@ -523,12 +492,10 @@
                 });
             }
 
-            // "Nueva Firma" button event
             if (newSignatureButton) {
                 newSignatureButton.addEventListener('click', resetFields);
             }
 
-            // Initialize card and mobile field on page load
             inputMovil.value = defaultValues.movil;
             updateCard();
         });
