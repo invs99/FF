@@ -509,13 +509,13 @@
             if (downloadImageButton && cardContainer) {
                 downloadImageButton.addEventListener('click', () => {
                     html2canvas(cardContainer, {
-                        scale: 1, // evitar que lo duplique
+                        scale: 1, // evitar duplicación automática
                         useCORS: true,
                         logging: false
                     }).then(canvas => {
                         const finalCanvas = document.createElement('canvas');
-                        finalCanvas.width = 420;
-                        finalCanvas.height = 185;
+                        finalCanvas.width = 688; // ancho fijo
+                        finalCanvas.height = 328; // alto fijo
                         const ctx = finalCanvas.getContext('2d');
 
                         // redimensionamos al tamaño exacto
