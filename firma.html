@@ -1,543 +1,136 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tarjeta de Presentación Freund</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <style>
-        :root {
-            --font-size-base: 16px;
-            --font-size-large: 2em;
-            --spacing-medium: 20px;
-            --spacing-large: 30px;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tarjeta de Presentación Freund</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
 
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            gap: var(--spacing-medium);
-            padding: var(--spacing-medium);
-            box-sizing: border-box;
-            min-height: 100vh;
-        }
-        .editor-form {
-            width: 100%;
-            max-width: 700px;
-        }
-        .card-container {
-            width: 100%;
-            max-width: 700px;
-            display: flex;
-            flex-direction: row;
-            height: 300px;
-            background-color: white;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            overflow: hidden;
-            margin-top: var(--spacing-medium);
-            margin-bottom: var(--spacing-medium);
-        }
-        .card-left {
-            padding: var(--spacing-large);
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .card-right {
-            background-color: white;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: var(--spacing-medium);
-            position: relative;
-            box-shadow: none;
-        }
-        .name {
-            font-size: var(--font-size-large);
-            font-weight: normal;
-            color: #495057;
-            margin: 0 0 5px 0;
-        }
-        .title {
-            font-size: var(--font-size-base);
-            color: #007bff;
-            margin: 0 0 var(--spacing-large) 0;
-        }
-        .contact-group {
-            margin-bottom: var(--spacing-medium);
-        }
-        .contact-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-        .icon {
-            margin-right: 8px;
-            font-size: var(--font-size-base);
-            color: #495057;
-        }
-        .contact-link .icon {
-            color: #007bff;
-        }
-        .social-item .fa-facebook {
-            color: #3b5998;
-        }
-        .social-item .fa-instagram {
-            color: #c13584;
-        }
-        .label {
-            font-weight: normal;
-            color: #495057;
-            width: 70px;
-            font-size: var(--font-size-base);
-        }
-        .value {
-            color: #495057;
-            font-size: var(--font-size-base);
-        }
-        .contact-link {
-            color: #007bff;
-            text-decoration: none;
-            display: block;
-            margin-bottom: 5px;
-            font-size: var(--font-size-base);
-        }
-        .social-media {
-            margin-top: 0;
-        }
-        .social-item {
-            color: #007bff;
-            display: flex;
-            align-items: center;
-            margin: 0;
-            font-size: var(--font-size-base);
-        }
-        .social-item + .social-item {
-            margin-top: 5px;
-        }
-        .logo-container {
-            width: 80%;
-            max-width: 250px;
-        }
-        .logo {
-            width: 100%;
-            height: auto;
-        }
-        .line-image {
-            height: 100%;
-            width: auto;
-            display: block;
-            margin: 0;
-            position: absolute;
-            left: 0;
-            top: 0;
-            z-index: 10;
-            pointer-events: none;
-        }
-        .slogan {
-            font-size: 14px;
-            color: #495057;
-            margin-top: 10px;
-            position: absolute;
-            bottom: var(--spacing-medium);
-            left: 50%;
-            transform: translateX(-50%);
-            white-space: nowrap;
-        }
-        .editor-form {
-            background-color: white;
-            padding: var(--spacing-medium);
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: var(--spacing-medium);
-        }
-        .editor-form h3 {
-            grid-column: 1 / -1;
-            margin-top: 0;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 10px;
-        }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        .form-group label {
-            font-weight: bold;
-            color: #333;
-        }
-        .form-group input {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .form-group.movil-input .prefix {
-            display: none;
-        }
+    .card-container {
+      width: 700px;
+      height: 300px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
 
-        .button-group {
-            grid-column: 1 / -1;
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 10px;
-        }
-        .action-button {
-            padding: 12px 25px;
-            font-size: 17px;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            text-transform: uppercase;
-        }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-        #downloadImage {
-            background-color: #28a745;
-            color: white;
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        #downloadImage.enabled {
-            opacity: 1;
-            cursor: pointer;
-        }
-        #downloadImage.enabled:hover {
-            background-color: #218838;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-        }
-        #downloadImage.enabled:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-        }
+    .card-header h2 {
+      margin: 0;
+      font-size: 22px;
+      color: #333;
+    }
 
-        #newSignature {
-            background-color: #dc3545;
-            color: white;
-        }
-        #newSignature:hover {
-            background-color: #c82333;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-        }
-        #newSignature:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-        }
+    .logo {
+      font-size: 40px;
+      color: #0077b6;
+    }
 
-        .bottom-buttons-container {
-            width: 100%;
-            max-width: 700px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            padding: 20px 0;
-            align-items: center;
-            margin-top: 40px;
-            margin-bottom: 20px;
-        }
-        .bottom-buttons-container button {
-            width: 80%;
-            max-width: 300px;
-        }
+    .card-body {
+      flex-grow: 1;
+      margin: 20px 0;
+    }
 
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-                gap: 20px;
-            }
-            .editor-form {
-                grid-template-columns: 1fr;
-            }
-            .card-container {
-                transform: scale(0.676);
-                transform-origin: center top;
-                width: 700px;
-                margin-top: 0;
-                margin-bottom: 0;
-            }
-            .card-right {
-                flex-direction: column;
-                box-shadow: none;
-            }
-            .logo-container {
-                width: 80%;
-                max-width: 250px;
-            }
-            .logo {
-                width: 100%;
-                height: auto;
-            }
-            .line-image {
-                height: 100%;
-                left: 0;
-            }
-            .slogan {
-                position: absolute;
-                bottom: var(--spacing-medium);
-                left: 50%;
-                transform: translateX(-50%);
-                margin-top: 10px;
-            }
-            .name {
-                font-size: var(--font-size-large);
-            }
-            .title {
-                font-size: var(--font-size-base);
-                margin-bottom: var(--spacing-large);
-            }
-            .contact-item, .contact-link, .social-item {
-                font-size: var(--font-size-base);
-            }
-            .label {
-                width: 70px;
-            }
-            .button-group {
-                display: none;
-            }
-            .bottom-buttons-container {
-                padding: 15px 0;
-                margin-top: -40px;
-            }
-            .bottom-buttons-container button {
-                width: 90%;
-                max-width: 300px;
-            }
-        }
+    .card-body p {
+      margin: 5px 0;
+      font-size: 16px;
+      color: #555;
+    }
 
-        @media (max-width: 375px) {
-            .card-container {
-                transform: scale(0.6);
-            }
-            .bottom-buttons-container button {
-                width: 95%;
-            }
-            .bottom-buttons-container {
-                margin-top: -30px;
-            }
-        }
-    </style>
+    .card-footer {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 10px;
+      transition: 0.3s;
+    }
+
+    .btn-download {
+      background: #0077b6;
+      color: white;
+    }
+
+    .btn-download:hover {
+      background: #005f86;
+    }
+  </style>
 </head>
 <body>
-    <div class="editor-form">
-        <h3>Editar Datos de la Tarjeta</h3>
-        <div class="form-group">
-            <label for="input-name">Nombre:</label>
-            <input type="text" id="input-name" placeholder="Alberto Martínez">
-        </div>
-        <div class="form-group">
-            <label for="input-title">Cargo:</label>
-            <input type="text" id="input-title" placeholder="Representante de ventas">
-        </div>
-        <div class="form-group">
-            <label for="input-movil">Móvil:</label>
-            <input type="text" id="input-movil" placeholder="(503) 7839-0032">
-        </div>
-        <div class="form-group">
-            <label for="input-email">E-mail:</label>
-            <input type="email" id="input-email" placeholder="albertomg@freundsa.com">
-        </div>
-        <div class="button-group"></div>
+  <div class="card-container" id="card-container">
+    <div class="card-header">
+      <h2>Jonathan Navas</h2>
+      <i class="fa-solid fa-user logo"></i>
     </div>
-
-    <div class="card-container">
-        <div class="card-left">
-            <h1 class="name" id="card-name"></h1>
-            <p class="title" id="card-title"></p>
-            <div class="contact-group">
-                <div class="contact-item">
-                    <i class="icon fa-solid fa-phone"></i>
-                    <span class="label">PBX:</span>
-                    <span class="value" id="card-pbx">(503) 2304-1888</span>
-                </div>
-                <div class="contact-item">
-                    <i class="icon fa-solid fa-mobile-screen-button"></i>
-                    <span class="label">Móvil:</span>
-                    <span class="value" id="card-movil"></span>
-                </div>
-            </div>
-            <a href="#" class="contact-link" id="card-email-link">
-                <i class="icon fa-solid fa-envelope"></i>
-                E-mail: <span id="card-email"></span>
-            </a>
-            <a href="http://www.freundferreteria.com" class="contact-link">
-                <i class="icon fa-solid fa-globe"></i>
-                www.freundferreteria.com
-            </a>
-            <div class="social-media">
-                <p class="social-item">
-                    <i class="icon fa-brands fa-facebook"></i>
-                    Freund El Salvador
-                </p>
-                <p class="social-item">
-                    <i class="icon fa-brands fa-instagram"></i>
-                    freundferreteria
-                </p>
-            </div>
-        </div>
-        <div class="card-right">
-            <div class="logo-container">
-                <img src="freund1.png" alt="Logo de Freund" class="logo" id="freund-logo">
-            </div>
-            <img src="linea.png" alt="Línea decorativa" class="line-image">
-        </div>
+    <div class="card-body">
+      <p><i class="fa-solid fa-briefcase"></i> Desarrollador Web</p>
+      <p><i class="fa-solid fa-envelope"></i> jonathan@example.com</p>
+      <p><i class="fa-solid fa-phone"></i> +503 1234-5678</p>
     </div>
-
-    <div class="bottom-buttons-container">
-        <button id="downloadImage" class="action-button" disabled>Descargar Imagen</button>
-        <button id="newSignature" class="action-button">Nueva Firma</button>
+    <div class="card-footer">
+      <button class="btn btn-download" id="download-image">Descargar Imagen</button>
     </div>
+  </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const cardName = document.getElementById('card-name');
-            const cardTitle = document.getElementById('card-title');
-            const cardMovil = document.getElementById('card-movil');
-            const cardEmail = document.getElementById('card-email');
-            const cardEmailLink = document.getElementById('card-email-link');
-            const inputName = document.getElementById('input-name');
-            const inputTitle = document.getElementById('input-title');
-            const inputMovil = document.getElementById('input-movil');
-            const inputEmail = document.getElementById('input-email');
+  <script>
+    const downloadImageButton = document.getElementById('download-image');
+    const cardContainer = document.getElementById('card-container');
 
-            const downloadImageButton = document.getElementById('downloadImage');
-            const newSignatureButton = document.getElementById('newSignature');
-            const cardContainer = document.querySelector('.card-container');
-            const freundLogo = document.getElementById('freund-logo');
+    if (downloadImageButton && cardContainer) {
+      downloadImageButton.addEventListener('click', () => {
+        html2canvas(cardContainer, {
+          scale: 3, // capturamos con alta resolución
+          useCORS: true,
+          logging: false,
+          backgroundColor: null
+        }).then(canvas => {
+          // Crear un nuevo canvas con tamaño fijo 688x328
+          const finalCanvas = document.createElement('canvas');
+          finalCanvas.width = 688;
+          finalCanvas.height = 328;
+          const ctx = finalCanvas.getContext('2d');
 
-            const mobilePrefix = "(503)";
-            
-            function updateCard() {
-                const movilValue = inputMovil.value.startsWith(mobilePrefix) ? inputMovil.value.substring(mobilePrefix.length).trim() : inputMovil.value;
-                cardMovil.textContent = inputMovil.value ? `${mobilePrefix} ${movilValue}` : '';
-                cardName.textContent = inputName.value;
-                cardTitle.textContent = inputTitle.value;
-                cardEmail.textContent = inputEmail.value;
-                cardEmailLink.href = inputEmail.value ? `mailto:${inputEmail.value}` : '#';
-            }
+          // Redibujar la captura con suavizado
+          ctx.drawImage(canvas, 0, 0, finalCanvas.width, finalCanvas.height);
 
-            function saveToLocalStorage() {
-                localStorage.setItem('user-name', inputName.value);
-                localStorage.setItem('user-title', inputTitle.value);
-                localStorage.setItem('user-movil', inputMovil.value);
-                localStorage.setItem('user-email', inputEmail.value);
-            }
-
-            function loadFromLocalStorage() {
-                const savedName = localStorage.getItem('user-name');
-                const savedTitle = localStorage.getItem('user-title');
-                const savedMovil = localStorage.getItem('user-movil');
-                const savedEmail = localStorage.getItem('user-email');
-
-                if (savedName) inputName.value = savedName;
-                if (savedTitle) inputTitle.value = savedTitle;
-                if (savedMovil) inputMovil.value = savedMovil;
-                if (savedEmail) inputEmail.value = savedEmail;
-                
-                updateCard();
-            }
-
-            function resetFields() {
-                inputName.value = "";
-                inputTitle.value = "";
-                inputMovil.value = "";
-                inputEmail.value = "";
-                localStorage.clear();
-                updateCard();
-            }
-
-            function handleMobileInput() {
-                const prefixLength = mobilePrefix.length;
-                let currentValue = inputMovil.value;
-
-                if (inputMovil.value.length < 1 && !currentValue.startsWith(mobilePrefix)) {
-                    inputMovil.value = mobilePrefix + " ";
-                }
-
-                if (inputMovil.selectionStart < prefixLength) {
-                    inputMovil.selectionStart = prefixLength;
-                    inputMovil.selectionEnd = prefixLength;
-                }
-                updateCard();
-            }
-            
-            const inputs = document.querySelectorAll('#input-name, #input-title, #input-movil, #input-email');
-            inputs.forEach(input => {
-                input.addEventListener('input', () => {
-                    updateCard();
-                    saveToLocalStorage();
-                });
-            });
-
-            inputMovil.addEventListener('focus', handleMobileInput);
-            inputMovil.addEventListener('keydown', (e) => {
-                const prefixLength = mobilePrefix.length;
-                if ((e.key === 'Backspace' && inputMovil.selectionStart <= prefixLength) ||
-                    (e.key === 'Delete' && inputMovil.selectionStart < prefixLength)) {
-                    e.preventDefault();
-                }
-            });
-
-            freundLogo.onload = () => {
-                downloadImageButton.disabled = false;
-                downloadImageButton.classList.add('enabled');
-            };
-            if (freundLogo.complete) {
-                freundLogo.onload();
-            } else {
-                freundLogo.onerror = () => {
-                    console.error("Error al cargar 'freund1.png'. Verifica ubicación/archivo.");
-                    downloadImageButton.disabled = false;
-                    downloadImageButton.classList.add('enabled');
-                };
-            }
-
-            if (downloadImageButton && cardContainer) {
-                downloadImageButton.addEventListener('click', () => {
-                    html2canvas(cardContainer, {
-                        scale: 1, // evitar duplicación automática
-                        useCORS: true,
-                        logging: false
-                    }).then(canvas => {
-                        const finalCanvas = document.createElement('canvas');
-                        finalCanvas.width = 688; // ancho fijo
-                        finalCanvas.height = 328; // alto fijo
-                        const ctx = finalCanvas.getContext('2d');
-
-                        // redimensionamos al tamaño exacto
-                        ctx.drawImage(canvas, 0, 0, finalCanvas.width, finalCanvas.height);
-
-                        const link = document.createElement('a');
-                        link.download = 'tarjeta_freund.png';
-                        link.href = finalCanvas.toDataURL('image/png');
-                        link.click();
-                    }).catch(err => {
-                        console.error('Error al generar imagen:', err);
-                        alert('Hubo un error al generar la imagen.');
-                    });
-                });
-            }
-
-            if (newSignatureButton) {
-                newSignatureButton.addEventListener('click', resetFields);
-            }
-            
-            loadFromLocalStorage();
+          // Descargar la imagen final
+          const link = document.createElement('a');
+          link.download = 'tarjeta_freund.png';
+          link.href = finalCanvas.toDataURL('image/png');
+          link.click();
+        }).catch(err => {
+          console.error('Error al generar imagen:', err);
+          alert('Hubo un error al generar la imagen.');
         });
-    </script>
+      });
+    }
+  </script>
 </body>
 </html>
