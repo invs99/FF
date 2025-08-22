@@ -152,10 +152,10 @@
             display: block;
             margin: 0;
             position: absolute;
-            left: 50%; /* CENTRA LA IMAGEN HORIZONTALMENTE */
-            transform: translateX(-50%); /* AJUSTA PARA EL CENTRADO PERFECTO */
+            left: 25%; /* CÓDIGO CORREGIDO: MUEVE LA LÍNEA MÁS A LA IZQUIERDA */
+            transform: translateX(-50%);
             top: 0;
-            z-index: 10; /* LA COLOCA SOBRE EL LOGO */
+            z-index: 10;
             pointer-events: none;
         }
         /* --- FIN ESTILOS PARA LA IMAGEN DE LÍNEA Y SU CONTENEDOR --- */
@@ -307,7 +307,7 @@
             }
             /* Ajustes para la línea en móviles */
             .line-image {
-                left: 50%;
+                left: 25%;
                 transform: translateX(-50%);
             }
             .slogan {
