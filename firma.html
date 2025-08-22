@@ -135,24 +135,14 @@
             height: auto;
         }
         /* --- ESTILOS PARA LA IMAGEN DE LÍNEA Y SU CONTENEDOR --- */
-        .right-content {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-evenly;
-            align-items: center;
-            height: 222%;
-            width: 100%;
-            position: relative;
-            overflow: hidden;
-        }
-
+        /* Eliminamos .right-content por completo para simplificar la estructura */
         .line-image {
-            height: 120%; 
+            height: 100%;  /* Esto hace que la línea se estire a la altura completa del contenedor .card-right */
             width: auto;
             display: block;
             margin: 0;
             position: absolute;
-            left: 0; /* CÓDIGO CORREGIDO: SE COLOCA EN EL BORDE IZQUIERDO DE SU CONTENEDOR, QUE ES EL CENTRO DE TODA LA TARJETA */
+            left: 0; /* Esto centra la línea en la tarjeta porque .card-right empieza en el 50% del total. */
             top: 0;
             z-index: 10;
             pointer-events: none;
@@ -414,12 +404,10 @@
             </div>
         </div>
         <div class="card-right">
-            <div class="right-content">
-                <div class="logo-container">
-                    <img src="freund1.png" alt="Logo de Freund" class="logo" id="freund-logo">
-                </div>
-                <img src="linea.png" alt="Línea decorativa" class="line-image">
+            <div class="logo-container">
+                <img src="freund1.png" alt="Logo de Freund" class="logo" id="freund-logo">
             </div>
+            <img src="linea.png" alt="Línea decorativa" class="line-image">
         </div>
     </div>
 
@@ -547,6 +535,3 @@
     </script>
 </body>
 </html>
-
-
-
