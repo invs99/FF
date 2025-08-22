@@ -152,8 +152,8 @@
             display: block;
             margin: 0;
             position: absolute;
-            left: 0%; /* CÓDIGO CORREGIDO: MUEVE LA LÍNEA AL BORDE */
-            transform: translateX(-50%);
+            left: 0; /* CÓDIGO CORREGIDO: SE MUEVE AL BORDE IZQUIERDO */
+            /* transform: translateX(-50%); SE ELIMINA PARA QUE NO LA MUEVA FUERA DE POSICIÓN */
             top: 0;
             z-index: 10;
             pointer-events: none;
@@ -307,8 +307,7 @@
             }
             /* Ajustes para la línea en móviles */
             .line-image {
-                left: 0%;
-                transform: translateX(-50%);
+                left: 0;
             }
             .slogan {
                 position: absolute;
