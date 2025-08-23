@@ -338,19 +338,19 @@
         <h3>Editar Datos de la Tarjeta</h3>
         <div class="form-group">
             <label for="input-name">Nombre:</label>
-            <input type="text" id="input-name" placeholder="Alberto Martínez">
+            <input type="text" id="input-name" placeholder="Jonathan Navas">
         </div>
         <div class="form-group">
             <label for="input-title">Cargo:</label>
-            <input type="text" id="input-title" placeholder="Representante de ventas">
+            <input type="text" id="input-title" placeholder="Soporte Tecnico">
         </div>
         <div class="form-group">
             <label for="input-movil">Móvil:</label>
-            <input type="text" id="input-movil" placeholder="(503) 7839-0032">
+            <input type="text" id="input-movil" placeholder="(503) 7567-1150">
         </div>
         <div class="form-group">
             <label for="input-email">E-mail:</label>
-            <input type="email" id="input-email" placeholder="albertomg@freundsa.com">
+            <input type="email" id="input-email" placeholder="jonathann@freundsa.com">
         </div>
         <div class="button-group"></div>
     </div>
@@ -516,7 +516,6 @@
                     cardClone.style.position = 'absolute';
                     cardClone.style.top = '-9999px';
 
-                    // Corrección para asegurar el fondo blanco
                     const cardLeftClone = cardClone.querySelector('.card-left');
                     if (cardLeftClone) {
                         cardLeftClone.style.backgroundColor = '#fff';
@@ -531,7 +530,12 @@
                     }).then(canvas => {
                         document.body.removeChild(cardClone);
                         const link = document.createElement('a');
-                        link.download = 'tarjeta_freund.png';
+
+                       
+                        const name = inputName.value.trim();
+                        const fileName = name ? `Tarjeta_${name.replace(/\s+/g, '_')}.png` : 'tarjeta_freund.png';
+                        link.download = fileName;
+                        
                         link.href = canvas.toDataURL('image/png');
                         link.click();
                     }).catch(err => {
