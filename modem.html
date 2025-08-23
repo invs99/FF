@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Entrega de Modem</title>
+    <a href="index.html" class="home-button">Inicio</a>
     <!-- Incluir Tailwind CSS para un diseño moderno y responsive -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Incluir jsPDF para generar el documento PDF -->
@@ -43,6 +44,26 @@
         .main-content {
             z-index: 10;
         }
+        .home-button {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+
+.home-button:hover {
+    background-color: #217dbb;
+}
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-start min-h-screen p-4 font-sans">
@@ -535,4 +556,5 @@
     </script>
 </body>
 </html>
+
 
