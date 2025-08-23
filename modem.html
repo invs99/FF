@@ -1,6 +1,41 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
+
+
+ <style>
+        /* ... Tu CSS ... */
+        .home-button {
+            position: fixed;
+            top: 20px;
+            left: 25px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            z-index: 1000;
+            -webkit-transform: translate3d(0, 0, 0);
+        }
+
+        .home-button:hover {
+            background-color: #217dbb;
+        }
+    </style>
+
+
+
+
+
+
+    
     <a href="index.html" class="home-button">Inicio</a>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -22,38 +57,6 @@
         };
     </script>
     <style>
-
-
-        
-
-.home-button {
-    position: fixed;
-    top: 20px;
-    left: 25px;
-    background-color: #3498db;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 8px 12px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    text-transform: uppercase;
-    text-decoration: none;
-    transition: background-color 0.3s;
-    z-index: 1000;
-    -webkit-transform: translate3d(0, 0, 0); /* Mejora la estabilidad en iOS */
-    -webkit-overflow-scrolling: touch; /* Habilita el desplazamiento nativo de iOS */
-}
-
-.home-button:hover {
-    background-color: #217dbb;
-}
-
-
-
-
-
 
 
         
@@ -573,6 +576,7 @@
     </script>
 </body>
 </html>
+
 
 
 
