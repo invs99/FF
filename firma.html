@@ -62,24 +62,15 @@
             box-shadow: none;
         }
         .name-container {
-            display: flex;
+            font-size: var(--font-size-large);
+            font-weight: normal;
+            color: #495057;
+            margin: 0 0 5px 0;
             white-space: nowrap;
             overflow: hidden;
-            width: 100%;
-            align-items: center;
-            font-size: var(--font-size-large);
-            font-weight: normal;
-            color: #495057;
-            margin: 0 0 5px 0;
         }
-        .first-names {
-            margin-right: 5px;
-        }
-        .name {
-            font-size: var(--font-size-large);
-            font-weight: normal;
-            color: #495057;
-            margin: 0 0 5px 0;
+        .name-container span {
+            display: inline;
         }
         .title {
             font-size: var(--font-size-base);
@@ -365,7 +356,7 @@
                 cardTitle.textContent = inputTitle.value;
                 cardEmail.textContent = inputEmail.value;
                 cardEmailLink.href = inputEmail.value ? `mailto:${inputEmail.value}` : '#';
-                fitText(document.getElementById('card-first-names'), 2.2);
+                fitText(document.getElementById('card-first-names'));
             }
             function saveToLocalStorage() {
                 localStorage.setItem('user-name', inputName.value);
@@ -419,12 +410,12 @@
                     e.preventDefault();
                 }
             });
-            function fitText(element, maxFontSizeEm) {
-                let fontSize = maxFontSizeEm;
-                element.style.fontSize = `${fontSize}em`;
-                while (element.scrollWidth > element.clientWidth && fontSize > 0.5) {
-                    fontSize -= 0.1;
-                    element.style.fontSize = `${fontSize}em`;
+            function fitText(element) {
+                const parent = element.parentElement;
+                element.style.fontSize = '';
+                while (element.scrollWidth > parent.clientWidth) {
+                    let currentFontSize = parseFloat(window.getComputedStyle(element).fontSize);
+                    element.style.fontSize = `${currentFontSize - 1}px`;
                 }
             }
             freundLogo.onload = () => {
