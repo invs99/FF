@@ -61,6 +61,20 @@
             position: relative;
             box-shadow: none;
         }
+        .name-container {
+            display: flex;
+            white-space: nowrap;
+            overflow: hidden;
+            width: 100%;
+            align-items: center;
+            font-size: var(--font-size-large);
+            font-weight: normal;
+            color: #495057;
+            margin: 0 0 5px 0;
+        }
+        .first-names {
+            margin-right: 5px;
+        }
         .name {
             font-size: var(--font-size-large);
             font-weight: normal;
@@ -272,7 +286,10 @@
     </div>
     <div class="card-container">
         <div class="card-left">
-            <h1 class="name" id="card-name"></h1>
+            <h1 class="name-container">
+                <span class="first-names" id="card-first-names"></span>
+                <span class="last-names" id="card-last-names"></span>
+            </h1>
             <p class="title" id="card-title"></p>
             <div class="contact-group">
                 <div class="contact-item">
@@ -318,7 +335,6 @@
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const cardName = document.getElementById('card-name');
             const cardTitle = document.getElementById('card-title');
             const cardMovil = document.getElementById('card-movil');
             const cardEmail = document.getElementById('card-email');
@@ -335,10 +351,21 @@
             function updateCard() {
                 const movilValue = inputMovil.value.startsWith(mobilePrefix) ? inputMovil.value.substring(mobilePrefix.length).trim() : inputMovil.value;
                 cardMovil.textContent = inputMovil.value ? `${mobilePrefix} ${movilValue}` : '';
-                cardName.textContent = inputName.value;
+                const nameParts = inputName.value.trim().split(' ');
+                let firstNames = '';
+                let lastNames = '';
+                if (nameParts.length > 2) {
+                    firstNames = `${nameParts[0]} ${nameParts[1]}`;
+                    lastNames = nameParts.slice(2).join(' ');
+                } else {
+                    firstNames = nameParts.join(' ');
+                }
+                document.getElementById('card-first-names').textContent = firstNames;
+                document.getElementById('card-last-names').textContent = lastNames;
                 cardTitle.textContent = inputTitle.value;
                 cardEmail.textContent = inputEmail.value;
                 cardEmailLink.href = inputEmail.value ? `mailto:${inputEmail.value}` : '#';
+                fitText(document.getElementById('card-first-names'), 2.2);
             }
             function saveToLocalStorage() {
                 localStorage.setItem('user-name', inputName.value);
@@ -392,6 +419,14 @@
                     e.preventDefault();
                 }
             });
+            function fitText(element, maxFontSizeEm) {
+                let fontSize = maxFontSizeEm;
+                element.style.fontSize = `${fontSize}em`;
+                while (element.scrollWidth > element.clientWidth && fontSize > 0.5) {
+                    fontSize -= 0.1;
+                    element.style.fontSize = `${fontSize}em`;
+                }
+            }
             freundLogo.onload = () => {
                 downloadImageButton.disabled = false;
                 downloadImageButton.classList.add('enabled');
