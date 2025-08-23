@@ -4,37 +4,6 @@
 
 
 
- <style>
-        /* ... Tu CSS ... */
-        .home-button {
-            position: fixed;
-            top: 20px;
-            left: 25px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 8px 12px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-transform: uppercase;
-            text-decoration: none;
-            transition: background-color 0.3s;
-            z-index: 1000;
-            -webkit-transform: translate3d(0, 0, 0);
-        }
-
-        .home-button:hover {
-            background-color: #217dbb;
-        }
-    </style>
-
-
-
-
-
-
     
     <a href="index.html" class="home-button">Inicio</a>
     <meta charset="UTF-8" />
@@ -58,6 +27,49 @@
     </script>
     <style>
 
+
+
+
+.home-button {
+    position: sticky; /* Cambiado a sticky para un anclaje más fiable */
+    top: 20px;       /* Se pegará a 20px de la parte superior */
+    left: 25px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background-color 0.3s;
+    z-index: 1000;
+}
+.home-button:hover {
+    background-color: #217dbb;
+}
+
+.header-logo {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    position: relative; /* Esencial para que sticky funcione dentro del contenedor */
+    width: 100%;
+    margin-bottom: 20px; /* Espacio entre el encabezado y el contenido */
+}
+.header-logo .logo {
+    margin-left: auto; /* Empuja el logo a la derecha si es necesario */
+    margin-right: 25px; /* Espacio para que el botón no lo toque */
+}
+
+
+
+
+
+
+     
 
         
         /* Estilos específicos para el canvas de la firma */
@@ -576,6 +588,7 @@
     </script>
 </body>
 </html>
+
 
 
 
