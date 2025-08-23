@@ -61,16 +61,11 @@
             position: relative;
             box-shadow: none;
         }
-        .name-container {
+        .name {
             font-size: var(--font-size-large);
             font-weight: normal;
             color: #495057;
             margin: 0 0 5px 0;
-            white-space: nowrap;
-            overflow: hidden;
-        }
-        .name-container span {
-            display: inline;
         }
         .title {
             font-size: var(--font-size-base);
@@ -259,28 +254,25 @@
         <h3>Editar Datos de la Tarjeta</h3>
         <div class="form-group">
             <label for="input-name">Nombre:</label>
-            <input type="text" id="input-name" placeholder="Jonathan Navas">
+            <input type="text" id="input-name" placeholder="Alberto Martínez">
         </div>
         <div class="form-group">
             <label for="input-title">Cargo:</label>
-            <input type="text" id="input-title" placeholder="Soporte Tecnico">
+            <input type="text" id="input-title" placeholder="Representante de ventas">
         </div>
         <div class="form-group">
             <label for="input-movil">Móvil:</label>
-            <input type="text" id="input-movil" placeholder="(503) 7567-1150">
+            <input type="text" id="input-movil" placeholder="(503) 7839-0032">
         </div>
         <div class="form-group">
             <label for="input-email">E-mail:</label>
-            <input type="email" id="input-email" placeholder="jonathann@freundsa.com">
+            <input type="email" id="input-email" placeholder="albertomg@freundsa.com">
         </div>
         <div class="button-group"></div>
     </div>
     <div class="card-container">
         <div class="card-left">
-            <h1 class="name-container">
-                <span class="first-names" id="card-first-names"></span>
-                <span class="last-names" id="card-last-names"></span>
-            </h1>
+            <h1 class="name" id="card-name"></h1>
             <p class="title" id="card-title"></p>
             <div class="contact-group">
                 <div class="contact-item">
@@ -326,6 +318,7 @@
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const cardName = document.getElementById('card-name');
             const cardTitle = document.getElementById('card-title');
             const cardMovil = document.getElementById('card-movil');
             const cardEmail = document.getElementById('card-email');
@@ -342,21 +335,10 @@
             function updateCard() {
                 const movilValue = inputMovil.value.startsWith(mobilePrefix) ? inputMovil.value.substring(mobilePrefix.length).trim() : inputMovil.value;
                 cardMovil.textContent = inputMovil.value ? `${mobilePrefix} ${movilValue}` : '';
-                const nameParts = inputName.value.trim().split(' ');
-                let firstNames = '';
-                let lastNames = '';
-                if (nameParts.length > 2) {
-                    firstNames = `${nameParts[0]} ${nameParts[1]}`;
-                    lastNames = nameParts.slice(2).join(' ');
-                } else {
-                    firstNames = nameParts.join(' ');
-                }
-                document.getElementById('card-first-names').textContent = firstNames;
-                document.getElementById('card-last-names').textContent = lastNames;
+                cardName.textContent = inputName.value;
                 cardTitle.textContent = inputTitle.value;
                 cardEmail.textContent = inputEmail.value;
                 cardEmailLink.href = inputEmail.value ? `mailto:${inputEmail.value}` : '#';
-                fitText(document.getElementById('card-first-names'));
             }
             function saveToLocalStorage() {
                 localStorage.setItem('user-name', inputName.value);
@@ -410,14 +392,6 @@
                     e.preventDefault();
                 }
             });
-            function fitText(element) {
-                const parent = element.parentElement;
-                element.style.fontSize = '';
-                while (element.scrollWidth > parent.clientWidth) {
-                    let currentFontSize = parseFloat(window.getComputedStyle(element).fontSize);
-                    element.style.fontSize = `${currentFontSize - 1}px`;
-                }
-            }
             freundLogo.onload = () => {
                 downloadImageButton.disabled = false;
                 downloadImageButton.classList.add('enabled');
