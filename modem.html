@@ -35,9 +35,13 @@
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
-    text-transform: uppercase;
     text-decoration: none;
     transition: background-color 0.3s;
+    /* --- Posicionamiento fijo para que no se mueva --- */
+    position: fixed;
+    top: 20px; /* Distancia desde la parte superior de la ventana */
+    left: 20px; /* Distancia desde la izquierda de la ventana */
+    z-index: 1000;
 }
 
 .home-button:hover {
@@ -565,6 +569,7 @@
     </script>
 </body>
 </html>
+
 
 
 
