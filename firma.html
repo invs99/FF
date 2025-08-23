@@ -507,16 +507,21 @@
                 };
             }
 
-            // --- Modificación para asegurar un tamaño fijo de 700x300px ---
             if (downloadImageButton && cardContainer) {
                 downloadImageButton.addEventListener('click', () => {
-                    // Crea un clon temporal del elemento para capturarlo sin las transformaciones CSS.
                     const cardClone = cardContainer.cloneNode(true);
                     cardClone.style.transform = 'none';
                     cardClone.style.width = '700px';
                     cardClone.style.height = '300px';
                     cardClone.style.position = 'absolute';
                     cardClone.style.top = '-9999px';
+
+                    // Corrección para asegurar el fondo blanco
+                    const cardLeftClone = cardClone.querySelector('.card-left');
+                    if (cardLeftClone) {
+                        cardLeftClone.style.backgroundColor = '#fff';
+                    }
+
                     document.body.appendChild(cardClone);
 
                     html2canvas(cardClone, {
@@ -524,13 +529,13 @@
                         logging: false,
                         scale: 1
                     }).then(canvas => {
-                        document.body.removeChild(cardClone); // Elimina el clon después de la captura
+                        document.body.removeChild(cardClone);
                         const link = document.createElement('a');
                         link.download = 'tarjeta_freund.png';
                         link.href = canvas.toDataURL('image/png');
                         link.click();
                     }).catch(err => {
-                        document.body.removeChild(cardClone); // Elimina el clon en caso de error
+                        document.body.removeChild(cardClone);
                         console.error('Error al generar imagen:', err);
                         alert('Hubo un error al generar la imagen.');
                     });
@@ -541,7 +546,6 @@
                 newSignatureButton.addEventListener('click', resetFields);
             }
             
-            // Cargar datos guardados si existen al iniciar
             loadFromLocalStorage();
         });
     </script>
