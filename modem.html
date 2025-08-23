@@ -26,7 +26,7 @@
         
 
 .home-button {
-    position: fixed; /* Cambiado a fixed para que se quede en la ventana */
+    position: fixed;
     top: 20px;
     left: 25px;
     background-color: #3498db;
@@ -40,13 +40,14 @@
     text-transform: uppercase;
     text-decoration: none;
     transition: background-color 0.3s;
-    z-index: 1000; /* Añadido un z-index alto para que esté encima de todo */
+    z-index: 1000;
+    -webkit-transform: translate3d(0, 0, 0); /* Mejora la estabilidad en iOS */
+    -webkit-overflow-scrolling: touch; /* Habilita el desplazamiento nativo de iOS */
 }
 
 .home-button:hover {
     background-color: #217dbb;
 }
-
 
 
 
@@ -571,6 +572,7 @@
     </script>
 </body>
 </html>
+
 
 
 
