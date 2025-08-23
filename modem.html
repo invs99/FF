@@ -25,8 +25,8 @@
 
         
 
-       .home-button {
-    position: absolute;
+.home-button {
+    position: fixed; /* Cambiado a fixed para que se quede en la ventana */
     top: 15px;
     left: 15px;
     background-color: #3498db;
@@ -40,6 +40,7 @@
     text-transform: uppercase;
     text-decoration: none;
     transition: background-color 0.3s;
+    z-index: 1000; /* Añadido un z-index alto para que esté encima de todo */
 }
 
 .home-button:hover {
@@ -570,6 +571,7 @@
     </script>
 </body>
 </html>
+
 
 
 
