@@ -4,9 +4,7 @@
     <meta charset="UTF-8" />
     <title>Conversor de Imágenes a PDF</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Hoja de estilos -->
     <style>
-        /* --- Estilos generales (tomados de tu archivo original) --- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #eaeaea;
@@ -46,7 +44,6 @@
             object-fit: contain;
         }
 
-        /* --- Estilos específicos para la nueva aplicación --- */
         #drop-area {
             border: 2px dashed #007BFF;
             border-radius: 10px;
@@ -201,42 +198,56 @@
             border-radius: 5px;
             cursor: pointer;
         }
+        .home-button {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        .home-button:hover {
+            background-color: #217dbb;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
+        <a href="index.html" class="home-button">Inicio</a>
         <img src="https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png" alt="Logo Freund" class="logo" />
         <h1>Convertidor de Imágenes a PDF</h1>
 
-        <!-- Área para arrastrar y soltar archivos -->
         <div id="drop-area">
             <p>Arrastra y suelta imágenes aquí, o haz clic para seleccionar.</p>
             <input type="file" id="fileElem" multiple accept="image/jpeg, image/png" style="display: none;">
         </div>
 
-        <!-- Contenedor para previsualizar las imágenes -->
         <div id="image-preview-container"></div>
         
-        <!-- Botón para generar el PDF -->
         <button id="convert-btn" disabled>Convertir a PDF</button>
 
         <div class="footer-text">Powered by Jonathann</div>
     </div>
 
-    <!-- Indicador de carga -->
     <div id="loadingOverlay">
         <div class="spinner"></div>
         <p>Generando PDF...</p>
     </div>
 
-    <!-- Mensaje de alerta personalizado -->
     <div id="message-box" style="display:none;">
         <div id="message-box-content"></div>
         <button onclick="document.getElementById('message-box').style.display='none';">OK</button>
     </div>
 
-    <!-- Librería jsPDF para la generación de PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         const { jsPDF } = window.jspdf;
@@ -251,14 +262,12 @@
 
         let files = [];
 
-        // Función para mostrar mensajes personalizados
         const showMessage = (message) => {
             messageBoxContent.textContent = message;
             messageBox.style.display = 'block';
         };
 
-        // Previene el comportamiento por defecto del navegador para arrastrar y soltar
-        ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropArea.addEventListener(eventName, preventDefaults, false);
         });
 
@@ -267,16 +276,14 @@
             e.stopPropagation();
         }
 
-        // Resalta el área de soltar al arrastrar archivos sobre ella
-        ;['dragenter', 'dragover'].forEach(eventName => {
+        ['dragenter', 'dragover'].forEach(eventName => {
             dropArea.addEventListener(eventName, () => dropArea.classList.add('highlight'), false);
         });
 
-        ;['dragleave', 'drop'].forEach(eventName => {
+        ['dragleave', 'drop'].forEach(eventName => {
             dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight'), false);
         });
 
-        // Maneja la acción de soltar archivos
         dropArea.addEventListener('drop', handleDrop, false);
         function handleDrop(e) {
             const dt = e.dataTransfer;
@@ -284,7 +291,6 @@
             processFiles(newFiles);
         }
 
-        // Abre el explorador de archivos al hacer clic en el área de soltar
         dropArea.addEventListener('click', () => fileInput.click(), false);
         fileInput.addEventListener('change', (e) => {
             processFiles(Array.from(e.target.files));
@@ -333,7 +339,6 @@
             convertBtn.disabled = files.length === 0;
         }
 
-        // Función para convertir a PDF
         convertBtn.addEventListener('click', async () => {
             if (files.length === 0) {
                 showMessage('Por favor, agrega al menos una imagen para convertir.');
@@ -348,19 +353,16 @@
                 const pageHeight = doc.internal.pageSize.getHeight();
                 const margin = 10;
                 
-                // Pre-carga el logo para no tener que hacerlo en cada iteración
                 const logoUrl = "https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png";
                 const logoImg = new Image();
                 logoImg.src = logoUrl;
                 await new Promise(resolve => logoImg.onload = resolve);
 
-                // Define las dimensiones y posición del logo
-                const logoWidth = 20; // 20 mm de ancho
-                const logoHeight = (logoImg.height * logoWidth) / logoImg.width; // Mantiene el aspecto
+                const logoWidth = 20;
+                const logoHeight = (logoImg.height * logoWidth) / logoImg.width;
                 const logoX = pageWidth - logoWidth - margin;
                 const logoY = pageHeight - logoHeight - margin;
 
-                // Mantiene el orden de las imágenes tal como se previsualizan
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
                     if (i > 0) {
@@ -380,18 +382,15 @@
                     const imgWidth = img.width;
                     const imgHeight = img.height;
 
-                    // Escala la imagen para que se ajuste a la página manteniendo el aspecto
                     const ratio = Math.min((pageWidth - margin * 2) / imgWidth, (pageHeight - margin * 2) / imgHeight);
                     const scaledWidth = imgWidth * ratio;
                     const scaledHeight = imgHeight * ratio;
 
-                    // Centra la imagen en la página
                     const x = (pageWidth - scaledWidth) / 2;
                     const y = (pageHeight - scaledHeight) / 2;
                     
                     doc.addImage(imgData, 'JPEG', x, y, scaledWidth, scaledHeight, '', 'FAST');
 
-                    // Añade el logo en la esquina inferior derecha
                     doc.addImage(logoImg, 'PNG', logoX, logoY, logoWidth, logoHeight);
                 }
 
@@ -399,7 +398,6 @@
                 loadingOverlay.style.display = 'none';
                 showMessage('PDF generado con éxito.');
                 
-                // Reinicia la aplicación después de guardar
                 files = [];
                 renderPreviews();
                 updateConvertButtonState();
