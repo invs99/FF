@@ -168,6 +168,7 @@
             margin-top: 0;
             border-bottom: 1px solid #ccc;
             padding-bottom: 10px;
+            text-align: center;
         }
         .form-group {
             display: flex;
@@ -177,6 +178,24 @@
         .form-group label {
             font-weight: bold;
             color: #333;
+        }
+        .email-input-container {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            overflow: hidden;
+            background-color: #fff;
+        }
+        .email-input-container input {
+            border: none;
+            padding: 8px;
+            flex: 1;
+            outline: none;
+        }
+        .email-input-container .fixed-domain {
+            padding: 8px;
+            color: #6c757d;
         }
         .form-group input {
             padding: 8px;
@@ -349,8 +368,11 @@
             <input type="text" id="input-movil" placeholder="(503) 7567-1150">
         </div>
         <div class="form-group">
-            <label for="input-email">E-mail:</label>
-            <input type="email" id="input-email" placeholder="jonathann@freundsa.com">
+            <label for="input-email-username">E-mail:</label>
+            <div class="email-input-container">
+                <input type="text" id="input-email-username" placeholder="usuario">
+                <span class="fixed-domain">@freundsa.com</span>
+            </div>
         </div>
         <div class="button-group"></div>
     </div>
@@ -413,41 +435,45 @@
             const inputName = document.getElementById('input-name');
             const inputTitle = document.getElementById('input-title');
             const inputMovil = document.getElementById('input-movil');
-            const inputEmail = document.getElementById('input-email');
+            const inputEmailUsername = document.getElementById('input-email-username');
 
             const downloadImageButton = document.getElementById('downloadImage');
             const newSignatureButton = document.getElementById('newSignature');
             const cardContainer = document.querySelector('.card-container');
             const freundLogo = document.getElementById('freund-logo');
-
-            const mobilePrefix = "(503)";
             
+            const mobilePrefix = "(503)";
+            const fixedEmailDomain = '@freundsa.com';
+
             function updateCard() {
                 const movilValue = inputMovil.value.startsWith(mobilePrefix) ? inputMovil.value.substring(mobilePrefix.length).trim() : inputMovil.value;
                 cardMovil.textContent = inputMovil.value ? `${mobilePrefix} ${movilValue}` : '';
+                
+                const fullEmail = inputEmailUsername.value + fixedEmailDomain;
+                
                 cardName.textContent = inputName.value;
                 cardTitle.textContent = inputTitle.value;
-                cardEmail.textContent = inputEmail.value;
-                cardEmailLink.href = inputEmail.value ? `mailto:${inputEmail.value}` : '#';
+                cardEmail.textContent = fullEmail;
+                cardEmailLink.href = `mailto:${fullEmail}`;
             }
 
             function saveToLocalStorage() {
                 localStorage.setItem('user-name', inputName.value);
                 localStorage.setItem('user-title', inputTitle.value);
                 localStorage.setItem('user-movil', inputMovil.value);
-                localStorage.setItem('user-email', inputEmail.value);
+                localStorage.setItem('user-email-username', inputEmailUsername.value);
             }
 
             function loadFromLocalStorage() {
                 const savedName = localStorage.getItem('user-name');
                 const savedTitle = localStorage.getItem('user-title');
                 const savedMovil = localStorage.getItem('user-movil');
-                const savedEmail = localStorage.getItem('user-email');
+                const savedEmailUsername = localStorage.getItem('user-email-username');
 
                 if (savedName) inputName.value = savedName;
                 if (savedTitle) inputTitle.value = savedTitle;
                 if (savedMovil) inputMovil.value = savedMovil;
-                if (savedEmail) inputEmail.value = savedEmail;
+                if (savedEmailUsername) inputEmailUsername.value = savedEmailUsername;
                 
                 updateCard();
             }
@@ -456,7 +482,7 @@
                 inputName.value = "";
                 inputTitle.value = "";
                 inputMovil.value = "";
-                inputEmail.value = "";
+                inputEmailUsername.value = "";
                 localStorage.clear();
                 updateCard();
             }
@@ -476,12 +502,18 @@
                 updateCard();
             }
             
-            const inputs = document.querySelectorAll('#input-name, #input-title, #input-movil, #input-email');
+            const inputs = document.querySelectorAll('#input-name, #input-title, #input-movil');
             inputs.forEach(input => {
                 input.addEventListener('input', () => {
                     updateCard();
                     saveToLocalStorage();
                 });
+            });
+
+            // Event listener para el nuevo campo de email
+            inputEmailUsername.addEventListener('input', () => {
+                updateCard();
+                saveToLocalStorage();
             });
 
             inputMovil.addEventListener('focus', handleMobileInput);
@@ -530,8 +562,7 @@
                     }).then(canvas => {
                         document.body.removeChild(cardClone);
                         const link = document.createElement('a');
-
-                       
+                        
                         const name = inputName.value.trim();
                         const fileName = name ? `Tarjeta_${name.replace(/\s+/g, '_')}.png` : 'tarjeta_freund.png';
                         link.download = fileName;
