@@ -62,22 +62,15 @@
             box-shadow: none;
         }
         .name-container {
-            display: flex;
-            flex-wrap: nowrap;
-            overflow: hidden;
-            width: 100%;
-            align-items: center;
             font-size: var(--font-size-large);
             font-weight: normal;
             color: #495057;
             margin: 0 0 5px 0;
-        }
-        .first-names {
-            margin-right: 5px;
             white-space: nowrap;
+            overflow: hidden;
         }
-        .last-names {
-            white-space: nowrap;
+        .name-container span {
+            display: inline;
         }
         .title {
             font-size: var(--font-size-base);
@@ -266,19 +259,19 @@
         <h3>Editar Datos de la Tarjeta</h3>
         <div class="form-group">
             <label for="input-name">Nombre:</label>
-            <input type="text" id="input-name" placeholder="Alberto Martínez">
+            <input type="text" id="input-name" placeholder="Jonathan Navas">
         </div>
         <div class="form-group">
             <label for="input-title">Cargo:</label>
-            <input type="text" id="input-title" placeholder="Representante de ventas">
+            <input type="text" id="input-title" placeholder="Soporte Tecnico">
         </div>
         <div class="form-group">
             <label for="input-movil">Móvil:</label>
-            <input type="text" id="input-movil" placeholder="(503) 7839-0032">
+            <input type="text" id="input-movil" placeholder="(503) 7567-1150">
         </div>
         <div class="form-group">
             <label for="input-email">E-mail:</label>
-            <input type="email" id="input-email" placeholder="albertomg@freundsa.com">
+            <input type="email" id="input-email" placeholder="jonathann@freundsa.com">
         </div>
         <div class="button-group"></div>
     </div>
@@ -363,7 +356,7 @@
                 cardTitle.textContent = inputTitle.value;
                 cardEmail.textContent = inputEmail.value;
                 cardEmailLink.href = inputEmail.value ? `mailto:${inputEmail.value}` : '#';
-                fitText(document.getElementById('card-first-names'), 2.2);
+                fitText(document.getElementById('card-first-names'));
             }
             function saveToLocalStorage() {
                 localStorage.setItem('user-name', inputName.value);
@@ -417,12 +410,12 @@
                     e.preventDefault();
                 }
             });
-            function fitText(element, maxFontSizeEm) {
-                let fontSize = maxFontSizeEm;
-                element.style.fontSize = `${fontSize}em`;
-                while (element.scrollWidth > element.clientWidth && fontSize > 0.5) {
-                    fontSize -= 0.1;
-                    element.style.fontSize = `${fontSize}em`;
+            function fitText(element) {
+                const parent = element.parentElement;
+                element.style.fontSize = '';
+                while (element.scrollWidth > parent.clientWidth) {
+                    let currentFontSize = parseFloat(window.getComputedStyle(element).fontSize);
+                    element.style.fontSize = `${currentFontSize - 1}px`;
                 }
             }
             freundLogo.onload = () => {
