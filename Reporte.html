@@ -45,6 +45,15 @@
             justify-content: center;
             padding-top: 10px;
         }
+        /* Estilos para Drag and Drop */
+        .drag-drop-area {
+            border: 2px dashed #9ca3af;
+            border-radius: 0.375rem;
+            transition: border-color 0.15s ease-in-out;
+        }
+        .drag-drop-area.drag-over {
+            border-color: #3b82f6; /* Blue 500 */
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-start min-h-screen p-4 font-sans">
@@ -130,17 +139,14 @@
 
             <div class="space-y-4 border p-4 rounded-md bg-gray-50">
                 <h2 class="text-lg font-semibold text-gray-700 border-b pb-2 flex justify-between items-center">
-                    Detalle de Evidencia
-                    <button type="button" id="addElementButton" class="bg-blue-500 text-white text-sm font-medium py-1 px-3 rounded-md hover:bg-blue-600 transition">
-                        + Añadir Otra Página
-                    </button>
+                    Detalle de Reporte
                 </h2>
                 <div id="reportElementsContainer" class="space-y-6">
-                    </div>
+                </div>
             </div>
 
             <div class="space-y-4 border p-4 rounded-md bg-gray-50">
-                <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Firma del Reporteador</h2>
+                <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Firma</h2>
                 <div class="mt-6">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Firma Digital</label>
                     <div id="signatureCanvasContainer_reporte" class="border rounded-md p-1 relative w-full h-auto">
@@ -171,14 +177,14 @@
 
     <script>
         // --- DATA MANAGEMENT & DYNAMIC ELEMENTS ---
-        let reportElements = []; // Stores objects: { id, description, image, details } // NEW: 'details' field added
+        let reportElements = [];
+        // Stores objects: { id, description, image, details }
         let elementCounter = 0;
         let currentElementIdForCamera = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             loadFormData();
         });
-
         // --- CAMERA LOGIC ---
         const cameraModal = document.getElementById('cameraModal');
         const cameraVideo = document.getElementById('cameraVideo');
@@ -254,7 +260,6 @@
         });
 
         cancelCameraButton.addEventListener('click', closeCameraModal);
-
         confirmImageButton.addEventListener('click', () => {
             if (capturedImage && currentElementIdForCamera) {
                 const elementDiv = document.getElementById(currentElementIdForCamera);
@@ -288,10 +293,9 @@
             const newElement = document.createElement('div');
             newElement.id = id;
             newElement.classList.add('p-3', 'border', 'rounded-md', 'bg-white', 'shadow-sm');
-            
             newElement.innerHTML = `
                 <div class="flex justify-between items-center mb-2 border-b pb-2">
-                    <h3 class="font-medium text-gray-700">Página de Evidencia #${elementCounter}</h3>
+                    <h3 class="font-medium text-gray-700">Página #${elementCounter}</h3> 
                     <button type="button" onclick="removeReportElement('${id}')" class="text-red-500 hover:text-red-700 text-sm">
                         Eliminar
                     </button>
@@ -301,13 +305,15 @@
                     <input type="text" data-type="description" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" placeholder="Ej: Estado del Rack Principal" value="${elementData.description || ''}">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Foto (Opcional)</label>
-                    <div class="flex space-x-2 mt-1">
-                        <button type="button" data-action="capture" data-element-id="${id}" class="flex-1 flex items-center justify-center py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-yellow-50 hover:bg-yellow-100 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A.5.5 0 0011 3H9a.5.5 0 00-.354.146L7.293 4.586a1 1 0 01-.707.293H4zm7 5a1 1 0 10-2 0 1 1 0 002 0zm-1 3a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
-                            Tomar Foto
-                        </button>
-                        <input type="file" data-type="image" accept="image/*" class="flex-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                    <label class="block text-sm font-medium text-gray-700">Foto (Arrastra o Selecciona)</label>
+                    <div data-dnd-id="${id}" class="drag-drop-area flex flex-col items-center justify-center p-4 mt-1">
+                        <div class="flex space-x-2 w-full">
+                            <button type="button" data-action="capture" data-element-id="${id}" class="flex-1 flex items-center justify-center py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-yellow-50 hover:bg-yellow-100 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A.5.5 0 0011 3H9a.5.5 0 00-.354.146L7.293 4.586a1 1 0 01-.707.293H4zm7 5a1 1 0 10-2 0 1 1 0 002 0zm-1 3a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
+                                Tomar Foto
+                            </button>
+                            <input type="file" data-type="image" accept="image/*" class="flex-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                        </div>
                     </div>
                     <div data-preview-id="${id}" class="mt-2 ${elementData.image ? '' : 'hidden'}">
                         <img src="${elementData.image || ''}" class="w-32 h-32 object-cover rounded-md border p-1" alt="Preview"/>
@@ -316,6 +322,11 @@
                 <div class="mt-3">
                     <label class="block text-sm font-medium text-gray-700">Detalles Adicionales de la Foto</label>
                     <textarea data-type="details" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" placeholder="Observaciones, valores o comentarios específicos sobre la imagen subida.">${elementData.details || ''}</textarea>
+                </div>
+                <div class="pt-3 border-t mt-3">
+                    <button type="button" onclick="addReportElement()" class="w-full bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-md hover:bg-blue-700 transition">
+                        + Añadir Otra Página
+                    </button>
                 </div>
             `;
             
@@ -326,22 +337,62 @@
                 id: id, 
                 description: elementData.description || '', 
                 image: elementData.image || '',
-                details: elementData.details || '' // NEW: details field added
+                details: elementData.details || '' 
             };
             reportElements.push(newElementObject);
-
             // Add event listeners for the new element's inputs
             const descInput = newElement.querySelector('input[data-type="description"]');
-            const detailsInput = newElement.querySelector('textarea[data-type="details"]'); // NEW: listener for details
+            const detailsInput = newElement.querySelector('textarea[data-type="details"]'); 
             const imageInput = newElement.querySelector('input[data-type="image"]');
             const captureButton = newElement.querySelector('button[data-action="capture"]');
+            const dndArea = newElement.querySelector(`[data-dnd-id="${id}"]`);
+
+            // --- Drag and Drop Logic ---
+            const handleDrop = (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                dndArea.classList.remove('drag-over');
+
+                const files = event.dataTransfer.files;
+                if (files.length > 0 && files[0].type.startsWith('image/')) {
+                    const file = files[0];
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const element = reportElements.find(e => e.id === id);
+                        if (element) {
+                            element.image = e.target.result;
+                            const previewDiv = newElement.querySelector(`[data-preview-id="${id}"]`);
+                            previewDiv.classList.remove('hidden');
+                            previewDiv.querySelector('img').src = e.target.result;
+                            // Clear file input value to reflect new image source
+                            imageInput.value = '';
+                            saveFormData();
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
             
+            dndArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dndArea.classList.add('drag-over');
+            });
+            dndArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dndArea.classList.remove('drag-over');
+            });
+            dndArea.addEventListener('drop', handleDrop);
+            // --- End Drag and Drop Logic ---
+
             // Listener para el botón de cámara
             captureButton.addEventListener('click', (event) => {
                 const elementId = event.currentTarget.getAttribute('data-element-id');
                 openCamera(elementId);
             });
-
+            
+            // Listener for Description
             descInput.addEventListener('input', () => {
                 const element = reportElements.find(e => e.id === id);
                 if (element) {
@@ -349,8 +400,7 @@
                     saveFormData();
                 }
             });
-
-            // NEW: Listener for Details
+            // Listener for Details
             detailsInput.addEventListener('input', () => {
                 const element = reportElements.find(e => e.id === id);
                 if (element) {
@@ -358,7 +408,6 @@
                     saveFormData();
                 }
             });
-
             imageInput.addEventListener('change', (event) => {
                 const file = event.target.files[0];
                 if (file) {
@@ -385,7 +434,6 @@
                     }
                 }
             });
-
             saveFormData();
         }
 
@@ -399,15 +447,12 @@
             elementCounter = 0;
             document.getElementById('reportElementsContainer').innerHTML = '';
             savedReportElements.forEach(el => addReportElement(el));
-            
             // If all elements were removed, add a blank one back
             if (reportElements.length === 0) {
                 addReportElement();
             }
             saveFormData();
         }
-
-        document.getElementById('addElementButton').addEventListener('click', () => addReportElement());
 
         // --- COMMON FUNCTIONS ---
         function showMessage(message, type = 'success') {
@@ -431,7 +476,6 @@
         let lastX = 0;
         let lastY = 0;
         let hasSigned = false;
-
         function drawPlaceholder() {
             if (!hasSigned) {
                 ctx.save();
@@ -474,7 +518,6 @@
 
         document.addEventListener('DOMContentLoaded', resizeCanvas);
         window.addEventListener('resize', resizeCanvas);
-
         function draw(e) {
             if (!isDrawing) return;
             if (!hasSigned) {
@@ -515,7 +558,6 @@
 
         // --- FORM AND STORAGE LOGIC ---
         const form = document.getElementById('documentForm_reporte');
-
         function saveFormData() {
             const formData = new FormData(form);
             const data = {};
@@ -529,7 +571,6 @@
             }
             
             data.reportElements = reportElements;
-
             localStorage.setItem('documentFormData_reporte_simple', JSON.stringify(data));
         }
 
@@ -574,7 +615,45 @@
         form.addEventListener('input', saveFormData);
         window.addEventListener('load', loadFormData);
 
-        // --- PDF GENERATION LOGIC ---
+        // MODIFICACIÓN CRÍTICA: FUNCIÓN para dibujar la firma ALINEADA AL FONDO
+        async function addSignatureSection(doc, data, pageHeight, margin, canvas, hasSigned) {
+            // Total fixed height for the signature section (Title, Image space, Line, Name) ~40 units
+            const signatureBlockHeight = 40; 
+            
+            // Calcula la coordenada Y inicial para que el bloque quede pegado al margen inferior
+            let currentY = pageHeight - margin - signatureBlockHeight; 
+            
+            // 1. FIRMA Title
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('FIRMA', margin, currentY); 
+            currentY += 5; // Espacio después del título
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(12);
+            
+            const signatureData = canvas.toDataURL('image/png');
+            const signatureImageHeight = 20;
+            const signatureWidth = 60;
+
+            // 2. Signature Image/Box
+            if (hasSigned) {
+                const signatureX = margin + 10; 
+                doc.addImage(signatureData, 'PNG', signatureX, currentY, signatureWidth, signatureImageHeight);
+            }
+            currentY += signatureImageHeight + 2;
+            
+            // 3. Signature Line
+            doc.line(margin + 10, currentY, margin + 10 + signatureWidth, currentY); 
+            currentY += 5; 
+            
+            // 4. Name
+            const tecnicoName = data.nombre_tecnico;
+            const tecnicoText = "Nombre: " + tecnicoName;
+            doc.text(tecnicoText, margin + 10, currentY); 
+        }
+
+        // --- PDF GENERATION LOGIC (FINAL MODIFICADO) ---
         document.getElementById('documentForm_reporte').addEventListener('submit', async function(e) {
             e.preventDefault();
             const loadingOverlay = document.getElementById('loadingOverlay');
@@ -586,18 +665,24 @@
                 const formData = new FormData(e.target);
                 const data = Object.fromEntries(formData.entries());
                 
-                const reportElementsData = reportElements.filter(el => el.description || el.image || el.details); // Filter elements that have content
+                // Filtrar elementos de reporte que tengan contenido
+                const reportElementsData = reportElements.filter(el => el.description || el.image || el.details); 
+
+                // El total de páginas es N (Evidencias)
                 const totalElements = reportElementsData.length;
+                let totalPages = totalElements === 0 ? 1 : totalElements; 
+                
                 let y = 15;
                 const margin = 15;
                 const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight(); 
                 const logoHeight = 17;
                 const logoWidth = 34;
                 const logoUrl = 'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
                 const reportDate = new Date().toLocaleDateString();
 
                 // Function to add Header and Footer
-                async function addHeader(doc, y, pageNum, totalPages) {
+                async function addHeader(doc, pageNum, finalTotalPages) {
                     const headerY = 15;
                     const headerX = pageWidth - margin;
 
@@ -628,84 +713,46 @@
                     doc.setFontSize(16);
                     doc.setFont('helvetica', 'bold');
                     doc.text(data.nombre_reporte.toUpperCase() || 'REPORTE DE EVIDENCIA', pageWidth / 2, titleY, { align: 'center' });
-
-                    y = headerY + Math.max(logoHeight, 15) + 10;
-                    doc.line(margin, y, pageWidth - margin, y);
-                    y += 8;
+                    
+                    let currentY = headerY + Math.max(logoHeight, 15) + 10;
+                    doc.line(margin, currentY, pageWidth - margin, currentY);
+                    currentY += 8;
                     
                     doc.setFontSize(10);
                     doc.setFont('helvetica', 'normal');
-                    const finalTotalPages = 1 + totalElements;
-                    doc.text(`Página ${pageNum} de ${finalTotalPages}`, pageWidth - margin, y - 2, null, null, 'right');
-
-                    return y;
+                    doc.text(`Página ${pageNum} de ${finalTotalPages}`, pageWidth - margin, currentY - 2, null, null, 'right');
+                    
+                    return currentY;
                 }
 
-                // --- Page 1: Information and Signature ---
-                let totalPages = totalElements > 0 ? totalElements + 1 : 1; 
                 let pageNum = 1;
-                y = await addHeader(doc, y, pageNum, totalPages);
+                
+                // --- Page 1: Information and First Element (if exists) ---
+                y = await addHeader(doc, pageNum, totalPages);
                 
                 doc.setFontSize(12);
                 doc.setFont('helvetica', 'bold');
-                doc.text('I. INFORMACIÓN Y RESUMEN', margin, y);
+                doc.text('INFORMACIÓN Y RESUMEN', margin, y);
                 y += 6;
                 doc.setFont('helvetica', 'normal');
                 doc.text(`Reporte generado por: ${data.nombre_tecnico}`, margin, y);
                 doc.text(`Fecha de Generación: ${reportDate}`, pageWidth / 2, y);
                 y += 10;
                 doc.text(`Asunto del Reporte: ${data.nombre_reporte}`, margin, y);
-                y += 15;
-
-                // --- Signature ---
-                doc.setFont('helvetica', 'bold');
-                doc.text('FIRMA DEL REPORTEADOR', margin, y);
-                y += 5;
-                
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(12);
-                
-                const signatureData = canvas.toDataURL('image/png');
-                const signatureImageHeight = 20; 
-
-                if (hasSigned) {
-                    const signatureWidth = 60;
-                    const signatureImageY = y;
-                    doc.addImage(signatureData, 'PNG', margin + 10, signatureImageY, signatureWidth, signatureImageHeight);
-                    y += signatureImageHeight + 2; 
-                } else {
-                    y += signatureImageHeight + 2;
-                }
-
-                const tecnicoName = data.nombre_tecnico;
-                const tecnicoLabel = "Nombre: ";
-                const tecnicoText = tecnicoLabel + tecnicoName;
-                const tecnicoTextWidth = doc.getStringUnitWidth(tecnicoText) * doc.internal.getFontSize();
-                
-                doc.line(margin, y, margin + (tecnicoTextWidth * 0.4), y);
-                y += 5; 
-                doc.text(tecnicoText, margin, y);
                 y += 10;
-
-
-                // --- Pages 2 to N: Elements (Each on a new page) ---
-                for (let i = 0; i < totalElements; i++) {
-                    const element = reportElementsData[i];
-                    
-                    doc.addPage();
-                    pageNum++;
-                    y = await addHeader(doc, margin, pageNum, totalPages);
-
-                    // Sub-Tema/Descripción como Título de la Evidencia
+                
+                // --- Insert First Evidence Element here (if exists) ---
+                if (totalElements > 0) {
+                    const element = reportElementsData[0];
                     doc.setFont('helvetica', 'bold');
-                    doc.text(`II. EVIDENCIA - ${element.description || 'SIN SUB-TEMA'}`, margin, y);
+                    doc.text(`${element.description || 'SIN SUB-TEMA'}`, margin, y);
                     y += 8;
 
                     doc.setFontSize(11);
                     doc.setFont('helvetica', 'normal');
-                    doc.text(`Página de Detalle #${i + 1}`, margin, y);
+                    doc.text(`Página de Detalle #1`, margin, y);
                     y += 5;
-
+                    
                     // Image
                     if (element.image) {
                         const img = new Image();
@@ -713,46 +760,142 @@
                             img.onload = resolve;
                             img.src = element.image;
                         });
-
+                        
                         const maxImgWidth = pageWidth - (margin * 2);
-                        // Make room for the details text at the bottom
-                        const textLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth);
-                        const textHeight = textLines.length * 5; // Approx height for text (5 units per line)
+                        
+                        // Estimate text height for details text. (Signature no longer affects vertical space)
+                        doc.setFontSize(10);
+                        doc.setFont('helvetica', 'normal');
+                        const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth - 4); 
+                        // Altura del recuadro de detalles = 4 (padding top) + 5 (Detalles Adicionales: text) + 4 (padding) + lines * 5 (line height) + 4 (padding bottom)
+                        const detailsBoxHeight = 4 + 5 + 4 + (detailsLines.length * 5) + 4; 
 
-                        const maxImgHeight = doc.internal.pageSize.getHeight() - y - margin - textHeight - 10; // 10 units buffer
+                        // La firma ya no ocupa espacio vertical aquí, solo el margen inferior.
+                        const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5; // -5 de buffer
                         
                         let imgWidth = img.width;
                         let imgHeight = img.height;
 
-                        if (imgWidth > maxImgWidth) {
-                            imgHeight = (imgHeight * maxImgWidth) / imgWidth;
-                            imgWidth = maxImgWidth;
-                        }
-                        if (imgHeight > maxImgHeight) {
-                            imgWidth = (imgWidth * maxImgHeight) / imgHeight;
-                            imgHeight = maxImgHeight;
+                        // Calculate dimensions to fit and maintain aspect ratio
+                        if (imgWidth > maxImgWidth || imgHeight > maxImgHeight) {
+                            const ratio = Math.min(maxImgWidth / imgWidth, maxImgHeight / imgHeight);
+                            imgWidth = imgWidth * ratio;
+                            imgHeight = imgHeight * ratio;
                         }
                         
-                        doc.addImage(element.image, 'JPEG', margin, y, imgWidth, imgHeight);
+                        // Centrar imagen
+                        const imgX = (pageWidth - imgWidth) / 2;
+
+                        doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight);
                         y += imgHeight + 5; 
                     } else {
                         doc.text('No se adjuntó imagen para este elemento.', margin, y);
                         y += 10;
                     }
 
-                    // NEW: Details Text
+                    // Details Text (Inside Box)
+                    const detailsBoxYStart = y;
+                    const detailsBoxWidth = pageWidth - (margin * 2);
+
                     doc.setFontSize(10);
                     doc.setFont('helvetica', 'bold');
-                    doc.text('Detalles Adicionales:', margin, y);
-                    y += 4;
-                    doc.setFont('helvetica', 'normal');
-                    const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', pageWidth - (margin * 2));
-                    doc.text(detailsLines, margin, y);
-                    y += (detailsLines.length * 5) + 5; // 5 units per line + buffer
+                    // Título dentro del recuadro
+                    doc.text('Detalles Adicionales:', margin + 2, y + 4); // +2 para padding lateral, +4 para padding superior
+                    y += 8;
 
-                    y += 5; // Separator
+                    doc.setFont('helvetica', 'normal');
+                    const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', detailsBoxWidth - 4);
+                    doc.text(detailsLines, margin + 2, y);
+                    y += (detailsLines.length * 5) + 4; // 5 por altura de línea, +4 para padding inferior
+
+                    // Dibujar el recuadro
+                    const finalDetailsBoxHeight = y - detailsBoxYStart;
+                    doc.rect(margin, detailsBoxYStart, detailsBoxWidth, finalDetailsBoxHeight);
+                    y += 5; // Espacio después del recuadro
                 }
 
+                // --- Pages 2 to N: Elements (Remaining elements, each on a new page) ---
+                for (let i = 1; i < totalElements; i++) {
+                    const element = reportElementsData[i];
+                    doc.addPage();
+                    pageNum++;
+                    y = await addHeader(doc, pageNum, totalPages);
+
+                    // Sub-Tema/Descripción como Título de la Evidencia
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(`${element.description || 'SIN SUB-TEMA'}`, margin, y);
+                    y += 8;
+
+                    doc.setFontSize(11);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(`Página de Detalle #${i + 1}`, margin, y);
+                    y += 5;
+                    
+                    // Image (Same logic as first element)
+                    if (element.image) {
+                        const img = new Image();
+                        await new Promise(resolve => {
+                            img.onload = resolve;
+                            img.src = element.image;
+                        });
+                        
+                        const maxImgWidth = pageWidth - (margin * 2);
+                        
+                        // Estimate text height for details text. (Signature no longer affects vertical space)
+                        doc.setFontSize(10);
+                        doc.setFont('helvetica', 'normal');
+                        const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth - 4);
+                        const detailsBoxHeight = 4 + 5 + 4 + (detailsLines.length * 5) + 4;
+
+                        const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5; // -5 de buffer
+                        
+                        let imgWidth = img.width;
+                        let imgHeight = img.height;
+
+                        // Calculate dimensions to fit and maintain aspect ratio
+                        if (imgWidth > maxImgWidth || imgHeight > maxImgHeight) {
+                            const ratio = Math.min(maxImgWidth / imgWidth, maxImgHeight / imgHeight);
+                            imgWidth = imgWidth * ratio;
+                            imgHeight = imgHeight * ratio;
+                        }
+                        
+                        // Centrar imagen
+                        const imgX = (pageWidth - imgWidth) / 2;
+
+                        doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight);
+                        y += imgHeight + 5; 
+                    } else {
+                        doc.text('No se adjuntó imagen para este elemento.', margin, y);
+                        y += 10;
+                    }
+
+                    // Details Text (Inside Box)
+                    const detailsBoxYStart = y;
+                    const detailsBoxWidth = pageWidth - (margin * 2);
+
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'bold');
+                    // Título dentro del recuadro
+                    doc.text('Detalles Adicionales:', margin + 2, y + 4);
+                    y += 8;
+
+                    doc.setFont('helvetica', 'normal');
+                    const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', detailsBoxWidth - 4);
+                    doc.text(detailsLines, margin + 2, y);
+                    y += (detailsLines.length * 5) + 4; // 5 por altura de línea, +4 para padding inferior
+
+                    // Dibujar el recuadro
+                    const finalDetailsBoxHeight = y - detailsBoxYStart;
+                    doc.rect(margin, detailsBoxYStart, detailsBoxWidth, finalDetailsBoxHeight);
+                    y += 5; // Espacio después del recuadro
+                }
+
+                // --- Signature Placement (Always at the bottom of the final page) ---
+                // Nos aseguramos de estar en la última página generada.
+                doc.setPage(totalPages);
+                
+                // Llamamos a la función que dibuja la firma en coordenadas absolutas
+                await addSignatureSection(doc, data, pageHeight, margin, canvas, hasSigned);
 
                 // 7. Finalizar
                 const fileName = data.nombre_reporte.replace(/[^a-z0-9]/gi, '_').substring(0, 30);
@@ -760,23 +903,19 @@
                 
                 loadingOverlay.style.display = 'none';
                 showMessage('Reporte generado con éxito.', 'success');
-
             } catch (error) {
                 console.error('Error al generar el PDF:', error);
                 loadingOverlay.style.display = 'none';
                 showMessage('Error al generar el documento.', 'error');
             }
         });
-
         // --- CLEAR FORM AND SIGNATURE LOGIC ---
         document.getElementById('clearFormButton_reporte').addEventListener('click', function() {
             document.getElementById('confirmationModal_reporte').classList.remove('hidden');
         });
-
         document.getElementById('cancelClearButton_reporte').addEventListener('click', function() {
             document.getElementById('confirmationModal_reporte').classList.add('hidden');
         });
-
         document.getElementById('confirmClearButton_reporte').addEventListener('click', function() {
             document.getElementById('documentForm_reporte').reset();
             
@@ -795,15 +934,12 @@
             showMessage('Formulario limpiado. Listo para un nuevo reporte.', 'success');
             localStorage.removeItem('documentFormData_reporte_simple');
         });
-
         document.getElementById('clearSignatureButton_reporte').addEventListener('click', function() {
             document.getElementById('clearSignatureConfirmationModal_reporte').classList.remove('hidden');
         });
-
         document.getElementById('cancelClearSignatureButton_reporte').addEventListener('click', function() {
             document.getElementById('clearSignatureConfirmationModal_reporte').classList.add('hidden');
         });
-
         document.getElementById('confirmClearSignatureButton_reporte').addEventListener('click', function() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = 'white';
