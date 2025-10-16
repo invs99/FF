@@ -52,7 +52,8 @@
             transition: border-color 0.15s ease-in-out;
         }
         .drag-drop-area.drag-over {
-            border-color: #3b82f6; /* Blue 500 */
+            border-color: #3b82f6;
+            /* Blue 500 */
         }
     </style>
 </head>
@@ -192,7 +193,6 @@
     <script>
         // --- DATA MANAGEMENT & DYNAMIC ELEMENTS ---
         let reportElements = [];
-        // Stores objects: { id, description, image, details }
         let elementCounter = 0;
         let currentElementIdForCamera = null;
 
@@ -200,24 +200,130 @@
             loadFormData();
         });
         
-        // --- EXTRA NOTES LOGIC (NEW) ---
+        // --- IMAGE PROCESSING UTILITIES (EXIF, RESIZE, COMPRESSION) ---
+        
+        function getExifOrientation(file) {
+            return new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const view = new DataView(e.target.result);
+                    if (view.getUint16(0, false) !== 0xFFD8) {
+                        return resolve(-2);
+                    }
+                    const length = view.byteLength;
+                    let offset = 2;
+                    while (offset < length) {
+                        if (view.getUint16(offset + 2, false) <= 8) break;
+                        const marker = view.getUint16(offset, false);
+                        offset += 2;
+                        if (marker === 0xFFE1) {
+                            if (view.getUint32(offset += 4, false) !== 0x45786966) {
+                                return resolve(-1);
+                            }
+                            const little = view.getUint16(offset += 6, false) === 0x4949;
+                            offset += view.getUint32(offset + 4, little);
+                            const tags = view.getUint16(offset, little);
+                            offset += 2;
+                            for (let i = 0; i < tags; i++) {
+                                if (view.getUint16(offset + (i * 12), little) === 0x0112) {
+                                    return resolve(view.getUint16(offset + (i * 12) + 8, little));
+                                }
+                            }
+                        } else if ((marker & 0xFF00) !== 0xFF00) {
+                            break;
+                        } else {
+                            offset += view.getUint16(offset, false);
+                        }
+                    }
+                    return resolve(1);
+                };
+                reader.onerror = () => resolve(1);
+                reader.readAsArrayBuffer(file.slice(0, 65536));
+            });
+        }
+
+        function fixOrientationResizeAndCompress(imageURL, orientation) {
+            return new Promise(resolve => {
+                const img = new Image();
+                img.onload = function() {
+                    const MAX_WIDTH = 1200; 
+                    
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > MAX_WIDTH || height > MAX_WIDTH) {
+                        const scale = MAX_WIDTH / Math.max(width, height);
+                        width = Math.round(width * scale);
+                        height = Math.round(height * scale);
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    if (orientation > 4 && orientation < 9) {
+                        canvas.width = height;
+                        canvas.height = width;
+                    } else {
+                        canvas.width = width;
+                        canvas.height = height;
+                    }
+                    
+                    switch (orientation) {
+                        case 2: ctx.translate(width, 0); ctx.scale(-1, 1); break;
+                        case 3: ctx.translate(width, height); ctx.rotate(Math.PI); break;
+                        case 4: ctx.translate(0, height); ctx.scale(1, -1); break;
+                        case 5: canvas.width = height; canvas.height = width; ctx.rotate(0.5 * Math.PI); ctx.scale(1, -1); break;
+                        case 6: ctx.translate(height, 0); ctx.rotate(0.5 * Math.PI); break;
+                        case 7: canvas.width = height; canvas.height = width; ctx.translate(height, width); ctx.rotate(0.5 * Math.PI); ctx.scale(-1, 1); break;
+                        case 8: ctx.translate(0, width); ctx.rotate(-0.5 * Math.PI); break;
+                    }
+                    
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const newURL = canvas.toDataURL('image/jpeg', 0.7); 
+                    resolve(newURL);
+                };
+                img.src = imageURL;
+            });
+        }
+        
+        async function processUploadedFile(file, elementId) {
+            const element = reportElements.find(e => e.id === elementId);
+            if (!element) return;
+
+            const url = URL.createObjectURL(file);
+            const orientation = await getExifOrientation(file);
+            
+            const processedURL = await fixOrientationResizeAndCompress(url, orientation);
+            
+            element.image = processedURL;
+            const elementDiv = document.getElementById(elementId);
+            const previewDiv = elementDiv.querySelector(`[data-preview-id="${elementId}"]`);
+            
+            previewDiv.classList.remove('hidden');
+            previewDiv.querySelector('img').src = processedURL;
+            
+            const fileInput = elementDiv.querySelector('input[data-type="image"]');
+            if (fileInput) fileInput.value = '';
+
+            URL.revokeObjectURL(url);
+            saveFormData();
+        }
+
+        // --- EXTRA NOTES LOGIC ---
         const extraNotesInput = document.getElementById('extraNotesInput');
         const openExtraNotesButton = document.getElementById('openExtraNotesButton');
         const closeExtraNotesButton = document.getElementById('closeExtraNotesButton');
         const extraNotesModal = document.getElementById('extraNotesModal');
-
         openExtraNotesButton.addEventListener('click', () => {
             extraNotesModal.classList.remove('hidden');
             extraNotesInput.value = localStorage.getItem('extraNotes_reporte_simple') || '';
         });
-
         closeExtraNotesButton.addEventListener('click', () => {
-            // Guarda la nota en localStorage y el formulario
             localStorage.setItem('extraNotes_reporte_simple', extraNotesInput.value);
             extraNotesModal.classList.add('hidden');
             saveFormData(); 
         });
-
 
         // --- CAMERA LOGIC ---
         const cameraModal = document.getElementById('cameraModal');
@@ -236,7 +342,6 @@
             cameraVideo.style.display = 'block';
 
             try {
-                // Request access to the back camera (ideal for mobile)
                 stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: 'environment' }, 
                     audio: false 
@@ -246,7 +351,7 @@
                 cameraModal.classList.remove('hidden');
             } catch (err) {
                 console.error("Error al acceder a la cámara:", err);
-                alert("No se pudo acceder a la cámara. Asegúrate de tener permisos. Si estás en una PC, a veces la cámara no está disponible. Usa la opción 'Seleccionar Archivo'.");
+                alert("No se pudo acceder a la cámara. Asegúrate de tener permisos. Si estás en una PC, usa la opción 'Seleccionar Archivo'.");
                 closeCameraModal();
             }
         }
@@ -271,21 +376,17 @@
 
             cameraCanvas.width = videoWidth;
             cameraCanvas.height = videoHeight;
+           
             const ctx = cameraCanvas.getContext('2d');
-            
-            // Draw the video frame to the canvas
             ctx.drawImage(cameraVideo, 0, 0, videoWidth, videoHeight);
             
-            // Get the image data as Data URL
-            capturedImage = cameraCanvas.toDataURL('image/jpeg', 0.8); // 80% quality
+            capturedImage = cameraCanvas.toDataURL('image/jpeg', 0.8); 
             
-            // Display captured image and hide video feed temporarily
             cameraVideo.style.display = 'none';
-            ctx.clearRect(0, 0, videoWidth, videoHeight);
             
-            // Draw captured image back onto canvas for temporary display in modal
             const img = new Image();
             img.onload = function() {
+                ctx.clearRect(0, 0, videoWidth, videoHeight);
                 ctx.drawImage(img, 0, 0, cameraCanvas.width, cameraCanvas.height);
             };
             img.src = capturedImage;
@@ -294,18 +395,20 @@
         });
 
         cancelCameraButton.addEventListener('click', closeCameraModal);
-        confirmImageButton.addEventListener('click', () => {
+        
+        confirmImageButton.addEventListener('click', async () => {
             if (capturedImage && currentElementIdForCamera) {
+                const processedURL = await fixOrientationResizeAndCompress(capturedImage, 1);
+
                 const elementDiv = document.getElementById(currentElementIdForCamera);
                 if (elementDiv) {
                     const element = reportElements.find(e => e.id === currentElementIdForCamera);
                     if (element) {
-                        element.image = capturedImage;
+                        element.image = processedURL;
                         
-                        // Update the preview
                         const previewDiv = elementDiv.querySelector(`[data-preview-id="${currentElementIdForCamera}"]`);
                         previewDiv.classList.remove('hidden');
-                        previewDiv.querySelector('img').src = capturedImage;
+                        previewDiv.querySelector('img').src = processedURL;
                         
                         const fileInput = elementDiv.querySelector('input[data-type="image"]');
                         if (fileInput) fileInput.value = '';
@@ -336,11 +439,13 @@
                 </div>
                 <div class="mb-3">
                     <label class="block text-sm font-medium text-gray-700">Sub-Tema o Breve Descripción</label>
-                    <input type="text" data-type="description" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" placeholder="Ej: Estado del Rack Principal" value="${elementData.description || ''}">
+                    <input type="text" data-type="description" 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" placeholder="Ej: Estado del Rack Principal" value="${elementData.description || ''}">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Foto (Arrastra o Selecciona)</label>
-                    <div data-dnd-id="${id}" class="drag-drop-area flex flex-col items-center justify-center p-4 mt-1">
+                    <div data-dnd-id="${id}" class="drag-drop-area 
+                        flex flex-col items-center justify-center p-4 mt-1">
                         <div class="flex space-x-2 w-full">
                             <button type="button" data-action="capture" data-element-id="${id}" class="flex-1 flex items-center justify-center py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-yellow-50 hover:bg-yellow-100 transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A.5.5 0 0011 3H9a.5.5 0 00-.354.146L7.293 4.586a1 1 0 01-.707.293H4zm7 5a1 1 0 10-2 0 1 1 0 002 0zm-1 3a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
@@ -365,8 +470,7 @@
             `;
             
             container.appendChild(newElement);
-
-            // Add new element to internal data structure
+            
             const newElementObject = { 
                 id: id, 
                 description: elementData.description || '', 
@@ -374,14 +478,13 @@
                 details: elementData.details || '' 
             };
             reportElements.push(newElementObject);
-            // Add event listeners for the new element's inputs
+            
             const descInput = newElement.querySelector('input[data-type="description"]');
             const detailsInput = newElement.querySelector('textarea[data-type="details"]'); 
             const imageInput = newElement.querySelector('input[data-type="image"]');
             const captureButton = newElement.querySelector('button[data-action="capture"]');
             const dndArea = newElement.querySelector(`[data-dnd-id="${id}"]`);
-
-            // --- Drag and Drop Logic ---
+            
             const handleDrop = (event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -389,24 +492,9 @@
 
                 const files = event.dataTransfer.files;
                 if (files.length > 0 && files[0].type.startsWith('image/')) {
-                    const file = files[0];
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const element = reportElements.find(e => e.id === id);
-                        if (element) {
-                            element.image = e.target.result;
-                            const previewDiv = newElement.querySelector(`[data-preview-id="${id}"]`);
-                            previewDiv.classList.remove('hidden');
-                            previewDiv.querySelector('img').src = e.target.result;
-                            // Clear file input value to reflect new image source
-                            imageInput.value = '';
-                            saveFormData();
-                        }
-                    };
-                    reader.readAsDataURL(file);
+                    processUploadedFile(files[0], id);
                 }
             };
-            
             dndArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -418,15 +506,12 @@
                 dndArea.classList.remove('drag-over');
             });
             dndArea.addEventListener('drop', handleDrop);
-            // --- End Drag and Drop Logic ---
 
-            // Listener para el botón de cámara
             captureButton.addEventListener('click', (event) => {
                 const elementId = event.currentTarget.getAttribute('data-element-id');
                 openCamera(elementId);
             });
             
-            // Listener for Description
             descInput.addEventListener('input', () => {
                 const element = reportElements.find(e => e.id === id);
                 if (element) {
@@ -434,7 +519,7 @@
                     saveFormData();
                 }
             });
-            // Listener for Details
+            
             detailsInput.addEventListener('input', () => {
                 const element = reportElements.find(e => e.id === id);
                 if (element) {
@@ -442,21 +527,11 @@
                     saveFormData();
                 }
             });
+
             imageInput.addEventListener('change', (event) => {
                 const file = event.target.files[0];
                 if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const element = reportElements.find(e => e.id === id);
-                        if (element) {
-                            element.image = e.target.result;
-                            const previewDiv = newElement.querySelector(`[data-preview-id="${id}"]`);
-                            previewDiv.classList.remove('hidden');
-                            previewDiv.querySelector('img').src = e.target.result;
-                            saveFormData();
-                        }
-                    };
-                    reader.readAsDataURL(file);
+                    processUploadedFile(file, id);
                 } else {
                     const element = reportElements.find(e => e.id === id);
                     if (element) {
@@ -475,13 +550,12 @@
             document.getElementById(id).remove();
             reportElements = reportElements.filter(e => e.id !== id);
             
-            // Re-render to update element numbers (Page #) and save data
             const savedReportElements = [...reportElements];
             reportElements = [];
             elementCounter = 0;
             document.getElementById('reportElementsContainer').innerHTML = '';
             savedReportElements.forEach(el => addReportElement(el));
-            // If all elements were removed, add a blank one back
+
             if (reportElements.length === 0) {
                 addReportElement();
             }
@@ -605,17 +679,16 @@
             }
             
             data.reportElements = reportElements;
-            data.extraNotes = extraNotesInput.value; // Guardar notas extra
+            data.extraNotes = extraNotesInput.value; 
             localStorage.setItem('documentFormData_reporte_simple', JSON.stringify(data));
-            localStorage.setItem('extraNotes_reporte_simple', extraNotesInput.value); // Guardar notas separadamente
+            localStorage.setItem('extraNotes_reporte_simple', extraNotesInput.value); 
         }
 
         function loadFormData() {
             const savedData = localStorage.getItem('documentFormData_reporte_simple');
-            
             const savedNotes = localStorage.getItem('extraNotes_reporte_simple');
             if (savedNotes !== null) {
-                extraNotesInput.value = savedNotes; // Cargar notas extra
+                extraNotesInput.value = savedNotes; 
             }
             
             if (savedData) {
@@ -657,18 +730,17 @@
         form.addEventListener('input', saveFormData);
         window.addEventListener('load', loadFormData);
 
-        // FUNCIÓN para dibujar la firma ALINEADA AL FONDO 
+        // --- PDF GENERATION UTILITIES ---
+
+        // FUNCIÓN para dibujar la firma (fija al fondo)
         async function addSignatureSection(doc, data, pageHeight, margin, canvas, hasSigned) {
-            const signatureBlockHeight = 40; 
-            
-            // Calcula la coordenada Y inicial para que el bloque quede pegado al margen inferior
-            let currentY = pageHeight - margin - signatureBlockHeight; 
-            
-            // 1. FIRMA Title
+            const signatureBlockHeight = 40;
+            let currentY = pageHeight - margin - signatureBlockHeight;
+
             doc.setFontSize(12);
             doc.setFont('helvetica', 'bold');
             doc.text('FIRMA', margin, currentY); 
-            currentY += 5; // Espacio después del título
+            currentY += 5; 
             
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(12);
@@ -677,77 +749,99 @@
             const signatureImageHeight = 20;
             const signatureWidth = 60;
 
-            // 2. Signature Image/Box
             if (hasSigned) {
-                const signatureX = margin + 10; 
+                const signatureX = margin + 10;
                 doc.addImage(signatureData, 'PNG', signatureX, currentY, signatureWidth, signatureImageHeight);
             }
             currentY += signatureImageHeight + 2;
             
-            // 3. Signature Line
-            doc.line(margin + 10, currentY, margin + 10 + signatureWidth, currentY); 
+            doc.line(margin + 10, currentY, margin + 10 + signatureWidth, currentY);
             currentY += 5; 
             
-            // 4. Name
             const tecnicoName = data.nombre_tecnico;
             const tecnicoText = "Nombre: " + tecnicoName;
-            doc.text(tecnicoText, margin + 10, currentY); 
+            doc.text(tecnicoText, margin + 10, currentY);
         }
 
-        // FUNCIÓN para dibujar la sección de Notas Extra (MODIFICADA para sombreado)
-        function addExtraNotesToPage(doc, notes, yStart, pageHeight, margin) {
-            const signatureBlockHeight = 40; 
-            const notesMaxY = pageHeight - margin - signatureBlockHeight - 10; 
+        // FUNCIÓN para dibujar la sección de Notas Extra (ahora simplificada, no chequea el final de página)
+        function addExtraNotesToPage(doc, notes, yStart, margin, notesBoxHeight, notesLines) {
             const notesBoxWidth = doc.internal.pageSize.getWidth() - (margin * 2);
             
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            
-            const titleAndPaddingHeight = 12;
-
-            doc.setFont('helvetica', 'normal');
-            const notesLines = doc.splitTextToSize(notes, notesBoxWidth - 4); 
-            const textHeight = notesLines.length * 5; 
-            let notesBoxHeight = textHeight + titleAndPaddingHeight; 
-            
             let finalYStart = yStart;
-            
-            if ((yStart + notesBoxHeight) > notesMaxY) {
-                finalYStart = notesMaxY - notesBoxHeight;
-            }
-            
-            // Ajuste para evitar solapamiento con el header (si la nota es muy larga)
+
+            // Seguridad: Si se inicia en una página nueva, no empezar antes del encabezado
             if (finalYStart < 50) { 
-                 finalYStart = 50; 
-                 notesBoxHeight = notesMaxY - finalYStart - 5;
-                 const maxTextHeight = notesBoxHeight - titleAndPaddingHeight;
-                 const maxLines = Math.floor(maxTextHeight / 5);
-                 notesLines.length = Math.min(notesLines.length, maxLines);
-                 notesBoxHeight = (notesLines.length * 5) + titleAndPaddingHeight;
-                 finalYStart = notesMaxY - notesBoxHeight - 5;
+                 finalYStart = 50;
             }
 
             const currentY = finalYStart;
             
-            // *** INICIO DEL CAMBIO: AÑADIR SOMBREADO ***
-            doc.setFillColor(240, 240, 240); // Color gris claro (#f0f0f0)
-            doc.rect(margin, currentY, notesBoxWidth, notesBoxHeight, 'F'); // Dibujar rectángulo relleno (F: fill)
-            doc.setDrawColor(0, 0, 0); // Restaurar color de línea a negro
-            // *** FIN DEL CAMBIO ***
+            doc.setFillColor(240, 240, 240);
+            doc.rect(margin, currentY, notesBoxWidth, notesBoxHeight, 'F');
+            doc.setDrawColor(0, 0, 0);
 
-            // Dibujar el Borde
             doc.rect(margin, currentY, notesBoxWidth, notesBoxHeight);
-            
             doc.setFont('helvetica', 'bold');
             doc.text('NOTAS GENERALES DEL REPORTE:', margin + 2, currentY + 4); 
             
             doc.setFont('helvetica', 'normal');
             doc.text(notesLines, margin + 2, currentY + 12);
 
-            return finalYStart + notesBoxHeight + 5; 
+            return finalYStart + notesBoxHeight + 5;
         }
 
-        // --- PDF GENERATION LOGIC (FINAL MODIFICADO) ---
+        // FUNCIÓN para dibujar el encabezado (ahora acepta el total final de páginas)
+        const logoUrl = 'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
+        async function addHeader(doc, pageNum, finalTotalPages) {
+            const margin = 15;
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const headerY = 15;
+            const headerX = pageWidth - margin;
+            const logoHeight = 17;
+            const logoWidth = 34;
+
+            let base64Image = '';
+            try {
+                const response = await fetch(logoUrl);
+                if (response.ok) {
+                    const blob = await response.blob();
+                    base64Image = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                    doc.addImage(base64Image, 'PNG', margin, headerY, logoWidth, logoHeight);
+                }
+            } catch (error) {
+                console.warn('No se pudo cargar el logo para el PDF:', error);
+            }
+
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Tiendas 01.001.0001.0001', headerX, headerY, null, null, 'right');
+            doc.text('Redes y Soporte', headerX, headerY + 4, null, null, 'right');
+            doc.text('Telecomunicaciones', headerX, headerY + 8, null, null, 'right');
+            doc.text(`Fecha de Reporte: ${new Date().toLocaleDateString()}`, headerX, headerY + 12, null, null, 'right');
+            
+            const titleY = headerY + (Math.max(logoHeight, 15) / 2) + 2;
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.text(doc.internal.data.reportName.toUpperCase() || 'REPORTE DE EVIDENCIA', pageWidth / 2, titleY, { align: 'center' });
+            
+            let currentY = headerY + Math.max(logoHeight, 15) + 10;
+            doc.line(margin, currentY, pageWidth - margin, currentY);
+            currentY += 8;
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            // USA EL TOTAL DE PÁGINAS FINAL
+            doc.text(`Página ${pageNum} de ${finalTotalPages}`, pageWidth - margin, currentY - 2, null, null, 'right');
+            
+            return currentY;
+        }
+
+        // --- PDF GENERATION LOGIC ---
         document.getElementById('documentForm_reporte').addEventListener('submit', async function(e) {
             e.preventDefault();
             const loadingOverlay = document.getElementById('loadingOverlay');
@@ -759,8 +853,9 @@
                 const formData = new FormData(e.target);
                 const data = Object.fromEntries(formData.entries());
                 
+                doc.internal.data = { reportName: data.nombre_reporte }; // Guardar nombre para el header
+                
                 const extraNotes = extraNotesInput.value.trim();
-
                 const reportElementsData = reportElements.filter(el => el.description || el.image || el.details); 
 
                 const totalElements = reportElementsData.length;
@@ -770,59 +865,11 @@
                 const margin = 15;
                 const pageWidth = doc.internal.pageSize.getWidth();
                 const pageHeight = doc.internal.pageSize.getHeight(); 
-                const logoUrl = 'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
                 const reportDate = new Date().toLocaleDateString();
 
-                async function addHeader(doc, pageNum, finalTotalPages) {
-                    const headerY = 15;
-                    const headerX = pageWidth - margin;
-                    const logoHeight = 17;
-                    const logoWidth = 34;
-
-                    let base64Image = '';
-                    try {
-                        const response = await fetch(logoUrl);
-                        if (!response.ok) throw new Error('Failed to fetch logo');
-                        const blob = await response.blob();
-                        const reader = new FileReader();
-                        reader.readAsDataURL(blob);
-                        base64Image = await new Promise((resolve, reject) => {
-                            reader.onloadend = () => resolve(reader.result);
-                            reader.onerror = reject;
-                        });
-                        doc.addImage(base64Image, 'PNG', margin, headerY, logoWidth, logoHeight);
-                    } catch (error) {
-                        console.warn('No se pudo cargar el logo para el PDF:', error);
-                    }
-
-                    doc.setFontSize(8);
-                    doc.setFont('helvetica', 'normal');
-                    doc.text('Tiendas 01.001.0001.0001', headerX, headerY, null, null, 'right');
-                    doc.text('Redes y Soporte', headerX, headerY + 4, null, null, 'right');
-                    doc.text('Telecomunicaciones', headerX, headerY + 8, null, null, 'right');
-                    doc.text(`Fecha de Reporte: ${reportDate}`, headerX, headerY + 12, null, null, 'right');
-                    
-                    const titleY = headerY + (Math.max(logoHeight, 15) / 2) + 2;
-                    doc.setFontSize(16);
-                    doc.setFont('helvetica', 'bold');
-                    doc.text(data.nombre_reporte.toUpperCase() || 'REPORTE DE EVIDENCIA', pageWidth / 2, titleY, { align: 'center' });
-                    
-                    let currentY = headerY + Math.max(logoHeight, 15) + 10;
-                    doc.line(margin, currentY, pageWidth - margin, currentY);
-                    currentY += 8;
-                    
-                    doc.setFontSize(10);
-                    doc.setFont('helvetica', 'normal');
-                    doc.text(`Página ${pageNum} de ${finalTotalPages}`, pageWidth - margin, currentY - 2, null, null, 'right');
-                    
-                    return currentY;
-                }
-
-                let pageNum = 1;
                 
                 // --- Page 1: Information and First Element (if exists) ---
-                y = await addHeader(doc, pageNum, totalPages);
-                
+                y = await addHeader(doc, 1, totalPages);
                 doc.setFontSize(12);
                 doc.setFont('helvetica', 'bold');
                 doc.text('INFORMACIÓN Y RESUMEN', margin, y);
@@ -834,79 +881,16 @@
                 doc.text(`Asunto del Reporte: ${data.nombre_reporte}`, margin, y);
                 y += 10;
                 
-                // --- Insert First Evidence Element here (if exists) ---
-                if (totalElements > 0) {
-                    const element = reportElementsData[0];
-                    doc.setFont('helvetica', 'bold');
-                    doc.text(`${element.description || 'SIN SUB-TEMA'}`, margin, y);
-                    y += 8;
-
-                    doc.setFontSize(11);
-                    doc.setFont('helvetica', 'normal');
-                    doc.text(`Página de Detalle #1`, margin, y);
-                    y += 5;
-                    
-                    // Image
-                    if (element.image) {
-                        const img = new Image();
-                        await new Promise(resolve => {
-                            img.onload = resolve;
-                            img.src = element.image;
-                        });
-                        
-                        const maxImgWidth = pageWidth - (margin * 2);
-                        
-                        doc.setFontSize(10);
-                        doc.setFont('helvetica', 'normal');
-                        const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth - 4); 
-                        const detailsBoxHeight = 4 + 5 + 4 + (detailsLines.length * 5) + 4; 
-                        
-                        const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5; 
-                        
-                        let imgWidth = img.width;
-                        let imgHeight = img.height;
-
-                        if (imgWidth > maxImgWidth || imgHeight > maxImgHeight) {
-                            const ratio = Math.min(maxImgWidth / imgWidth, maxImgHeight / imgHeight);
-                            imgWidth = imgWidth * ratio;
-                            imgHeight = imgHeight * ratio;
-                        }
-                        
-                        const imgX = (pageWidth - imgWidth) / 2;
-
-                        doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight);
-                        y += imgHeight + 5; 
-                    } else {
-                        doc.text('No se adjuntó imagen para este elemento.', margin, y);
-                        y += 10;
-                    }
-
-                    // Details Text (Inside Box)
-                    const detailsBoxYStart = y;
-                    const detailsBoxWidth = pageWidth - (margin * 2);
-
-                    doc.setFontSize(10);
-                    doc.setFont('helvetica', 'bold');
-                    doc.text('Detalles Adicionales:', margin + 2, y + 4); 
-                    y += 8;
-
-                    doc.setFont('helvetica', 'normal');
-                    const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', detailsBoxWidth - 4);
-                    doc.text(detailsLines, margin + 2, y);
-                    y += (detailsLines.length * 5) + 4; 
-
-                    const finalDetailsBoxHeight = y - detailsBoxYStart;
-                    doc.rect(margin, detailsBoxYStart, detailsBoxWidth, finalDetailsBoxHeight);
-                    y += 5; 
-                }
-
-                // --- Pages 2 to N: Elements (Remaining elements, each on a new page) ---
-                for (let i = 1; i < totalElements; i++) {
+                // --- Loop to generate pages for each element ---
+                for (let i = 0; i < totalElements; i++) {
                     const element = reportElementsData[i];
-                    doc.addPage();
-                    pageNum++;
-                    y = await addHeader(doc, pageNum, totalPages);
+                    const isLastElement = (i === totalElements - 1);
 
+                    if (i > 0) {
+                        doc.addPage();
+                        y = await addHeader(doc, i + 1, totalPages);
+                    }
+                    
                     doc.setFont('helvetica', 'bold');
                     doc.text(`${element.description || 'SIN SUB-TEMA'}`, margin, y);
                     y += 8;
@@ -917,25 +901,43 @@
                     y += 5;
                     
                     // Image
+                    let imgWidth = 0;
+                    let imgHeight = 0;
+                    let detailsBoxYStart = y;
+                    const maxImgWidth = pageWidth - (margin * 2);
+                    
                     if (element.image) {
                         const img = new Image();
-                        await new Promise(resolve => {
-                            img.onload = resolve;
-                            img.src = element.image;
-                        });
-                        
-                        const maxImgWidth = pageWidth - (margin * 2);
-                        
-                        doc.setFontSize(10);
-                        doc.setFont('helvetica', 'normal');
+                        await new Promise(resolve => { img.onload = resolve; img.src = element.image; });
+
+                        // Recalculate dimensions based on the pre-processed image
+                        imgWidth = img.width;
+                        imgHeight = img.height;
+
                         const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth - 4);
                         const detailsBoxHeight = 4 + 5 + 4 + (detailsLines.length * 5) + 4;
-
-                        const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5; 
                         
-                        let imgWidth = img.width;
-                        let imgHeight = img.height;
+                        // Check required space for the rest of the page (if last element)
+                        let requiredHeightForNotesAndSignature = 0;
+                        if (isLastElement) {
+                            const signatureBlockHeight = 40; 
+                            const signatureSafetyMargin = 15; 
+                            const requiredHeightForSignature = signatureBlockHeight + signatureSafetyMargin + margin;
+                            
+                            if (extraNotes) {
+                                // Preliminary calculation for notes box height
+                                const notesLinesTemp = doc.splitTextToSize(extraNotes, maxImgWidth - 4);
+                                const notesBoxHeightTemp = (notesLinesTemp.length * 5) + 12;
+                                requiredHeightForNotesAndSignature = notesBoxHeightTemp + 5 + requiredHeightForSignature; // 5 is gap
+                            } else {
+                                requiredHeightForNotesAndSignature = requiredHeightForSignature;
+                            }
+                        }
 
+                        // Max height available for the image
+                        const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5 - requiredHeightForNotesAndSignature; 
+                        
+                        // Scale image to fit max constraints
                         if (imgWidth > maxImgWidth || imgHeight > maxImgHeight) {
                             const ratio = Math.min(maxImgWidth / imgWidth, maxImgHeight / imgHeight);
                             imgWidth = imgWidth * ratio;
@@ -943,18 +945,16 @@
                         }
                         
                         const imgX = (pageWidth - imgWidth) / 2;
-
-                        doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight);
-                        y += imgHeight + 5; 
+                        doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight); 
+                        y += imgHeight + 5;
                     } else {
                         doc.text('No se adjuntó imagen para este elemento.', margin, y);
                         y += 10;
                     }
 
                     // Details Text (Inside Box)
-                    const detailsBoxYStart = y;
+                    detailsBoxYStart = y;
                     const detailsBoxWidth = pageWidth - (margin * 2);
-
                     doc.setFontSize(10);
                     doc.setFont('helvetica', 'bold');
                     doc.text('Detalles Adicionales:', margin + 2, y + 4);
@@ -967,23 +967,107 @@
 
                     const finalDetailsBoxHeight = y - detailsBoxYStart;
                     doc.rect(margin, detailsBoxYStart, detailsBoxWidth, finalDetailsBoxHeight);
-                    y += 5; 
-                }
+                    y += 5;
 
-                // --- Signature and Notes Placement (Always on the last page) ---
+                    // --- LAST ELEMENT ONLY: Check for page break for Notes/Signature ---
+                    if (isLastElement) {
+                        let requiredHeightForNotesAndSignature = 0;
+                        let notesBoxHeight = 0;
+                        let notesLines = [];
+                        
+                        // 1. Calculate space required
+                        const signatureBlockHeight = 40; 
+                        const signatureSafetyMargin = 15; 
+                        const requiredHeightForSignature = signatureBlockHeight + signatureSafetyMargin + margin;
+                        
+                        if (extraNotes) {
+                            notesLines = doc.splitTextToSize(extraNotes, maxImgWidth - 4);
+                            const titleAndPaddingHeight = 12;
+                            notesBoxHeight = (notesLines.length * 5) + titleAndPaddingHeight;
+                            requiredHeightForNotesAndSignature = notesBoxHeight + 5 + requiredHeightForSignature; 
+                        } else {
+                            requiredHeightForNotesAndSignature = requiredHeightForSignature;
+                        }
+
+                        // 2. Check for page break
+                        if ((y + requiredHeightForNotesAndSignature) > pageHeight) {
+                            doc.addPage();
+                            totalPages++;
+                            
+                            // Re-render headers for all pages with the new total
+                            const totalPagesFinal = totalPages;
+                            for (let p = 1; p < totalPagesFinal; p++) {
+                                doc.setPage(p);
+                                // The new total page count is required for Page X of Y
+                                await addHeader(doc, p, totalPagesFinal); 
+                            }
+
+                            doc.setPage(totalPagesFinal); // Back to the last page
+                            y = await addHeader(doc, totalPagesFinal, totalPagesFinal); 
+                            
+                        } else if (extraNotes && (y + notesBoxHeight + 5 + requiredHeightForSignature) > pageHeight - margin) {
+                            // Small optimization: If notes and signature don't fit well but content is on page 1, 
+                            // force a break to ensure clean layout.
+                            doc.addPage();
+                            totalPages++;
+                            const totalPagesFinal = totalPages;
+                            for (let p = 1; p < totalPagesFinal; p++) {
+                                doc.setPage(p);
+                                await addHeader(doc, p, totalPagesFinal); 
+                            }
+                            doc.setPage(totalPagesFinal);
+                            y = await addHeader(doc, totalPagesFinal, totalPagesFinal); 
+                        }
+                        
+                        // 3. Draw Notes (starts at 'y' which is now guaranteed to be safe)
+                        if (extraNotes) {
+                            y = addExtraNotesToPage(doc, extraNotes, y, margin, notesBoxHeight, notesLines); 
+                        }
+
+                        // 4. Draw Signature (fixed at bottom)
+                        await addSignatureSection(doc, data, pageHeight, margin, canvas, hasSigned);
+                    }
+                }
                 
-                doc.setPage(totalPages);
+                // --- Finalizing for Empty Reports (If totalElements is 0) ---
+                if (totalElements === 0) {
+                     // Check and add notes/signature on the single page (Page 1)
+                    let requiredHeightForNotesAndSignature = 0;
+                    let notesBoxHeight = 0;
+                    let notesLines = [];
+                    const signatureBlockHeight = 40; 
+                    const signatureSafetyMargin = 15; 
+                    const requiredHeightForSignature = signatureBlockHeight + signatureSafetyMargin + margin;
 
-                // 1. Añadir Notas Extra si existen
-                if (extraNotes) {
-                    // 'y' es la posición después del último contenido, se usa como punto de inicio para la nota.
-                    y = addExtraNotesToPage(doc, extraNotes, y, pageHeight, margin); 
+                    if (extraNotes) {
+                        const notesBoxWidth = pageWidth - (margin * 2);
+                        notesLines = doc.splitTextToSize(extraNotes, notesBoxWidth - 4);
+                        const titleAndPaddingHeight = 12;
+                        notesBoxHeight = (notesLines.length * 5) + titleAndPaddingHeight;
+                        requiredHeightForNotesAndSignature = notesBoxHeight + 5 + requiredHeightForSignature; 
+                    } else {
+                        requiredHeightForNotesAndSignature = requiredHeightForSignature;
+                    }
+                    
+                    if ((y + requiredHeightForNotesAndSignature) > pageHeight - margin) {
+                        doc.addPage();
+                        totalPages++;
+                        doc.setPage(totalPages);
+                        y = await addHeader(doc, totalPages, totalPages); 
+                        // Update header for page 1
+                        doc.setPage(1);
+                        await addHeader(doc, 1, totalPages);
+                        doc.setPage(totalPages);
+                    }
+                    
+                    if (extraNotes) {
+                        y = addExtraNotesToPage(doc, extraNotes, y, margin, notesBoxHeight, notesLines); 
+                    }
+                    await addSignatureSection(doc, data, pageHeight, margin, canvas, hasSigned);
                 }
 
-                // 2. Añadir Firma (Siempre fija al final)
-                await addSignatureSection(doc, data, pageHeight, margin, canvas, hasSigned);
 
-                // 3. Finalizar
+                // --- Finalizar ---
                 const fileName = data.nombre_reporte.replace(/[^a-z0-9]/gi, '_').substring(0, 30);
                 doc.save(`${fileName}_${new Date().getTime()}.pdf`);
                 
@@ -995,6 +1079,7 @@
                 showMessage('Error al generar el documento.', 'error');
             }
         });
+        
         // --- CLEAR FORM AND SIGNATURE LOGIC ---
         document.getElementById('clearFormButton_reporte').addEventListener('click', function() {
             document.getElementById('confirmationModal_reporte').classList.remove('hidden');
@@ -1018,9 +1103,10 @@
             
             document.getElementById('confirmationModal_reporte').classList.add('hidden');
             showMessage('Formulario limpiado. Listo para un nuevo reporte.', 'success');
+       
             localStorage.removeItem('documentFormData_reporte_simple');
-            localStorage.removeItem('extraNotes_reporte_simple'); // Limpiar notas extra
-            extraNotesInput.value = ''; // Limpiar el input de notas
+            localStorage.removeItem('extraNotes_reporte_simple'); 
+            extraNotesInput.value = ''; 
         });
         document.getElementById('clearSignatureButton_reporte').addEventListener('click', function() {
             document.getElementById('clearSignatureConfirmationModal_reporte').classList.remove('hidden');
@@ -1038,7 +1124,6 @@
             document.getElementById('clearSignatureConfirmationModal_reporte').classList.add('hidden');
             showMessage('Firma borrada.', 'success');
         });
-        
         if (reportElements.length === 0) {
             addReportElement();
         }
