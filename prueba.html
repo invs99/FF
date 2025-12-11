@@ -149,6 +149,10 @@
                     <label for="nombre_tecnico" class="block text-sm font-medium text-gray-700">Nombre de quien Reporta</label>
                     <input type="text" id="nombre_tecnico" name="nombre_tecnico" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" required/>
                 </div>
+                <div>
+                    <label for="correo_destino" class="block text-sm font-medium text-gray-700">Correo Electrónico Destino</label>
+                    <input type="email" id="correo_destino" name="correo_destino" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" placeholder="ejemplo@dominio.com" required/>
+                </div>
             </div>
 
             <div class="space-y-4 border p-4 rounded-md bg-gray-50">
@@ -195,7 +199,7 @@
     <script>
         // ***************************************************************
         // 🚨 CONFIGURACIÓN CRÍTICA 🚨
-        // ** DEBE USAR ESTA URL DE DESPLIEGUE FINAL DE SU SCRIPT DE GOOGLE APPS **
+        // ** URL DE DESPLIEGUE FINAL DE SU SCRIPT DE GOOGLE APPS **
         const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyeawk_fjZa5GtmWEbIsYc9Z3Z49JZsKk5GLQ_Do5USl6X9KAODOBIwYqrievTYS0S8LQ/exec'; 
         // ***************************************************************
 
@@ -831,8 +835,10 @@
             y += 6;
             doc.setFont('helvetica', 'normal');
             doc.text(`Reporte generado por: ${data.nombre_tecnico}`, margin, y);
+            doc.text(`Correo Destino: ${data.correo_destino}`, pageWidth / 2, y); // Agregado al resumen
+            y += 5;
             doc.text(`Fecha de Generación: ${reportDate}`, pageWidth / 2, y);
-            y += 10;
+            y += 5;
             doc.text(`Asunto del Reporte: ${data.nombre_reporte}`, margin, y);
             y += 10;
 
@@ -988,12 +994,13 @@
             e.preventDefault();
             const loadingOverlay = document.getElementById('loadingOverlay');
 
-            // 1. Validación básica
+            // 1. Validación básica (Añadido correo destino)
             const nombreReporte = document.getElementById('nombre_reporte').value.trim();
             const nombreTecnico = document.getElementById('nombre_tecnico').value.trim();
+            const correoDestino = document.getElementById('correo_destino').value.trim();
 
-            if (!nombreReporte || !nombreTecnico) {
-                showMessage("Por favor, complete el 'Nombre del Reporte' y el 'Nombre de quien Reporta'.", 'info');
+            if (!nombreReporte || !nombreTecnico || !correoDestino) {
+                showMessage("Por favor, complete el 'Nombre del Reporte', el 'Nombre de quien Reporta' y el 'Correo Electrónico Destino'.", 'info');
                 return;
             }
 
@@ -1009,8 +1016,8 @@
                     pdfBase64: pdfBase64,
                     fileName: nombreReporte.replace(/[^a-z0-9]/gi, '_').substring(0, 30),
                     nombreReporte: nombreReporte,
-                    nombreTecnico: nombreTecnico
-                    // Si necesita enviar emails, añadalos aquí (e.g., recipientEmail: 'destino@ejemplo.com')
+                    nombreTecnico: nombreTecnico,
+                    correoDestino: correoDestino // Enviamos el correo de destino al Script
                 };
 
                 // 4. Enviar a Google Apps Script
