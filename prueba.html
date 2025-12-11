@@ -63,7 +63,7 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p class="text-gray-700">Generando PDF y enviando correo...</p>
+            <p class="text-gray-700">Generando PDF y Enviando...</p>
         </div>
     </div>
 
@@ -81,6 +81,7 @@
             </div>
         </div>
     </div>
+    
     <div id="clearSignatureConfirmationModal_reporte" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
         <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
             <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Confirmar</h3>
@@ -95,6 +96,7 @@
             </div>
         </div>
     </div>
+    
     <div id="cameraModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
         <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-xl">
             <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Tomar Foto para Evidencia</h3>
@@ -129,6 +131,7 @@
             </div>
         </div>
     </div>
+    
     <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg mb-6 main-content">
         <div class="flex justify-center mb-6">
             <img src="https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png" alt="Logo Freund" class="h-16 w-auto" />
@@ -145,10 +148,6 @@
                 <div>
                     <label for="nombre_tecnico" class="block text-sm font-medium text-gray-700">Nombre de quien Reporta</label>
                     <input type="text" id="nombre_tecnico" name="nombre_tecnico" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" required/>
-                </div>
-                <div>
-                    <label for="recipient_email" class="block text-sm font-medium text-gray-700">Email Destinatario</label>
-                    <input type="email" id="recipient_email" name="recipient_email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" placeholder="ejemplo@dominio.com" required/>
                 </div>
             </div>
 
@@ -177,8 +176,8 @@
                 <button type="button" id="openExtraNotesButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                     Notas Extra
                 </button>
-                <button type="submit" id="sendPdfButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    Generar y Enviar PDF por Correo
+                <button type="button" id="generatePdfButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Generar y Enviar Reporte PDF
                 </button>
                 <button type="button" id="clearFormButton_reporte" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                     Nuevo Reporte
@@ -190,13 +189,15 @@
         </form>
     </div>
     <div id="messageBox" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 hidden">
-        Documento generado con éxito.
+        Mensaje de éxito/error.
     </div>
 
     <script>
-        // *** URL DE DESPLIEGUE DE GOOGLE APPS SCRIPT PROPORCIONADA POR EL USUARIO ***
-        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxyqgyH1xd2E7UIiEYiCly99Xhve3rLG_1dRa8XaeGefib56eLru4SFXefJyD7bNEI/exec';
-        // **************************************************************************
+        // ***************************************************************
+        // 🚨 CONFIGURACIÓN CRÍTICA 🚨
+        // ** DEBE USAR ESTA URL DE DESPLIEGUE FINAL DE SU SCRIPT DE GOOGLE APPS **
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyeawk_fjZa5GtmWEbIsYc9Z3Z49JZsKk5GLQ_Do5USl6X9KAODOBIwYqrievTYS0S8LQ/exec'; 
+        // ***************************************************************
 
         // --- DATA MANAGEMENT & DYNAMIC ELEMENTS ---
         let reportElements = []; // Stores objects: { id, description, image, details }
@@ -212,12 +213,10 @@
         const openExtraNotesButton = document.getElementById('openExtraNotesButton');
         const closeExtraNotesButton = document.getElementById('closeExtraNotesButton');
         const extraNotesModal = document.getElementById('extraNotesModal');
-
         openExtraNotesButton.addEventListener('click', () => {
             extraNotesModal.classList.remove('hidden');
             extraNotesInput.value = localStorage.getItem('extraNotes_reporte_simple') || '';
         });
-
         closeExtraNotesButton.addEventListener('click', () => {
             // Guarda la nota en localStorage y el formulario
             localStorage.setItem('extraNotes_reporte_simple', extraNotesInput.value);
@@ -323,7 +322,6 @@
             }
         });
 
-
         // --- DYNAMIC ELEMENTS (FORM) ---
         function addReportElement(elementData = {}) {
             elementCounter++;
@@ -342,7 +340,8 @@
                 </div>
                 <div class="mb-3">
                     <label class="block text-sm font-medium text-gray-700">Sub-Tema o Breve Descripción</label>
-                    <input type="text" data-type="description" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" placeholder="Ej: Estado del Rack Principal" value="${elementData.description || ''}">
+                    <input type="text" data-type="description" 
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" placeholder="Ej: Estado del Rack Principal" value="${elementData.description || ''}">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Foto (Arrastra o Selecciona)</label>
@@ -419,13 +418,11 @@
                 e.stopPropagation();
                 dndArea.classList.add('drag-over');
             });
-
             dndArea.addEventListener('dragleave', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 dndArea.classList.remove('drag-over');
             });
-
             dndArea.addEventListener('drop', handleDrop);
             // --- End Drag and Drop Logic ---
 
@@ -492,7 +489,6 @@
             elementCounter = 0;
             document.getElementById('reportElementsContainer').innerHTML = '';
             savedReportElements.forEach(el => addReportElement(el));
-
             // If all elements were removed, add a blank one back
             if (reportElements.length === 0) {
                 addReportElement();
@@ -509,12 +505,12 @@
             } else if (type === 'error') {
                 messageBox.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
             } else if (type === 'info') {
-                messageBox.className = 'fixed bottom-4 right-4 bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                 messageBox.className = 'fixed bottom-4 right-4 bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
             }
             messageBox.classList.remove('hidden');
             setTimeout(() => {
                 messageBox.classList.add('hidden');
-            }, 5000); // 5 segundos para mensajes importantes
+            }, 5000); // Aumentado a 5 segundos para errores
         }
 
         // --- SIGNATURE CANVAS LOGIC ---
@@ -542,7 +538,7 @@
         function resizeCanvas() {
             const container = document.getElementById('signatureCanvasContainer_reporte');
             const newWidth = container.offsetWidth;
-            const newHeight = container.offsetHeight;
+            const newHeight = 150; // Altura fija
             canvas.width = newWidth;
             canvas.height = newHeight;
             ctx.fillStyle = 'white';
@@ -570,6 +566,7 @@
 
         function draw(e) {
             if (!isDrawing) return;
+
             if (!hasSigned) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = 'white';
@@ -602,8 +599,8 @@
         });
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('touchmove', draw);
-        canvas.addEventListener('mouseup', () => isDrawing = false);
-        canvas.addEventListener('touchend', () => isDrawing = false);
+        canvas.addEventListener('mouseup', () => { isDrawing = false; saveFormData(); }); // Guardar al levantar el dedo/ratón
+        canvas.addEventListener('touchend', () => { isDrawing = false; saveFormData(); }); // Guardar al finalizar el toque
         canvas.addEventListener('mouseout', () => isDrawing = false);
 
         // --- FORM AND STORAGE LOGIC ---
@@ -615,6 +612,7 @@
             for (const [key, value] of formData.entries()) {
                 data[key] = value;
             }
+            // La firma solo se guarda si hasSigned es true
             if (hasSigned) {
                 data.signature = canvas.toDataURL('image/png');
             } else {
@@ -630,6 +628,7 @@
         function loadFormData() {
             const savedData = localStorage.getItem('documentFormData_reporte_simple');
             const savedNotes = localStorage.getItem('extraNotes_reporte_simple');
+            
             if (savedNotes !== null) {
                 extraNotesInput.value = savedNotes; // Cargar notas extra
             }
@@ -642,12 +641,14 @@
                         input.value = data[key];
                     }
                 }
+                
                 if (data.reportElements && Array.isArray(data.reportElements)) {
                     reportElements = [];
                     elementCounter = 0;
                     document.getElementById('reportElementsContainer').innerHTML = '';
                     data.reportElements.forEach(el => addReportElement(el));
                 }
+
                 if (data.signature) {
                     hasSigned = true;
                     const img = new Image();
@@ -667,79 +668,78 @@
                 }
             }
         }
-
+        
         form.addEventListener('input', saveFormData);
         window.addEventListener('load', loadFormData);
 
-        // --- PDF GENERATION & SENDING LOGIC (UPDATED) ---
-
-        // Función auxiliar para dibujar la sección de la firma en el PDF
+        // FUNCIÓN para dibujar la firma ALINEADA AL FONDO 
         async function addSignatureSection(doc, data, pageHeight, margin, canvas, hasSigned) {
-            let currentY = pageHeight - 55;
-            const signatureWidth = 150;
-            const signatureImageHeight = 35; // Altura fija para la imagen
-            const signatureData = hasSigned ? canvas.toDataURL('image/png') : null;
-
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
+            const signatureBlockHeight = 40;
+            // Calcula la coordenada Y inicial para que el bloque quede pegado al margen inferior
+            let currentY = pageHeight - margin - signatureBlockHeight;
             
-            // 1. Title
-            doc.text('Firma de quien Reporta:', margin + 10, currentY);
-            currentY += 2;
-
+            // 1. FIRMA Title
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('FIRMA', margin, currentY); 
+            currentY += 5; // Espacio después del título
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(12);
+            
+            const signatureData = canvas.toDataURL('image/png');
+            const signatureImageHeight = 20;
+            const signatureWidth = 60;
             // 2. Signature Image/Box
             if (hasSigned) {
                 const signatureX = margin + 10;
                 doc.addImage(signatureData, 'PNG', signatureX, currentY, signatureWidth, signatureImageHeight);
             }
             currentY += signatureImageHeight + 2;
-
             // 3. Signature Line
             doc.line(margin + 10, currentY, margin + 10 + signatureWidth, currentY);
-            currentY += 5;
-
+            currentY += 5; 
+            
             // 4. Name
             const tecnicoName = data.nombre_tecnico;
             const tecnicoText = "Nombre: " + tecnicoName;
             doc.text(tecnicoText, margin + 10, currentY);
         }
-        
+
         // FUNCIÓN para dibujar la sección de Notas Extra (MODIFICADA para sombreado)
         function addExtraNotesToPage(doc, notes, yStart, pageHeight, margin) {
             const signatureBlockHeight = 40;
-            const notesMaxY = pageHeight - margin - signatureBlockHeight - 10;
+            const notesMaxY = pageHeight - margin - signatureBlockHeight - 10; 
             const notesBoxWidth = doc.internal.pageSize.getWidth() - (margin * 2);
-
+            
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
-
-            const titleAndPaddingHeight = 12; // Altura para el título y padding
             
+            const titleAndPaddingHeight = 12;
+
             doc.setFont('helvetica', 'normal');
             const notesLines = doc.splitTextToSize(notes, notesBoxWidth - 4);
-            const textHeight = notesLines.length * 5; // 5mm por línea
+            const textHeight = notesLines.length * 5; 
+            let notesBoxHeight = textHeight + titleAndPaddingHeight; 
             
-            let notesBoxHeight = textHeight + titleAndPaddingHeight;
             let finalYStart = yStart;
 
-            // 1. Ajuste inicial para evitar solapamiento con la firma
             if ((yStart + notesBoxHeight) > notesMaxY) {
                 finalYStart = notesMaxY - notesBoxHeight;
             }
-
-            // 2. Ajuste para evitar solapamiento con el header (si la nota es muy larga)
-            if (finalYStart < 50) {
-                finalYStart = 50;
-                notesBoxHeight = notesMaxY - finalYStart - 5;
-                const maxTextHeight = notesBoxHeight - titleAndPaddingHeight;
-                const maxLines = Math.floor(maxTextHeight / 5);
-                notesLines.length = Math.min(notesLines.length, maxLines);
-                notesBoxHeight = (notesLines.length * 5) + titleAndPaddingHeight;
-                finalYStart = notesMaxY - notesBoxHeight - 5; // Recalcula Y de inicio
+            
+            // Ajuste para evitar solapamiento con el header (si la nota es muy larga)
+            if (finalYStart < 50) { 
+                 finalYStart = 50;
+                 notesBoxHeight = notesMaxY - finalYStart - 5;
+                 const maxTextHeight = notesBoxHeight - titleAndPaddingHeight;
+                 const maxLines = Math.floor(maxTextHeight / 5);
+                 notesLines.length = Math.min(notesLines.length, maxLines);
+                 notesBoxHeight = (notesLines.length * 5) + titleAndPaddingHeight;
+                 finalYStart = notesMaxY - notesBoxHeight - 5;
             }
 
             const currentY = finalYStart;
-
             // *** INICIO DEL CAMBIO: AÑADIR SOMBREADO ***
             doc.setFillColor(240, 240, 240); // Color gris claro (#f0f0f0)
             doc.rect(margin, currentY, notesBoxWidth, notesBoxHeight, 'F'); // Dibujar rectángulo relleno (F: fill)
@@ -748,28 +748,21 @@
 
             // Dibujar el Borde
             doc.rect(margin, currentY, notesBoxWidth, notesBoxHeight);
-
             doc.setFont('helvetica', 'bold');
-            doc.text('NOTAS GENERALES DEL REPORTE:', margin + 2, currentY + 4);
-
-            doc.setFont('helvetica', 'normal');
-            doc.text(notesLines, margin + 2, currentY + 9);
+            doc.text('NOTAS GENERALES DEL REPORTE:', margin + 2, currentY + 4); 
             
-            return currentY + notesBoxHeight + 5; // Retorna la posición Y después de la caja
+            doc.setFont('helvetica', 'normal');
+            doc.text(notesLines, margin + 2, currentY + 12);
+
+            return finalYStart + notesBoxHeight + 5;
         }
 
-        // Función auxiliar para dibujar el encabezado
-        async function addHeader(doc, data, pageNum, finalTotalPages) {
-            const margin = 15;
-            const pageWidth = doc.internal.pageSize.getWidth();
+        // FUNCIÓN para añadir el encabezado del reporte
+        async function addHeader(doc, pageNum, finalTotalPages, data, logoUrl, reportDate, pageWidth, margin, logoHeight = 17, logoWidth = 34) {
             const headerY = 15;
             const headerX = pageWidth - margin;
-            const logoUrl = 'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
-            const reportDate = new Date().toLocaleDateString();
-            const logoHeight = 17;
-            const logoWidth = 34;
-            let base64Image = '';
 
+            let base64Image = '';
             try {
                 const response = await fetch(logoUrl);
                 if (!response.ok) throw new Error('Failed to fetch logo');
@@ -800,147 +793,76 @@
             let currentY = headerY + Math.max(logoHeight, 15) + 10;
             doc.line(margin, currentY, pageWidth - margin, currentY);
             currentY += 8;
-
+            
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.text(`Página ${pageNum} de ${finalTotalPages}`, pageWidth - margin, currentY - 2, null, null, 'right');
-
-            return currentY; // Devuelve la posición Y para comenzar el contenido
+            
+            return currentY;
         }
 
-        // Función principal para generar y enviar el PDF
-        async function generateAndSendPDF(data) {
-            const reportElementsData = data.reportElements || [];
-            const extraNotes = data.extraNotes || '';
-
-            // Calcular el número total de páginas (1 de información + 1 por elemento + 1 extra para firma/notas si es necesario)
-            const totalElements = reportElementsData.length;
-            let totalPages = 1; // Página de inicio
-            if (totalElements > 0) {
-                // Si hay elementos, cada uno toma una página
-                totalPages = totalElements;
-            }
-            // La firma y las notas extra van en la ÚLTIMA página, sin contar como una página extra a menos que el último elemento no deje espacio.
-            // Para simplificar, asumiremos que si hay elementos, hay suficientes páginas o que la firma y notas caben en la última.
-            // Si no hay elementos, la página 1 es la página final.
-            if (totalElements === 0 && extraNotes) {
-                // Si no hay elementos pero sí hay notas extra, la página 1 es la única.
-                totalPages = 1; 
-            } else if (totalElements === 0 && !extraNotes) {
-                // Si no hay elementos ni notas, solo la página 1.
-                totalPages = 1;
-            }
-
-
+        // FUNCIÓN para crear el PDF y convertirlo a Base64
+        async function createPdfBase64() {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4');
+            const doc = new jsPDF();
+            const formData = new FormData(document.getElementById('documentForm_reporte'));
+            const data = Object.fromEntries(formData.entries());
+            
+            const extraNotes = extraNotesInput.value.trim();
+            const reportElementsData = reportElements.filter(el => el.description || el.image || el.details); 
+
+            const totalElements = reportElementsData.length;
+            let totalPages = totalElements === 0 ? 1 : totalElements; 
+            
+            let y = 15;
             const margin = 15;
             const pageWidth = doc.internal.pageSize.getWidth();
-            const pageHeight = doc.internal.pageSize.getHeight();
-            let pageNum = 1;
-            
-            let y = 0; // Posición Y de inicio de contenido
+            const pageHeight = doc.internal.pageSize.getHeight(); 
+            const logoUrl = 'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
+            const reportDate = new Date().toLocaleDateString();
 
             // --- Page 1: Information and First Element (if exists) ---
-            if (totalElements === 0) {
-                y = await addHeader(doc, data, 1, 1); // 1 página total
-            } else {
-                y = await addHeader(doc, data, 1, totalPages);
-            }
-            
-            doc.setFont('helvetica', 'bold');
-            doc.text(`Técnico: ${data.nombre_tecnico}`, margin, y);
-            y += 8;
+            let pageNum = 1;
+            y = await addHeader(doc, pageNum, totalPages, data, logoUrl, reportDate, pageWidth, margin);
 
-            // Dibujar el primer elemento (si existe)
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('INFORMACIÓN Y RESUMEN', margin, y);
+            y += 6;
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Reporte generado por: ${data.nombre_tecnico}`, margin, y);
+            doc.text(`Fecha de Generación: ${reportDate}`, pageWidth / 2, y);
+            y += 10;
+            doc.text(`Asunto del Reporte: ${data.nombre_reporte}`, margin, y);
+            y += 10;
+
+            // --- Insert First Evidence Element here (if exists) ---
             if (totalElements > 0) {
                 const element = reportElementsData[0];
-                
                 doc.setFont('helvetica', 'bold');
                 doc.text(`${element.description || 'SIN SUB-TEMA'}`, margin, y);
                 y += 8;
+
                 doc.setFontSize(11);
                 doc.setFont('helvetica', 'normal');
                 doc.text(`Página de Detalle #1`, margin, y);
-                y += 5;
-
-                // Image (First Page)
-                if (element.image) {
-                    const img = new Image();
-                    await new Promise(resolve => { img.onload = resolve; img.src = element.image; });
-                    
-                    const maxImgWidth = pageWidth - (margin * 2);
-                    
-                    // Calcular detallesBoxHeight para estimar maxImgHeight
-                    doc.setFontSize(10);
-                    doc.setFont('helvetica', 'normal');
-                    const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth - 4);
-                    const detailsBoxHeight = 4 + 5 + 4 + (detailsLines.length * 5) + 4; // Borde, padding, texto
-
-                    const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5;
-                    let imgWidth = img.width;
-                    let imgHeight = img.height;
-
-                    if (imgWidth > maxImgWidth || imgHeight > maxImgHeight) {
-                        const ratio = Math.min(maxImgWidth / imgWidth, maxImgHeight / imgHeight);
-                        imgWidth = imgWidth * ratio;
-                        imgHeight = imgHeight * ratio;
-                    }
-
-                    const imgX = (pageWidth - imgWidth) / 2;
-                    doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight);
-                    y += imgHeight + 5;
-                } else {
-                    doc.text('No se adjuntó imagen para este elemento.', margin, y);
-                    y += 10;
-                }
-
-                // Details Text (Inside Box - First Page)
-                const detailsBoxYStart = y;
-                const detailsBoxWidth = pageWidth - (margin * 2);
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'bold');
-                doc.text('Detalles Adicionales:', margin + 2, y + 4);
-                y += 8;
-                doc.setFont('helvetica', 'normal');
-                const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', detailsBoxWidth - 4);
-                doc.text(detailsLines, margin + 2, y);
-                y += (detailsLines.length * 5) + 4;
-                const finalDetailsBoxHeight = y - detailsBoxYStart;
-                doc.rect(margin, detailsBoxYStart, detailsBoxWidth, finalDetailsBoxHeight);
-                y += 5;
-            }
-
-            // --- Pages 2 to N: Elements (Remaining elements, each on a new page) ---
-            for (let i = 1; i < totalElements; i++) {
-                const element = reportElementsData[i];
-                
-                doc.addPage();
-                pageNum++;
-                y = await addHeader(doc, data, pageNum, totalPages);
-                
-                doc.setFont('helvetica', 'bold');
-                doc.text(`${element.description || 'SIN SUB-TEMA'}`, margin, y);
-                y += 8;
-                doc.setFontSize(11);
-                doc.setFont('helvetica', 'normal');
-                doc.text(`Página de Detalle #${i + 1}`, margin, y);
                 y += 5;
                 
                 // Image
                 if (element.image) {
                     const img = new Image();
-                    await new Promise(resolve => { img.onload = resolve; img.src = element.image; });
-                    
+                    await new Promise(resolve => {
+                        img.onload = resolve;
+                        img.src = element.image;
+                    });
                     const maxImgWidth = pageWidth - (margin * 2);
                     
-                    // Calcular detallesBoxHeight para estimar maxImgHeight
                     doc.setFontSize(10);
                     doc.setFont('helvetica', 'normal');
                     const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth - 4);
                     const detailsBoxHeight = 4 + 5 + 4 + (detailsLines.length * 5) + 4;
-
-                    const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5;
+                    const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5; 
+                    
                     let imgWidth = img.width;
                     let imgHeight = img.height;
 
@@ -949,7 +871,7 @@
                         imgWidth = imgWidth * ratio;
                         imgHeight = imgHeight * ratio;
                     }
-
+                    
                     const imgX = (pageWidth - imgWidth) / 2;
                     doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight);
                     y += imgHeight + 5;
@@ -961,128 +883,193 @@
                 // Details Text (Inside Box)
                 const detailsBoxYStart = y;
                 const detailsBoxWidth = pageWidth - (margin * 2);
+
                 doc.setFontSize(10);
                 doc.setFont('helvetica', 'bold');
                 doc.text('Detalles Adicionales:', margin + 2, y + 4);
                 y += 8;
+
                 doc.setFont('helvetica', 'normal');
                 const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', detailsBoxWidth - 4);
                 doc.text(detailsLines, margin + 2, y);
-                y += (detailsLines.length * 5) + 4;
+                y += (detailsLines.length * 5) + 4; 
+
+                const finalDetailsBoxHeight = y - detailsBoxYStart;
+                doc.rect(margin, detailsBoxYStart, detailsBoxWidth, finalDetailsBoxHeight);
+                y += 5;
+            }
+
+            // --- Pages 2 to N: Elements (Remaining elements, each on a new page) ---
+            for (let i = 1; i < totalElements; i++) {
+                const element = reportElementsData[i];
+                doc.addPage();
+                pageNum++;
+                y = await addHeader(doc, pageNum, totalPages, data, logoUrl, reportDate, pageWidth, margin);
+
+                doc.setFont('helvetica', 'bold');
+                doc.text(`${element.description || 'SIN SUB-TEMA'}`, margin, y);
+                y += 8;
+
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Página de Detalle #${i + 1}`, margin, y);
+                y += 5;
+
+                // Image
+                if (element.image) {
+                    const img = new Image();
+                    await new Promise(resolve => {
+                        img.onload = resolve;
+                        img.src = element.image;
+                    });
+                    const maxImgWidth = pageWidth - (margin * 2);
+                    
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'normal');
+                    const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth - 4);
+                    const detailsBoxHeight = 4 + 5 + 4 + (detailsLines.length * 5) + 4;
+                    const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5; 
+                    
+                    let imgWidth = img.width;
+                    let imgHeight = img.height;
+
+                    if (imgWidth > maxImgWidth || imgHeight > maxImgHeight) {
+                        const ratio = Math.min(maxImgWidth / imgWidth, maxImgHeight / imgHeight);
+                        imgWidth = imgWidth * ratio;
+                        imgHeight = imgHeight * ratio;
+                    }
+                    
+                    const imgX = (pageWidth - imgWidth) / 2;
+                    doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight);
+                    y += imgHeight + 5;
+                } else {
+                    doc.text('No se adjuntó imagen para este elemento.', margin, y);
+                    y += 10;
+                }
+
+                // Details Text (Inside Box)
+                const detailsBoxYStart = y;
+                const detailsBoxWidth = pageWidth - (margin * 2);
+
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Detalles Adicionales:', margin + 2, y + 4);
+                y += 8;
+
+                doc.setFont('helvetica', 'normal');
+                const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', detailsBoxWidth - 4);
+                doc.text(detailsLines, margin + 2, y);
+                y += (detailsLines.length * 5) + 4; 
+
                 const finalDetailsBoxHeight = y - detailsBoxYStart;
                 doc.rect(margin, detailsBoxYStart, detailsBoxWidth, finalDetailsBoxHeight);
                 y += 5;
             }
 
             // --- Signature and Notes Placement (Always on the last page) ---
+            
             doc.setPage(totalPages);
 
             // 1. Añadir Notas Extra si existen
             if (extraNotes) {
                 // 'y' es la posición después del último contenido, se usa como punto de inicio para la nota.
-                y = addExtraNotesToPage(doc, extraNotes, y, pageHeight, margin);
+                y = addExtraNotesToPage(doc, extraNotes, y, pageHeight, margin); 
             }
 
             // 2. Añadir Firma (Siempre fija al final)
             await addSignatureSection(doc, data, pageHeight, margin, canvas, hasSigned);
-
-            // 3. Obtener Base64 del PDF y metadatos
-            const pdfBase64 = doc.output('datauristring').split(',')[1];
-            const fileName = data.nombre_reporte.replace(/[^a-z0-9]/gi, '_').substring(0, 30);
             
-            // 4. Enviar a Google Apps Script
-            const dataToSend = {
-                pdfBase64: pdfBase64,
-                fileName: `${fileName}_${new Date().getTime()}.pdf`,
-                recipientEmail: data.recipient_email,
-                reportName: data.nombre_reporte,
-                reporterName: data.nombre_tecnico
-            };
-
-            const response = await fetch(GAS_WEB_APP_URL, {
-                method: 'POST',
-                mode: 'cors', // Necesario para peticiones a GAS
-                headers: {
-                    'Content-Type': 'text/plain', // Usar text/plain o vacío para evitar errores CORS complejos en GAS
-                },
-                body: JSON.stringify(dataToSend)
-            });
-
-            if (!response.ok) {
-                throw new Error('Error al conectar con Google Apps Script.');
-            }
-
-            const result = await response.json();
-
-            if (result.success) {
-                showMessage(`✅ Correo enviado a: ${data.recipient_email}`, 'success');
-            } else {
-                showMessage(`❌ Error de GAS: ${result.message || 'Error desconocido'}`, 'error');
-                throw new Error(result.message);
-            }
+            // 3. Devolver PDF como Base64
+            return doc.output('datauristring').split(',')[1];
         }
 
-        // --- EVENT HANDLERS ---
-        
-        form.addEventListener('submit', async (e) => {
+        // --- PDF GENERATION AND SENDING LOGIC (MODIFICADA) ---
+        document.getElementById('generatePdfButton').addEventListener('click', async function(e) {
             e.preventDefault();
-            
-            const formInputs = new FormData(form);
-            const data = {};
-            for (const [key, value] of formInputs.entries()) {
-                data[key] = value;
-            }
-            data.reportElements = reportElements;
-            data.extraNotes = extraNotesInput.value;
+            const loadingOverlay = document.getElementById('loadingOverlay');
 
-            // Simple validation
-            if (!data.nombre_reporte || !data.nombre_tecnico || !data.recipient_email) {
-                showMessage('Por favor, complete todos los campos requeridos.', 'error');
+            // 1. Validación básica
+            const nombreReporte = document.getElementById('nombre_reporte').value.trim();
+            const nombreTecnico = document.getElementById('nombre_tecnico').value.trim();
+
+            if (!nombreReporte || !nombreTecnico) {
+                showMessage("Por favor, complete el 'Nombre del Reporte' y el 'Nombre de quien Reporta'.", 'info');
                 return;
             }
-            
-            const loadingOverlay = document.getElementById('loadingOverlay');
+
             loadingOverlay.style.display = 'flex';
 
             try {
-                // Generar y Enviar
-                await generateAndSendPDF(data);
+                // 2. Generar el PDF en Base64
+                const pdfBase64 = await createPdfBase64();
                 
-                // Si el envío es exitoso, limpiar el formulario (opcional, pero buena práctica)
-                // Esto simula la acción de Nuevo Reporte para no duplicar envíos
-                // document.getElementById('clearFormButton_reporte').click(); 
-                
+                // 3. Preparar los datos para enviar al GAS
+                const sendData = {
+                    action: 'sendReport',
+                    pdfBase64: pdfBase64,
+                    fileName: nombreReporte.replace(/[^a-z0-9]/gi, '_').substring(0, 30),
+                    nombreReporte: nombreReporte,
+                    nombreTecnico: nombreTecnico
+                    // Si necesita enviar emails, añadalos aquí (e.g., recipientEmail: 'destino@ejemplo.com')
+                };
+
+                // 4. Enviar a Google Apps Script
+                const response = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'cors', // Necesario para evitar CORS (Failed to fetch)
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8', // Google Script espera text/plain o no especificado
+                    },
+                    body: JSON.stringify(sendData),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error en la solicitud: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    showMessage('Reporte generado y enviado con éxito al correo.', 'success');
+                    // Opcional: limpiar el formulario después del envío exitoso
+                    // document.getElementById('clearFormButton_reporte').click(); 
+                } else {
+                    throw new Error(result.message || 'Error desconocido en el Script de Google.');
+                }
+
             } catch (error) {
-                console.error("Error al generar o enviar PDF:", error);
-                showMessage(`Error: ${error.message || 'No se pudo generar/enviar el PDF.'}`, 'error');
+                console.error('Error al generar o enviar el PDF:', error);
+                // Aquí es donde se resolverá el Failed to fetch si la URL y el despliegue son correctos
+                showMessage(`Error: ${error.message || 'Error de conexión o script.'} Asegúrese que su script de Google Apps tenga el "Acceso" configurado a "Cualquier persona".`, 'error');
             } finally {
                 loadingOverlay.style.display = 'none';
             }
         });
 
-        // Eventos para el botón de "Nuevo Reporte" (Clear Form)
+        // --- CLEAR FORM AND SIGNATURE LOGIC ---
         document.getElementById('clearFormButton_reporte').addEventListener('click', function() {
             document.getElementById('confirmationModal_reporte').classList.remove('hidden');
         });
-
         document.getElementById('cancelClearButton_reporte').addEventListener('click', function() {
             document.getElementById('confirmationModal_reporte').classList.add('hidden');
         });
-
         document.getElementById('confirmClearButton_reporte').addEventListener('click', function() {
-            form.reset();
+            document.getElementById('documentForm_reporte').reset();
+            
             reportElements = [];
             elementCounter = 0;
             document.getElementById('reportElementsContainer').innerHTML = '';
-            addReportElement(); // Añadir un elemento vacío al limpiar
+            addReportElement();
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             hasSigned = false;
             drawPlaceholder();
-            saveFormData(); // Guardar el estado limpio
+            
             document.getElementById('confirmationModal_reporte').classList.add('hidden');
             showMessage('Formulario limpiado. Listo para un nuevo reporte.', 'success');
+       
             localStorage.removeItem('documentFormData_reporte_simple');
             localStorage.removeItem('extraNotes_reporte_simple'); // Limpiar notas extra
             extraNotesInput.value = ''; // Limpiar el input de notas
@@ -1091,11 +1078,9 @@
         document.getElementById('clearSignatureButton_reporte').addEventListener('click', function() {
             document.getElementById('clearSignatureConfirmationModal_reporte').classList.remove('hidden');
         });
-
         document.getElementById('cancelClearSignatureButton_reporte').addEventListener('click', function() {
             document.getElementById('clearSignatureConfirmationModal_reporte').classList.add('hidden');
         });
-
         document.getElementById('confirmClearSignatureButton_reporte').addEventListener('click', function() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = 'white';
@@ -1107,7 +1092,6 @@
             showMessage('Firma borrada.', 'success');
         });
         
-        // Inicialización de un elemento si no hay datos guardados
         if (reportElements.length === 0) {
             addReportElement();
         }
