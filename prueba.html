@@ -198,8 +198,6 @@
     </div>
 
     <script>
-        // *** SE ELIMINA GAS_ENDPOINT ***
-
         let reportElements = []; // Stores objects: { id, description, image, details }
         let elementCounter = 0;
         let currentElementIdForCamera = null;
@@ -943,18 +941,20 @@
             return doc.output('blob'); 
         }
 
+        // Función auxiliar para la descarga local
+        function downloadLocal(pdfBlob, fileName) {
+            const url = URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showMessage('PDF descargado localmente en su dispositivo.', 'success');
+        }
 
-        // --- EVENT HANDLERS ---
-        const generateAndShareButton = document.getElementById('generateAndShareButton');
-        const downloadPdfButton = document.getElementById('downloadPdfButton');
-        
-        // MODIFICACIÓN: Evento SUBMIT ahora llama a la función de compartir
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            handleSharePDF();
-        });
-
-        // NUEVA FUNCIÓN: Lógica de Compartir Nativo
+        // NUEVA FUNCIÓN: Lógica de Compartir Nativo con Fallback Robusto
         async function handleSharePDF() {
             document.getElementById('loadingOverlay').classList.remove('hidden');
 
@@ -969,47 +969,65 @@
             const fileNamePrefix = data.nombre_reporte.replace(/[^a-z0-9]/gi, '_').substring(0, 50) || 'reporte_evidencia';
             const reportDate = new Date().toLocaleDateString().replace(/\//g, '-');
             const finalFileName = `${fileNamePrefix}_${reportDate}.pdf`;
+            
+            let pdfBlob = null;
 
             try {
                 showMessage('Generando PDF...', 'info');
                 // 1. Generar el PDF como un objeto Blob
-                const pdfBlob = await generatePDF(data, reportElements, signatureData, extraNotes, canvas, hasSigned); 
+                pdfBlob = await generatePDF(data, reportElements, signatureData, extraNotes, canvas, hasSigned); 
                 
                 // 2. Crear un objeto File necesario para la API de compartir
                 const pdfFile = new File([pdfBlob], finalFileName, { type: 'application/pdf' });
 
-                // 3. Verificar la API de compartir y compartir el archivo
+                // 3. Verificar la API de compartir
                 if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-                    await navigator.share({
-                        files: [pdfFile],
-                        title: `Reporte: ${data.nombre_reporte}`,
-                        text: `Adjunto el reporte de evidencia generado por ${data.nombre_tecnico}.`,
-                        // URL: 'https://invs99.github.io/FF/prueba.html' // Opcional, si quiere compartir el enlace a la app
-                    });
-                    showMessage('PDF compartido con éxito. Seleccione su aplicación de destino.', 'success');
+                    try {
+                        // Intento de compartir nativo
+                        await navigator.share({
+                            files: [pdfFile],
+                            title: `Reporte: ${data.nombre_reporte}`,
+                            text: `Adjunto el reporte de evidencia generado por ${data.nombre_tecnico}.`,
+                        });
+                        showMessage('PDF compartido con éxito. Seleccione su aplicación de destino.', 'success');
+
+                    } catch (error) {
+                        // Si la función share() falla (generalmente por rechazo del SO o archivo muy grande)
+                        if (error.name !== 'AbortError') {
+                            console.error('Fallo en la API de Compartir Nativo:', error);
+                            showMessage('Fallo en la función de Compartir Nativo. Intentando descarga local...', 'error');
+                            
+                            // FALLBACK: DESCARGA LOCAL
+                            downloadLocal(pdfBlob, finalFileName);
+                        } else {
+                            // El usuario canceló la acción, no es un error.
+                            showMessage('Compartición cancelada por el usuario.', 'info');
+                        }
+                    }
                 } else {
-                    // Fallback para navegadores/dispositivos antiguos
-                    showMessage('La opción de Compartir Nativo no está disponible. Descargando el archivo localmente como alternativa...', 'error');
-                    
-                    // Activamos la descarga local como fallback
-                    const url = URL.createObjectURL(pdfBlob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = finalFileName;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
+                    // Fallback para navegadores/dispositivos que no soportan la API
+                    showMessage('La opción de Compartir Nativo no está disponible. Descargando el archivo localmente como alternativa.', 'error');
+                    downloadLocal(pdfBlob, finalFileName);
                 }
 
             } catch (error) {
-                console.error('Error al generar o compartir el documento:', error);
-                showMessage('ERROR: Falló la generación del PDF o la función de compartir.', 'error');
+                console.error('Error CRÍTICO al generar o compartir el documento:', error);
+                showMessage('ERROR: Falló la generación del PDF. Revisa la consola para más detalles.', 'error');
             } finally {
                 document.getElementById('loadingOverlay').classList.add('hidden');
             }
         }
 
+
+        // --- EVENT HANDLERS ---
+        const generateAndShareButton = document.getElementById('generateAndShareButton');
+        const downloadPdfButton = document.getElementById('downloadPdfButton');
+        
+        // MODIFICACIÓN: Evento SUBMIT ahora llama a la función de compartir
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            handleSharePDF();
+        });
 
         // Evento para el botón de DESCARGA LOCAL (se mantiene como opción)
         downloadPdfButton.addEventListener('click', async function() {
@@ -1032,16 +1050,8 @@
                 const pdfBlob = await generatePDF(data, reportElements, signatureData, extraNotes, canvas, hasSigned);
                 
                 // Descargar localmente
-                const url = URL.createObjectURL(pdfBlob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = finalFileName;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+                downloadLocal(pdfBlob, finalFileName);
 
-                showMessage('Reporte PDF generado y descargado con éxito.', 'success');
             } catch (error) {
                 console.error("Error al generar el PDF:", error);
                 showMessage('Error al generar el PDF. Revisa la consola para más detalles.', 'error');
