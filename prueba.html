@@ -179,11 +179,11 @@
                 </button>
 
                 <button type="button" id="downloadPdfButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    1. Generar y Descargar PDF Localmente
+                    1. Generar, Descargar y Compartir (Intento Automático)
                 </button>
                 
                 <button type="button" id="shareAfterDownloadButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 hidden">
-                    2. Compartir PDF (Usar Menú Nativo del Teléfono)
+                    2. Compartir PDF (Hacer clic si el automático falla)
                 </button>
                 
                 <button type="button" id="clearFormButton_reporte" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
@@ -203,8 +203,8 @@
         let reportElements = []; // Stores objects: { id, description, image, details }
         let elementCounter = 0;
         let currentElementIdForCamera = null;
-        let lastGeneratedPdfBlob = null; // *** NUEVA VARIABLE GLOBAL PARA ALMACENAR EL BLOB ***
-        let lastGeneratedPdfFileName = ''; // *** NOMBRE DEL ARCHIVO PARA COMPARTIR ***
+        let lastGeneratedPdfBlob = null; 
+        let lastGeneratedPdfFileName = ''; 
 
         document.addEventListener('DOMContentLoaded', () => {
             loadFormData();
@@ -1033,14 +1033,15 @@
             showMessage('PDF descargado localmente. Búsquelo en la carpeta "Descargas" o en el historial de su navegador.', 'success');
         }
 
-        // FUNCIÓN NUEVA: Compartir el Blob previamente generado
-        async function handleDeferredShare() {
+        // FUNCIÓN: Compartir el Blob previamente generado
+        // El parámetro isAutoAttempt nos ayuda a dar un mensaje de error más útil.
+        async function handleDeferredShare(isAutoAttempt = false) {
             if (!lastGeneratedPdfBlob) {
-                showMessage('ERROR: Primero debe generar y descargar el PDF localmente (Paso 1).', 'error');
+                showMessage('ERROR: Primero debe generar y descargar el PDF localmente.', 'error');
                 return;
             }
 
-            // Ocultar el botón para evitar clics múltiples mientras se abre el menú nativo
+            // Desactivar el botón para evitar clics múltiples mientras se intenta el compartir
             shareAfterDownloadButton.disabled = true;
 
             try {
@@ -1054,30 +1055,48 @@
                         text: `Adjunto el reporte de evidencia generado.`,
                     });
                     showMessage('PDF compartido con éxito. Seleccione su aplicación de destino (Correo, WhatsApp, etc.).', 'success');
-
+                    
+                    // Si el compartir fue exitoso (no cancelado), podemos ocultar el botón manual.
+                    if (!isAutoAttempt) { 
+                        shareAfterDownloadButton.classList.add('hidden');
+                    }
+                    
                 } else {
-                    // Este es el fallback que ya deberíamos haber cubierto con el botón de descarga, pero sirve de advertencia
-                    showMessage('La opción de Compartir Nativo no está disponible en su dispositivo.', 'info');
+                    if (isAutoAttempt) {
+                         showMessage('Compartir Nativo no disponible. Por favor, utilice el botón "2. Compartir PDF" manualmente.', 'error');
+                    } else {
+                         showMessage('La opción de Compartir Nativo no está disponible en su dispositivo.', 'info');
+                    }
                 }
             } catch (error) {
                 if (error.name !== 'AbortError') {
                     console.error('Fallo en la API de Compartir Nativo (deferred):', error);
-                    showMessage('Fallo al abrir el menú de Compartir Nativo. Intente buscar el archivo en la carpeta "Descargas".', 'error');
+                    
+                    // Mensaje específico si el error es por bloqueo de seguridad
+                    if (isAutoAttempt && (error.name === 'NotAllowedError' || error.name === 'SecurityError')) {
+                         showMessage('El navegador ha bloqueado la apertura automática del menú de Compartir. Por favor, haga clic en el botón "2. Compartir PDF" manualmente.', 'error');
+                    } else if (!isAutoAttempt) {
+                         showMessage('Fallo al abrir el menú de Compartir Nativo. Intente buscar el archivo en la carpeta "Descargas".', 'error');
+                    }
                 } else {
                     showMessage('Compartición cancelada por el usuario.', 'info');
                 }
             } finally {
                 shareAfterDownloadButton.disabled = false;
+                // Si fue un intento automático, el botón manual siempre debe ser visible como plan B.
+                if (isAutoAttempt) {
+                    shareAfterDownloadButton.classList.remove('hidden'); 
+                }
             }
         }
         
         // --- EVENT HANDLERS ---
         
-        // EVENTO DEL NUEVO BOTÓN COMPARTIR
-        shareAfterDownloadButton.addEventListener('click', handleDeferredShare);
+        // EVENTO DEL BOTÓN COMPARTIR MANUAL (FALLBACK)
+        shareAfterDownloadButton.addEventListener('click', () => handleDeferredShare(false));
 
 
-        // Evento para el botón de DESCARGA LOCAL (AHORA ES EL PRINCIPAL)
+        // Evento para el botón de GENERAR Y COMPARTIR (AHORA CON INTENTO AUTOMÁTICO)
         document.getElementById('downloadPdfButton').addEventListener('click', async function() {
             document.getElementById('loadingOverlay').classList.remove('hidden');
             // Ocultar el botón de compartir previo
@@ -1097,24 +1116,29 @@
             const finalFileName = `${fileNamePrefix}_${reportDate}_DESCARGA.pdf`;
 
             try {
-                showMessage('Generando PDF para descarga local...', 'info');
+                showMessage('Generando PDF y preparando la descarga...', 'info');
                 // 1. Generar el PDF y obtener el objeto Blob
                 const pdfBlob = await generatePDF(data, reportElements, signatureData, extraNotes, canvas, hasSigned);
                 
                 // 2. Descargar localmente
                 downloadLocal(pdfBlob, finalFileName);
 
-                // 3. ALMACENAR EL BLOB Y MOSTRAR EL BOTÓN COMPARTIR
+                // 3. ALMACENAR EL BLOB 
                 lastGeneratedPdfBlob = pdfBlob;
                 lastGeneratedPdfFileName = finalFileName;
-                shareAfterDownloadButton.classList.remove('hidden');
                 
-                showMessage('Generación completada. Archivo guardado. Ahora puede usar el botón "2. Compartir PDF".', 'success');
+                showMessage('Generación completada. Archivo guardado. Intentando abrir el menú de Compartir...', 'info');
+                
+                // 4. INTENTAR COMPARTIR AUTOMÁTICAMENTE (Lo más probable es que falle en móviles, pero lo intentamos)
+                setTimeout(async () => {
+                     await handleDeferredShare(true); // Flag true para intento automático
+                }, 500); // Pequeño retraso de 500ms
+                
                 saveFormData();
 
             } catch (error) {
                 console.error("Error al generar el PDF para descarga:", error);
-                showMessage(`ERROR (Descarga Local): Falló la generación. Detalle: ${error.message || error.name || 'Error desconocido'}.`, 'error');
+                showMessage(`ERROR (Generación): Falló la generación. Detalle: ${error.message || error.name || 'Error desconocido'}.`, 'error');
             } finally {
                 document.getElementById('loadingOverlay').classList.add('hidden');
             }
