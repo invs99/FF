@@ -63,7 +63,7 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p class="text-gray-700">Generando PDF y Enviando Correo...</p>
+            <p class="text-gray-700">Generando PDF y preparando para compartir...</p>
         </div>
     </div>
 
@@ -177,8 +177,8 @@
                 <button type="button" id="openExtraNotesButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                     Notas Extra
                 </button>
-                <button type="submit" id="generateAndSendButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Enviar por Correo (Adjunto Automático)
+                <button type="submit" id="generateAndShareButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Generar y Compartir PDF (Adjunto Nativo)
                 </button>
                 <button type="button" id="downloadPdfButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     Generar Reporte PDF (Solo Descarga Local)
@@ -198,12 +198,7 @@
     </div>
 
     <script>
-        // =======================================================================
-        // >>> CONFIGURACIÓN CRÍTICA DEL SERVIDOR (GOOGLE APPS SCRIPT) <<<
-        // =======================================================================
-        // URL de su Script de Google. ¡NO LA CAMBIE!
-        const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxomRBQTqoRZ1S-Tw-VAmI4TENP6mVLi1PMdOftXKAuDGtLSGG8vvZbrgdeHrbAAwB6/exec'; 
-        // =======================================================================
+        // *** SE ELIMINA GAS_ENDPOINT ***
 
         let reportElements = []; // Stores objects: { id, description, image, details }
         let elementCounter = 0;
@@ -667,8 +662,8 @@
             }
         }
 
-        // --- PDF GENERATION CORE FUNCTION ---
-        async function generatePDF(data, reportElementsData, signatureData, extraNotes, canvas, hasSigned, returnBase64 = false) {
+        // --- PDF GENERATION CORE FUNCTION (MODIFIED TO RETURN BLOB) ---
+        async function generatePDF(data, reportElementsData, signatureData, extraNotes, canvas, hasSigned) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
             let pageNum = 1;
@@ -725,7 +720,7 @@
                 return currentY;
             }
 
-            async function addSignatureSection(doc, data, pageHeight, margin, canvasElement, isSigned) {
+            async function addSignatureSection(doc, data, pageHeight, margin, isSigned) {
                 const signatureImageHeight = 30;
                 const signatureWidth = 80;
                 const signatureBlockHeight = 40;
@@ -942,25 +937,81 @@
                 y = addExtraNotesToPage(doc, extraNotes, y, pageHeight, margin);
             }
 
-            await addSignatureSection(doc, data, pageHeight, margin, canvas, hasSigned);
+            await addSignatureSection(doc, data, pageHeight, margin, hasSigned);
             
-            // --- Finalizar: Devolver el objeto doc (para ambos casos) ---
-            return doc; 
+            // --- FINAL: RETORNAR COMO BLOB PARA COMPARTIR ---
+            return doc.output('blob'); 
         }
 
 
         // --- EVENT HANDLERS ---
-        const generateAndSendButton = document.getElementById('generateAndSendButton');
+        const generateAndShareButton = document.getElementById('generateAndShareButton');
         const downloadPdfButton = document.getElementById('downloadPdfButton');
-
-        // Modificamos el evento SUBMIT para que use el botón de ENVÍO AUTOMÁTICO
+        
+        // MODIFICACIÓN: Evento SUBMIT ahora llama a la función de compartir
         form.addEventListener('submit', (e) => {
             e.preventDefault();
-            // Ejecutamos la función de envío automático por defecto al hacer submit
-            handleSendEmail();
+            handleSharePDF();
         });
 
-        // Evento para el botón de DESCARGA LOCAL
+        // NUEVA FUNCIÓN: Lógica de Compartir Nativo
+        async function handleSharePDF() {
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+
+            const formData = new FormData(form);
+            const data = {};
+            for (const [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            const signatureData = hasSigned ? canvas.toDataURL('image/png') : null;
+            const extraNotes = localStorage.getItem('extraNotes_reporte_simple') || '';
+            const fileNamePrefix = data.nombre_reporte.replace(/[^a-z0-9]/gi, '_').substring(0, 50) || 'reporte_evidencia';
+            const reportDate = new Date().toLocaleDateString().replace(/\//g, '-');
+            const finalFileName = `${fileNamePrefix}_${reportDate}.pdf`;
+
+            try {
+                showMessage('Generando PDF...', 'info');
+                // 1. Generar el PDF como un objeto Blob
+                const pdfBlob = await generatePDF(data, reportElements, signatureData, extraNotes, canvas, hasSigned); 
+                
+                // 2. Crear un objeto File necesario para la API de compartir
+                const pdfFile = new File([pdfBlob], finalFileName, { type: 'application/pdf' });
+
+                // 3. Verificar la API de compartir y compartir el archivo
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                    await navigator.share({
+                        files: [pdfFile],
+                        title: `Reporte: ${data.nombre_reporte}`,
+                        text: `Adjunto el reporte de evidencia generado por ${data.nombre_tecnico}.`,
+                        // URL: 'https://invs99.github.io/FF/prueba.html' // Opcional, si quiere compartir el enlace a la app
+                    });
+                    showMessage('PDF compartido con éxito. Seleccione su aplicación de destino.', 'success');
+                } else {
+                    // Fallback para navegadores/dispositivos antiguos
+                    showMessage('La opción de Compartir Nativo no está disponible. Descargando el archivo localmente como alternativa...', 'error');
+                    
+                    // Activamos la descarga local como fallback
+                    const url = URL.createObjectURL(pdfBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = finalFileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }
+
+            } catch (error) {
+                console.error('Error al generar o compartir el documento:', error);
+                showMessage('ERROR: Falló la generación del PDF o la función de compartir.', 'error');
+            } finally {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }
+        }
+
+
+        // Evento para el botón de DESCARGA LOCAL (se mantiene como opción)
         downloadPdfButton.addEventListener('click', async function() {
             document.getElementById('loadingOverlay').classList.remove('hidden');
 
@@ -972,15 +1023,23 @@
             
             const signatureData = hasSigned ? canvas.toDataURL('image/png') : null;
             const extraNotes = localStorage.getItem('extraNotes_reporte_simple') || '';
+            const fileNamePrefix = data.nombre_reporte.replace(/[^a-z0-9]/gi, '_').substring(0, 50) || 'reporte_evidencia';
+            const reportDate = new Date().toLocaleDateString().replace(/\//g, '-');
+            const finalFileName = `${fileNamePrefix}_${reportDate}.pdf`;
 
             try {
-                // Generar el PDF y obtener el objeto doc
-                const doc = await generatePDF(data, reportElements, signatureData, extraNotes, canvas, hasSigned, false);
+                // Generar el PDF y obtener el objeto Blob
+                const pdfBlob = await generatePDF(data, reportElements, signatureData, extraNotes, canvas, hasSigned);
                 
                 // Descargar localmente
-                const fileName = data.nombre_reporte.replace(/[^a-z0-9]/gi, '_').substring(0, 50) || 'reporte_evidencia';
-                const reportDate = new Date().toLocaleDateString().replace(/\//g, '-');
-                doc.save(`${fileName}_${reportDate}.pdf`);
+                const url = URL.createObjectURL(pdfBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = finalFileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
 
                 showMessage('Reporte PDF generado y descargado con éxito.', 'success');
             } catch (error) {
@@ -990,66 +1049,6 @@
                 document.getElementById('loadingOverlay').classList.add('hidden');
             }
         });
-
-        // Lógica de Envío Automático al Servidor
-        async function handleSendEmail() {
-            document.getElementById('loadingOverlay').classList.remove('hidden');
-
-            const formData = new FormData(form);
-            const data = {};
-            for (const [key, value] of formData.entries()) {
-                data[key] = value;
-            }
-            
-            const signatureData = hasSigned ? canvas.toDataURL('image/png') : null;
-            const extraNotes = localStorage.getItem('extraNotes_reporte_simple') || '';
-
-            try {
-                // 1. Generar el PDF y obtener el objeto doc
-                showMessage('Generando PDF y Enviando al servidor...', 'info');
-                const doc = await generatePDF(data, reportElements, signatureData, extraNotes, canvas, hasSigned, true); 
-                
-                // 2. Convertir el objeto doc a Base64 Data URI String
-                const pdfBase64DataUri = doc.output('datauristring');
-                
-                // 3. Extraer solo la parte Base64 después de la coma
-                const pdfBase64 = pdfBase64DataUri.split(',')[1];
-                
-                const reportDate = new Date().toLocaleDateString().replace(/\//g, '-');
-                const fileNamePrefix = data.nombre_reporte.replace(/[^a-z0-9]/gi, '_').substring(0, 50) || 'reporte_evidencia';
-
-                // 4. Crear el payload a enviar al Apps Script
-                const payload = {
-                    subject: `Reporte de Evidencia: ${data.nombre_reporte}`,
-                    technician: data.nombre_tecnico,
-                    pdfContent: pdfBase64, // Nombre de la propiedad que espera Apps Script
-                    fileName: `${fileNamePrefix}_${reportDate}.pdf`
-                };
-
-                // 5. Enviar el payload a la URL de Apps Script
-                const response = await fetch(GAS_ENDPOINT, {
-                    method: 'POST',
-                    mode: 'no-cors', // Necesario para GitHub Pages a Apps Script
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload)
-                });
-                
-                // No se puede leer la respuesta por 'no-cors', asumimos éxito.
-                showMessage('Documento enviado al servidor. Recibirá el correo con el adjunto en breve.', 'success');
-
-            } catch (error) {
-                console.error('Error crítico al intentar enviar el documento al servidor:', error);
-                showMessage('ERROR: Falló el envío automático. Revisa el Apps Script o la URL.', 'error');
-            } finally {
-                document.getElementById('loadingOverlay').classList.add('hidden');
-            }
-        }
-        
-        // Asignar handleSendEmail al botón principal que ahora es un submit
-        generateAndSendButton.addEventListener('click', handleSendEmail);
-        
 
 
         document.getElementById('clearFormButton_reporte').addEventListener('click', function() {
