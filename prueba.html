@@ -206,7 +206,7 @@
             loadFormData();
         });
 
-        // --- RESTO DE LAS FUNCIONES DE SOPORTE (Notes, Camera, DND) ---
+        // --- FUNCIONES DE SOPORTE (Notes, Camera, DND) ---
         const extraNotesInput = document.getElementById('extraNotesInput');
         const openExtraNotesButton = document.getElementById('openExtraNotesButton');
         const closeExtraNotesButton = document.getElementById('closeExtraNotesButton');
@@ -277,7 +277,8 @@
             
             ctx.drawImage(cameraVideo, 0, 0, videoWidth, videoHeight);
             
-            capturedImage = cameraCanvas.toDataURL('image/jpeg', 0.8);
+            // Reducción de calidad de imagen a 80% para ahorrar espacio
+            capturedImage = cameraCanvas.toDataURL('image/jpeg', 0.8); 
             
             cameraVideo.style.display = 'none';
             ctx.clearRect(0, 0, videoWidth, videoHeight);
@@ -498,10 +499,10 @@
             messageBox.classList.remove('hidden');
             setTimeout(() => {
                 messageBox.classList.add('hidden');
-            }, 5000);
+            }, 8000); 
         }
 
-        // --- SIGNATURE AND STORAGE LOGIC ---
+        // --- FIRMA Y ALMACENAMIENTO ---
         const canvas = document.getElementById('signatureCanvas_reporte');
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
@@ -590,8 +591,14 @@
 
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('touchmove', draw);
-        canvas.addEventListener('mouseup', () => isDrawing = false);
-        canvas.addEventListener('touchend', () => isDrawing = false);
+        canvas.addEventListener('mouseup', () => {
+            if (isDrawing) saveFormData();
+            isDrawing = false;
+        });
+        canvas.addEventListener('touchend', () => {
+            if (isDrawing) saveFormData();
+            isDrawing = false;
+        });
         canvas.addEventListener('mouseout', () => isDrawing = false);
 
         const form = document.getElementById('documentForm_reporte');
@@ -608,7 +615,13 @@
             } else {
                 data.signature = null;
             }
-            data.reportElements = reportElements;
+            // Solo guardamos los datos necesarios de los elementos, no el elemento HTML
+            data.reportElements = reportElements.map(el => ({
+                id: el.id,
+                description: el.description,
+                image: el.image,
+                details: el.details
+            }));
             data.extraNotes = extraNotesInput.value;
 
             localStorage.setItem('documentFormData_reporte_simple', JSON.stringify(data));
@@ -636,6 +649,7 @@
                     reportElements = [];
                     elementCounter = 0;
                     document.getElementById('reportElementsContainer').innerHTML = '';
+                    // Reconstruir la interfaz
                     data.reportElements.forEach(el => addReportElement(el));
                 }
 
@@ -660,7 +674,7 @@
             }
         }
 
-        // --- PDF GENERATION CORE FUNCTION (MODIFIED TO RETURN BLOB) ---
+        // --- FUNCIÓN CENTRAL DE GENERACIÓN DE PDF ---
         async function generatePDF(data, reportElementsData, signatureData, extraNotes, canvas, hasSigned) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
@@ -682,6 +696,7 @@
                 let base64Image = '';
 
                 try {
+                    // Carga y conversión del logo
                     const response = await fetch(logoUrl);
                     if (!response.ok) throw new Error('Failed to fetch logo');
                     const blob = await response.blob();
@@ -693,7 +708,7 @@
                     });
                     doc.addImage(base64Image, 'PNG', margin, headerY, logoWidth, logoHeight);
                 } catch (error) {
-                    // console.warn('No se pudo cargar el logo para el PDF:', error);
+                    console.warn('No se pudo cargar el logo para el PDF:', error.message);
                 }
 
                 doc.setFontSize(8);
@@ -789,7 +804,7 @@
             }
 
 
-            // --- Page 1 ---
+            // --- Page 1: Información General y Primer Elemento ---
             y = await addHeader(doc, pageNum, totalPages);
             
             doc.setFontSize(11);
@@ -819,29 +834,42 @@
                 const maxImgWidth = pageWidth - (margin * 2);
                 if (element.image) {
                     const img = new Image();
-                    await new Promise(resolve => {
+                    // Implementación segura de la carga de imágenes
+                    await new Promise((resolve, reject) => {
                         img.onload = resolve;
+                        img.onerror = () => {
+                            console.error('Error al cargar la imagen en jspdf, saltando:', element.image.substring(0, 50) + '...');
+                            reject(new Error('Fallo al cargar la imagen'));
+                        };
                         img.src = element.image;
+                    }).catch(e => {
+                         // Si la promesa falla (la imagen no carga), no hacemos nada y la imagen no se dibuja.
+                         // Esto permite que el PDF siga generándose.
                     });
                     
-                    doc.setFontSize(10);
-                    doc.setFont('helvetica', 'normal');
-                    const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth - 4);
-                    const detailsBoxHeight = 4 + 5 + 4 + (detailsLines.length * 5) + 4;
-                    const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5;
-                    
-                    let imgWidth = img.width;
-                    let imgHeight = img.height;
+                    if (img.complete && img.naturalHeight !== 0) {
+                        doc.setFontSize(10);
+                        doc.setFont('helvetica', 'normal');
+                        const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth - 4);
+                        const detailsBoxHeight = 4 + 5 + 4 + (detailsLines.length * 5) + 4;
+                        const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5;
+                        
+                        let imgWidth = img.width;
+                        let imgHeight = img.height;
 
-                    if (imgWidth > maxImgWidth || imgHeight > maxImgHeight) {
-                        const ratio = Math.min(maxImgWidth / imgWidth, maxImgHeight / imgHeight);
-                        imgWidth = imgWidth * ratio;
-                        imgHeight = imgHeight * ratio;
+                        if (imgWidth > maxImgWidth || imgHeight > maxImgHeight) {
+                            const ratio = Math.min(maxImgWidth / imgWidth, maxImgHeight / imgHeight);
+                            imgWidth = imgWidth * ratio;
+                            imgHeight = imgHeight * ratio;
+                        }
+
+                        const imgX = (pageWidth - imgWidth) / 2;
+                        doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight);
+                        y += imgHeight + 5;
+                    } else {
+                        doc.text('No se pudo adjuntar o cargar la imagen para este elemento.', margin, y);
+                        y += 10;
                     }
-
-                    const imgX = (pageWidth - imgWidth) / 2;
-                    doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight);
-                    y += imgHeight + 5;
                 } else {
                     doc.text('No se adjuntó imagen para este elemento.', margin, y);
                     y += 10;
@@ -883,29 +911,40 @@
                 const maxImgWidth = pageWidth - (margin * 2);
                 if (element.image) {
                     const img = new Image();
-                    await new Promise(resolve => {
+                    await new Promise((resolve, reject) => {
                         img.onload = resolve;
+                        img.onerror = () => {
+                            console.error('Error al cargar la imagen en jspdf, saltando:', element.image.substring(0, 50) + '...');
+                            reject(new Error('Fallo al cargar la imagen'));
+                        };
                         img.src = element.image;
+                    }).catch(e => {
+                         // Si la promesa falla (la imagen no carga), no hacemos nada y la imagen no se dibuja.
                     });
                     
-                    doc.setFontSize(10);
-                    doc.setFont('helvetica', 'normal');
-                    const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth - 4);
-                    const detailsBoxHeight = 4 + 5 + 4 + (detailsLines.length * 5) + 4;
-                    const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5; 
-                    
-                    let imgWidth = img.width;
-                    let imgHeight = img.height;
+                    if (img.complete && img.naturalHeight !== 0) {
+                        doc.setFontSize(10);
+                        doc.setFont('helvetica', 'normal');
+                        const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth - 4);
+                        const detailsBoxHeight = 4 + 5 + 4 + (detailsLines.length * 5) + 4;
+                        const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5; 
+                        
+                        let imgWidth = img.width;
+                        let imgHeight = img.height;
 
-                    if (imgWidth > maxImgWidth || imgHeight > maxImgHeight) {
-                        const ratio = Math.min(maxImgWidth / imgWidth, maxImgHeight / imgHeight);
-                        imgWidth = imgWidth * ratio;
-                        imgHeight = imgHeight * ratio;
+                        if (imgWidth > maxImgWidth || imgHeight > maxImgHeight) {
+                            const ratio = Math.min(maxImgWidth / imgWidth, maxImgHeight / imgHeight);
+                            imgWidth = imgWidth * ratio;
+                            imgHeight = imgHeight * ratio;
+                        }
+
+                        const imgX = (pageWidth - imgWidth) / 2;
+                        doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight);
+                        y += imgHeight + 5;
+                    } else {
+                        doc.text('No se pudo adjuntar o cargar la imagen para este elemento.', margin, y);
+                        y += 10;
                     }
-
-                    const imgX = (pageWidth - imgWidth) / 2;
-                    doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight);
-                    y += imgHeight + 5;
                 } else {
                     doc.text('No se adjuntó imagen para este elemento.', margin, y);
                     y += 10;
@@ -928,7 +967,7 @@
             }
 
 
-            // --- Signature and Notes Placement ---
+            // --- Firma y Notas Finales ---
             doc.setPage(totalPages);
 
             if (extraNotes) {
@@ -937,7 +976,7 @@
 
             await addSignatureSection(doc, data, pageHeight, margin, hasSigned);
             
-            // --- FINAL: RETORNAR COMO BLOB PARA COMPARTIR ---
+            // Retornar como Blob
             return doc.output('blob'); 
         }
 
@@ -954,7 +993,7 @@
             showMessage('PDF descargado localmente en su dispositivo.', 'success');
         }
 
-        // NUEVA FUNCIÓN: Lógica de Compartir Nativo con Fallback Robusto
+        // FUNCIÓN PRINCIPAL: Generar y Compartir/Descargar
         async function handleSharePDF() {
             document.getElementById('loadingOverlay').classList.remove('hidden');
 
@@ -989,30 +1028,30 @@
                             title: `Reporte: ${data.nombre_reporte}`,
                             text: `Adjunto el reporte de evidencia generado por ${data.nombre_tecnico}.`,
                         });
-                        showMessage('PDF compartido con éxito. Seleccione su aplicación de destino.', 'success');
+                        showMessage('PDF compartido con éxito. Seleccione su aplicación de destino (Correo, WhatsApp, etc.).', 'success');
 
                     } catch (error) {
-                        // Si la función share() falla (generalmente por rechazo del SO o archivo muy grande)
+                        // Si la función share() falla (archivo muy grande, error del SO o cancelación)
                         if (error.name !== 'AbortError') {
                             console.error('Fallo en la API de Compartir Nativo:', error);
-                            showMessage('Fallo en la función de Compartir Nativo. Intentando descarga local...', 'error');
-                            
                             // FALLBACK: DESCARGA LOCAL
+                            showMessage('Fallo en la función de Compartir Nativo. Descargando el archivo localmente.', 'error');
                             downloadLocal(pdfBlob, finalFileName);
                         } else {
-                            // El usuario canceló la acción, no es un error.
+                            // El usuario canceló la acción
                             showMessage('Compartición cancelada por el usuario.', 'info');
                         }
                     }
                 } else {
                     // Fallback para navegadores/dispositivos que no soportan la API
-                    showMessage('La opción de Compartir Nativo no está disponible. Descargando el archivo localmente como alternativa.', 'error');
+                    showMessage('La opción de Compartir Nativo no está disponible. Descargando el archivo localmente como alternativa.', 'info');
                     downloadLocal(pdfBlob, finalFileName);
                 }
 
             } catch (error) {
-                console.error('Error CRÍTICO al generar o compartir el documento:', error);
-                showMessage('ERROR: Falló la generación del PDF. Revisa la consola para más detalles.', 'error');
+                // Si falla la generación del PDF
+                console.error('Error CRÍTICO al generar el documento:', error);
+                showMessage(`ERROR CRÍTICO (Generación PDF): Falló. Detalle: ${error.message || error.name || 'Error desconocido'}.`, 'error');
             } finally {
                 document.getElementById('loadingOverlay').classList.add('hidden');
             }
@@ -1020,17 +1059,16 @@
 
 
         // --- EVENT HANDLERS ---
-        const generateAndShareButton = document.getElementById('generateAndShareButton');
-        const downloadPdfButton = document.getElementById('downloadPdfButton');
         
         // MODIFICACIÓN: Evento SUBMIT ahora llama a la función de compartir
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             handleSharePDF();
+            saveFormData(); // Asegurar que la última firma/datos se guarden
         });
 
         // Evento para el botón de DESCARGA LOCAL (se mantiene como opción)
-        downloadPdfButton.addEventListener('click', async function() {
+        document.getElementById('downloadPdfButton').addEventListener('click', async function() {
             document.getElementById('loadingOverlay').classList.remove('hidden');
 
             const formData = new FormData(form);
@@ -1043,24 +1081,27 @@
             const extraNotes = localStorage.getItem('extraNotes_reporte_simple') || '';
             const fileNamePrefix = data.nombre_reporte.replace(/[^a-z0-9]/gi, '_').substring(0, 50) || 'reporte_evidencia';
             const reportDate = new Date().toLocaleDateString().replace(/\//g, '-');
-            const finalFileName = `${fileNamePrefix}_${reportDate}.pdf`;
+            const finalFileName = `${fileNamePrefix}_${reportDate}_DESCARGA.pdf`;
 
             try {
+                showMessage('Generando PDF...', 'info');
                 // Generar el PDF y obtener el objeto Blob
                 const pdfBlob = await generatePDF(data, reportElements, signatureData, extraNotes, canvas, hasSigned);
                 
                 // Descargar localmente
                 downloadLocal(pdfBlob, finalFileName);
+                saveFormData();
 
             } catch (error) {
                 console.error("Error al generar el PDF:", error);
-                showMessage('Error al generar el PDF. Revisa la consola para más detalles.', 'error');
+                showMessage(`ERROR (Descarga Local): Falló la generación. Detalle: ${error.message || error.name || 'Error desconocido'}.`, 'error');
             } finally {
                 document.getElementById('loadingOverlay').classList.add('hidden');
             }
         });
 
 
+        // Lógica de Limpiar Formulario y Firma
         document.getElementById('clearFormButton_reporte').addEventListener('click', function() {
             document.getElementById('confirmationModal_reporte').classList.remove('hidden');
         });
