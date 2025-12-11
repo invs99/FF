@@ -200,8 +200,7 @@
         // ***************************************************************
         // 🚨 CONFIGURACIÓN CRÍTICA 🚨
         // ** URL DE DESPLIEGUE FINAL DE SU SCRIPT DE GOOGLE APPS **
-        // URL INSERTADA: https://script.google.com/macros/s/AKfycbwr4NlDgSghZlkZAVbfB49c2sxeoh-gM1QxnMLafik-4cY--qnDJrAR6xrHzbUHQ2AVKw/exec
-        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwr4NlDgSghZlkZAVbfB49c2sxeoh-gM1QxnMLafik-4cY--qnDJrAR6xrHzbUHQ2AVKw/exec'; 
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxVdtHi5Pn8dCDNX_to8v-nZP5MajcHCEpMI_WIRfMdzbQwB4unVGgIoglfgB85DqwO/exec'; 
         // ***************************************************************
 
         // --- DATA MANAGEMENT & DYNAMIC ELEMENTS ---
@@ -1047,7 +1046,7 @@
 
             } catch (error) {
                 console.error('Error al generar o enviar el PDF:', error);
-                // Aquí es donde se resolverá el Failed to fetch si la URL y el despliegue son correctos
+                // Si el error es de tipo "Failed to fetch" o similar, la causa es el despliegue/permisos.
                 showMessage(`Error: ${error.message || 'Error de conexión o script.'} Por favor, asegúrese que la URL de despliegue final sea correcta y que los permisos estén en "Cualquier persona".`, 'error');
             } finally {
                 loadingOverlay.style.display = 'none';
