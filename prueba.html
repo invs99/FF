@@ -63,7 +63,7 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p class="text-gray-700">Generando PDF...</p>
+            <p class="text-gray-700">Generando PDF y enviando correo...</p>
         </div>
     </div>
 
@@ -146,15 +146,15 @@
                     <label for="nombre_tecnico" class="block text-sm font-medium text-gray-700">Nombre de quien Reporta</label>
                     <input type="text" id="nombre_tecnico" name="nombre_tecnico" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" required/>
                 </div>
+                <div>
+                    <label for="recipient_email" class="block text-sm font-medium text-gray-700">Email Destinatario</label>
+                    <input type="email" id="recipient_email" name="recipient_email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" placeholder="ejemplo@dominio.com" required/>
+                </div>
             </div>
 
             <div class="space-y-4 border p-4 rounded-md bg-gray-50">
                 <h2 class="text-lg font-semibold text-gray-700 border-b pb-2 flex justify-between items-center">
                     Detalle de Reporte
-                    <button type="button" onclick="addReportElement()" class="bg-blue-500 text-white text-xs font-medium py-1 px-3 rounded-md hover:bg-blue-600 transition shadow-sm flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/></svg>
-                        Añadir Página
-                    </button>
                 </h2>
                 <div id="reportElementsContainer" class="space-y-6">
                 </div>
@@ -177,15 +177,9 @@
                 <button type="button" id="openExtraNotesButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                     Notas Extra
                 </button>
-
-                <button type="button" id="downloadPdfButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    1. Generar, Descargar y Compartir (Intento Automático)
+                <button type="submit" id="sendPdfButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Generar y Enviar PDF por Correo
                 </button>
-                
-                <button type="button" id="shareAfterDownloadButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 hidden">
-                    2. Compartir PDF (Hacer clic si el automático falla)
-                </button>
-                
                 <button type="button" id="clearFormButton_reporte" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                     Nuevo Reporte
                 </button>
@@ -200,22 +194,24 @@
     </div>
 
     <script>
+        // *** URL DE DESPLIEGUE DE GOOGLE APPS SCRIPT PROPORCIONADA POR EL USUARIO ***
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxyqgyH1xd2E7UIiEYiCly99Xhve3rLG_1dRa8XaeGefib56eLru4SFXefJyD7bNEI/exec';
+        // **************************************************************************
+
+        // --- DATA MANAGEMENT & DYNAMIC ELEMENTS ---
         let reportElements = []; // Stores objects: { id, description, image, details }
         let elementCounter = 0;
         let currentElementIdForCamera = null;
-        let lastGeneratedPdfBlob = null; 
-        let lastGeneratedPdfFileName = ''; 
 
         document.addEventListener('DOMContentLoaded', () => {
             loadFormData();
         });
 
-        // --- FUNCIONES DE SOPORTE (Notes, Camera, DND) ---
+        // --- EXTRA NOTES LOGIC (NEW) ---
         const extraNotesInput = document.getElementById('extraNotesInput');
         const openExtraNotesButton = document.getElementById('openExtraNotesButton');
         const closeExtraNotesButton = document.getElementById('closeExtraNotesButton');
         const extraNotesModal = document.getElementById('extraNotesModal');
-        const shareAfterDownloadButton = document.getElementById('shareAfterDownloadButton');
 
         openExtraNotesButton.addEventListener('click', () => {
             extraNotesModal.classList.remove('hidden');
@@ -223,11 +219,13 @@
         });
 
         closeExtraNotesButton.addEventListener('click', () => {
+            // Guarda la nota en localStorage y el formulario
             localStorage.setItem('extraNotes_reporte_simple', extraNotesInput.value);
             extraNotesModal.classList.add('hidden');
             saveFormData(); 
         });
 
+        // --- CAMERA LOGIC ---
         const cameraModal = document.getElementById('cameraModal');
         const cameraVideo = document.getElementById('cameraVideo');
         const cameraCanvas = document.getElementById('cameraCanvas');
@@ -244,11 +242,9 @@
             cameraVideo.style.display = 'block';
 
             try {
-                // Priorizar la cámara trasera para reportes
+                // Request access to the back camera (ideal for mobile)
                 stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: { ideal: 'environment' } 
-                    }, 
+                    video: { facingMode: 'environment' }, 
                     audio: false 
                 });
                 cameraVideo.srcObject = stream;
@@ -283,14 +279,17 @@
             cameraCanvas.height = videoHeight;
             const ctx = cameraCanvas.getContext('2d');
             
+            // Draw the video frame to the canvas
             ctx.drawImage(cameraVideo, 0, 0, videoWidth, videoHeight);
             
-            // OPTIMIZACIÓN CLAVE PARA MÓVILES: Reducción de calidad de imagen a 80% (JPEG)
-            capturedImage = cameraCanvas.toDataURL('image/jpeg', 0.8); 
+            // Get the image data as Data URL
+            capturedImage = cameraCanvas.toDataURL('image/jpeg', 0.8); // 80% quality
             
+            // Display captured image and hide video feed temporarily
             cameraVideo.style.display = 'none';
             ctx.clearRect(0, 0, videoWidth, videoHeight);
             
+            // Draw captured image back onto canvas for temporary display in modal
             const img = new Image();
             img.onload = function() {
                 ctx.drawImage(img, 0, 0, cameraCanvas.width, cameraCanvas.height);
@@ -301,7 +300,6 @@
         });
 
         cancelCameraButton.addEventListener('click', closeCameraModal);
-
         confirmImageButton.addEventListener('click', () => {
             if (capturedImage && currentElementIdForCamera) {
                 const elementDiv = document.getElementById(currentElementIdForCamera);
@@ -310,6 +308,7 @@
                     if (element) {
                         element.image = capturedImage;
                         
+                        // Update the preview
                         const previewDiv = elementDiv.querySelector(`[data-preview-id="${currentElementIdForCamera}"]`);
                         previewDiv.classList.remove('hidden');
                         previewDiv.querySelector('img').src = capturedImage;
@@ -325,6 +324,7 @@
         });
 
 
+        // --- DYNAMIC ELEMENTS (FORM) ---
         function addReportElement(elementData = {}) {
             elementCounter++;
             const id = `el_${elementCounter}`;
@@ -333,12 +333,9 @@
             const newElement = document.createElement('div');
             newElement.id = id;
             newElement.classList.add('p-3', 'border', 'rounded-md', 'bg-white', 'shadow-sm');
-            
-            const currentElementCount = reportElements.length;
-
             newElement.innerHTML = `
                 <div class="flex justify-between items-center mb-2 border-b pb-2">
-                    <h3 class="font-medium text-gray-700">Página #${currentElementCount + 1}</h3> 
+                    <h3 class="font-medium text-gray-700">Página #${elementCounter}</h3> 
                     <button type="button" onclick="removeReportElement('${id}')" class="text-red-500 hover:text-red-700 text-sm">
                         Eliminar
                     </button>
@@ -355,7 +352,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A.5.5 0 0011 3H9a.5.5 0 00-.354.146L7.293 4.586a1 1 0 01-.707.293H4zm7 5a1 1 0 10-2 0 1 1 0 002 0zm-1 3a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
                                 Tomar Foto
                             </button>
-                            <input type="file" data-type="image" accept="image/*" capture="environment" class="flex-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                            <input type="file" data-type="image" accept="image/*" class="flex-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
                         </div>
                     </div>
                     <div data-preview-id="${id}" class="mt-2 ${elementData.image ? '' : 'hidden'}">
@@ -375,6 +372,7 @@
             
             container.appendChild(newElement);
 
+            // Add new element to internal data structure
             const newElementObject = { 
                 id: id, 
                 description: elementData.description || '', 
@@ -383,12 +381,14 @@
             };
             reportElements.push(newElementObject);
 
+            // Add event listeners for the new element's inputs
             const descInput = newElement.querySelector('input[data-type="description"]');
             const detailsInput = newElement.querySelector('textarea[data-type="details"]'); 
             const imageInput = newElement.querySelector('input[data-type="image"]');
             const captureButton = newElement.querySelector('button[data-action="capture"]');
             const dndArea = newElement.querySelector(`[data-dnd-id="${id}"]`);
 
+            // --- Drag and Drop Logic ---
             const handleDrop = (event) => {
                 event.preventDefault();
                 event.stopPropagation();
@@ -399,28 +399,16 @@
                     const file = files[0];
                     const reader = new FileReader();
                     reader.onload = (e) => {
-                        // Al cargar desde archivo (DND), también se aplica la compresión JPEG 80%
-                        const img = new Image();
-                        img.onload = () => {
-                            const canvas = document.createElement('canvas');
-                            const ctx = canvas.getContext('2d');
-                            canvas.width = img.naturalWidth;
-                            canvas.height = img.naturalHeight;
-                            ctx.drawImage(img, 0, 0);
-                            
-                            const compressedDataURL = canvas.toDataURL('image/jpeg', 0.8);
-                            
-                            const element = reportElements.find(e => e.id === id);
-                            if (element) {
-                                element.image = compressedDataURL;
-                                const previewDiv = newElement.querySelector(`[data-preview-id="${id}"]`);
-                                previewDiv.classList.remove('hidden');
-                                previewDiv.querySelector('img').src = compressedDataURL;
-                                imageInput.value = '';
-                                saveFormData();
-                            }
-                        };
-                        img.src = e.target.result;
+                        const element = reportElements.find(e => e.id === id);
+                        if (element) {
+                            element.image = e.target.result;
+                            const previewDiv = newElement.querySelector(`[data-preview-id="${id}"]`);
+                            previewDiv.classList.remove('hidden');
+                            previewDiv.querySelector('img').src = e.target.result;
+                            // Clear file input value to reflect new image source
+                            imageInput.value = '';
+                            saveFormData();
+                        }
                     };
                     reader.readAsDataURL(file);
                 }
@@ -439,12 +427,15 @@
             });
 
             dndArea.addEventListener('drop', handleDrop);
+            // --- End Drag and Drop Logic ---
 
+            // Listener para el botón de cámara
             captureButton.addEventListener('click', (event) => {
                 const elementId = event.currentTarget.getAttribute('data-element-id');
                 openCamera(elementId);
             });
 
+            // Listener for Description
             descInput.addEventListener('input', () => {
                 const element = reportElements.find(e => e.id === id);
                 if (element) {
@@ -453,6 +444,7 @@
                 }
             });
 
+            // Listener for Details
             detailsInput.addEventListener('input', () => {
                 const element = reportElements.find(e => e.id === id);
                 if (element) {
@@ -466,27 +458,14 @@
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = (e) => {
-                        // Al seleccionar un archivo, también se aplica la compresión JPEG 80%
-                        const img = new Image();
-                        img.onload = () => {
-                            const canvas = document.createElement('canvas');
-                            const ctx = canvas.getContext('2d');
-                            canvas.width = img.naturalWidth;
-                            canvas.height = img.naturalHeight;
-                            ctx.drawImage(img, 0, 0);
-                            
-                            const compressedDataURL = canvas.toDataURL('image/jpeg', 0.8);
-
-                            const element = reportElements.find(e => e.id === id);
-                            if (element) {
-                                element.image = compressedDataURL;
-                                const previewDiv = newElement.querySelector(`[data-preview-id="${id}"]`);
-                                previewDiv.classList.remove('hidden');
-                                previewDiv.querySelector('img').src = compressedDataURL;
-                                saveFormData();
-                            }
-                        };
-                        img.src = e.target.result;
+                        const element = reportElements.find(e => e.id === id);
+                        if (element) {
+                            element.image = e.target.result;
+                            const previewDiv = newElement.querySelector(`[data-preview-id="${id}"]`);
+                            previewDiv.classList.remove('hidden');
+                            previewDiv.querySelector('img').src = e.target.result;
+                            saveFormData();
+                        }
                     };
                     reader.readAsDataURL(file);
                 } else {
@@ -500,7 +479,6 @@
                     }
                 }
             });
-
             saveFormData();
         }
 
@@ -508,36 +486,38 @@
             document.getElementById(id).remove();
             reportElements = reportElements.filter(e => e.id !== id);
             
-            // Reconstruir para re-enumerar las páginas correctamente
+            // Re-render to update element numbers (Page #) and save data
             const savedReportElements = [...reportElements];
             reportElements = [];
             elementCounter = 0;
             document.getElementById('reportElementsContainer').innerHTML = '';
             savedReportElements.forEach(el => addReportElement(el));
 
+            // If all elements were removed, add a blank one back
             if (reportElements.length === 0) {
                 addReportElement();
             }
             saveFormData();
         }
 
+        // --- COMMON FUNCTIONS ---
         function showMessage(message, type = 'success') {
             const messageBox = document.getElementById('messageBox');
             messageBox.textContent = message;
             if (type === 'success') {
                 messageBox.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
             } else if (type === 'error') {
-                messageBox.className = 'fixed bottom-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                messageBox.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
             } else if (type === 'info') {
-                messageBox.className = 'fixed bottom-4 right-4 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                messageBox.className = 'fixed bottom-4 right-4 bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
             }
             messageBox.classList.remove('hidden');
             setTimeout(() => {
                 messageBox.classList.add('hidden');
-            }, 8000); 
+            }, 5000); // 5 segundos para mensajes importantes
         }
 
-        // --- FIRMA Y ALMACENAMIENTO ---
+        // --- SIGNATURE CANVAS LOGIC ---
         const canvas = document.getElementById('signatureCanvas_reporte');
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
@@ -562,7 +542,7 @@
         function resizeCanvas() {
             const container = document.getElementById('signatureCanvasContainer_reporte');
             const newWidth = container.offsetWidth;
-            const newHeight = 150; 
+            const newHeight = container.offsetHeight;
             canvas.width = newWidth;
             canvas.height = newHeight;
             ctx.fillStyle = 'white';
@@ -599,7 +579,6 @@
             const rect = canvas.getBoundingClientRect();
             const x = (e.clientX || e.touches[0].clientX) - rect.left;
             const y = (e.clientY || e.touches[0].clientY) - rect.top;
-
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
             ctx.lineTo(x, y);
@@ -607,7 +586,6 @@
             ctx.lineWidth = 2;
             ctx.lineCap = 'round';
             ctx.stroke();
-
             [lastX, lastY] = [x, y];
         }
 
@@ -616,26 +594,19 @@
             const rect = canvas.getBoundingClientRect();
             [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
         });
-
         canvas.addEventListener('touchstart', (e) => {
             isDrawing = true;
             const rect = canvas.getBoundingClientRect();
             [lastX, lastY] = [e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top];
             e.preventDefault();
         });
-
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('touchmove', draw);
-        canvas.addEventListener('mouseup', () => {
-            if (isDrawing) saveFormData();
-            isDrawing = false;
-        });
-        canvas.addEventListener('touchend', () => {
-            if (isDrawing) saveFormData();
-            isDrawing = false;
-        });
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('touchend', () => isDrawing = false);
         canvas.addEventListener('mouseout', () => isDrawing = false);
 
+        // --- FORM AND STORAGE LOGIC ---
         const form = document.getElementById('documentForm_reporte');
 
         function saveFormData() {
@@ -644,35 +615,25 @@
             for (const [key, value] of formData.entries()) {
                 data[key] = value;
             }
-
             if (hasSigned) {
-                // La firma siempre se guarda como PNG para mejor calidad de líneas
                 data.signature = canvas.toDataURL('image/png');
             } else {
                 data.signature = null;
             }
-            // Solo guardamos los datos necesarios de los elementos, no el elemento HTML
-            data.reportElements = reportElements.map(el => ({
-                id: el.id,
-                description: el.description,
-                // La imagen ya está comprimida si viene de la cámara/archivo
-                image: el.image, 
-                details: el.details
-            }));
-            data.extraNotes = extraNotesInput.value;
-
+            
+            data.reportElements = reportElements;
+            data.extraNotes = extraNotesInput.value; // Guardar notas extra
             localStorage.setItem('documentFormData_reporte_simple', JSON.stringify(data));
-            localStorage.setItem('extraNotes_reporte_simple', extraNotesInput.value);
+            localStorage.setItem('extraNotes_reporte_simple', extraNotesInput.value); // Guardar notas separadamente
         }
 
         function loadFormData() {
             const savedData = localStorage.getItem('documentFormData_reporte_simple');
             const savedNotes = localStorage.getItem('extraNotes_reporte_simple');
-
             if (savedNotes !== null) {
-                extraNotesInput.value = savedNotes;
+                extraNotesInput.value = savedNotes; // Cargar notas extra
             }
-
+            
             if (savedData) {
                 const data = JSON.parse(savedData);
                 for (const key in data) {
@@ -681,15 +642,12 @@
                         input.value = data[key];
                     }
                 }
-
                 if (data.reportElements && Array.isArray(data.reportElements)) {
                     reportElements = [];
                     elementCounter = 0;
                     document.getElementById('reportElementsContainer').innerHTML = '';
-                    // Reconstruir la interfaz
                     data.reportElements.forEach(el => addReportElement(el));
                 }
-
                 if (data.signature) {
                     hasSigned = true;
                     const img = new Image();
@@ -704,162 +662,200 @@
             } else {
                 hasSigned = false;
                 drawPlaceholder();
-            }
-            
-            if (reportElements.length === 0) {
-                addReportElement();
+                if (reportElements.length === 0) {
+                    addReportElement();
+                }
             }
         }
 
-        // --- FUNCIÓN CENTRAL DE GENERACIÓN DE PDF ---
-        async function generatePDF(data, reportElementsData, signatureData, extraNotes, canvas, hasSigned) {
+        form.addEventListener('input', saveFormData);
+        window.addEventListener('load', loadFormData);
+
+        // --- PDF GENERATION & SENDING LOGIC (UPDATED) ---
+
+        // Función auxiliar para dibujar la sección de la firma en el PDF
+        async function addSignatureSection(doc, data, pageHeight, margin, canvas, hasSigned) {
+            let currentY = pageHeight - 55;
+            const signatureWidth = 150;
+            const signatureImageHeight = 35; // Altura fija para la imagen
+            const signatureData = hasSigned ? canvas.toDataURL('image/png') : null;
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            
+            // 1. Title
+            doc.text('Firma de quien Reporta:', margin + 10, currentY);
+            currentY += 2;
+
+            // 2. Signature Image/Box
+            if (hasSigned) {
+                const signatureX = margin + 10;
+                doc.addImage(signatureData, 'PNG', signatureX, currentY, signatureWidth, signatureImageHeight);
+            }
+            currentY += signatureImageHeight + 2;
+
+            // 3. Signature Line
+            doc.line(margin + 10, currentY, margin + 10 + signatureWidth, currentY);
+            currentY += 5;
+
+            // 4. Name
+            const tecnicoName = data.nombre_tecnico;
+            const tecnicoText = "Nombre: " + tecnicoName;
+            doc.text(tecnicoText, margin + 10, currentY);
+        }
+        
+        // FUNCIÓN para dibujar la sección de Notas Extra (MODIFICADA para sombreado)
+        function addExtraNotesToPage(doc, notes, yStart, pageHeight, margin) {
+            const signatureBlockHeight = 40;
+            const notesMaxY = pageHeight - margin - signatureBlockHeight - 10;
+            const notesBoxWidth = doc.internal.pageSize.getWidth() - (margin * 2);
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+
+            const titleAndPaddingHeight = 12; // Altura para el título y padding
+            
+            doc.setFont('helvetica', 'normal');
+            const notesLines = doc.splitTextToSize(notes, notesBoxWidth - 4);
+            const textHeight = notesLines.length * 5; // 5mm por línea
+            
+            let notesBoxHeight = textHeight + titleAndPaddingHeight;
+            let finalYStart = yStart;
+
+            // 1. Ajuste inicial para evitar solapamiento con la firma
+            if ((yStart + notesBoxHeight) > notesMaxY) {
+                finalYStart = notesMaxY - notesBoxHeight;
+            }
+
+            // 2. Ajuste para evitar solapamiento con el header (si la nota es muy larga)
+            if (finalYStart < 50) {
+                finalYStart = 50;
+                notesBoxHeight = notesMaxY - finalYStart - 5;
+                const maxTextHeight = notesBoxHeight - titleAndPaddingHeight;
+                const maxLines = Math.floor(maxTextHeight / 5);
+                notesLines.length = Math.min(notesLines.length, maxLines);
+                notesBoxHeight = (notesLines.length * 5) + titleAndPaddingHeight;
+                finalYStart = notesMaxY - notesBoxHeight - 5; // Recalcula Y de inicio
+            }
+
+            const currentY = finalYStart;
+
+            // *** INICIO DEL CAMBIO: AÑADIR SOMBREADO ***
+            doc.setFillColor(240, 240, 240); // Color gris claro (#f0f0f0)
+            doc.rect(margin, currentY, notesBoxWidth, notesBoxHeight, 'F'); // Dibujar rectángulo relleno (F: fill)
+            doc.setDrawColor(0, 0, 0); // Restaurar color de línea a negro
+            // *** FIN DEL CAMBIO ***
+
+            // Dibujar el Borde
+            doc.rect(margin, currentY, notesBoxWidth, notesBoxHeight);
+
+            doc.setFont('helvetica', 'bold');
+            doc.text('NOTAS GENERALES DEL REPORTE:', margin + 2, currentY + 4);
+
+            doc.setFont('helvetica', 'normal');
+            doc.text(notesLines, margin + 2, currentY + 9);
+            
+            return currentY + notesBoxHeight + 5; // Retorna la posición Y después de la caja
+        }
+
+        // Función auxiliar para dibujar el encabezado
+        async function addHeader(doc, data, pageNum, finalTotalPages) {
+            const margin = 15;
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const headerY = 15;
+            const headerX = pageWidth - margin;
+            const logoUrl = 'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
+            const reportDate = new Date().toLocaleDateString();
+            const logoHeight = 17;
+            const logoWidth = 34;
+            let base64Image = '';
+
+            try {
+                const response = await fetch(logoUrl);
+                if (!response.ok) throw new Error('Failed to fetch logo');
+                const blob = await response.blob();
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                base64Image = await new Promise((resolve, reject) => {
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = reject;
+                });
+                doc.addImage(base64Image, 'PNG', margin, headerY, logoWidth, logoHeight);
+            } catch (error) {
+                console.warn('No se pudo cargar el logo para el PDF:', error);
+            }
+
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Tiendas 01.001.0001.0001', headerX, headerY, null, null, 'right');
+            doc.text('Redes y Soporte', headerX, headerY + 4, null, null, 'right');
+            doc.text('Telecomunicaciones', headerX, headerY + 8, null, null, 'right');
+            doc.text(`Fecha de Reporte: ${reportDate}`, headerX, headerY + 12, null, null, 'right');
+
+            const titleY = headerY + (Math.max(logoHeight, 15) / 2) + 2;
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.text(data.nombre_reporte.toUpperCase() || 'REPORTE DE EVIDENCIA', pageWidth / 2, titleY, { align: 'center' });
+
+            let currentY = headerY + Math.max(logoHeight, 15) + 10;
+            doc.line(margin, currentY, pageWidth - margin, currentY);
+            currentY += 8;
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Página ${pageNum} de ${finalTotalPages}`, pageWidth - margin, currentY - 2, null, null, 'right');
+
+            return currentY; // Devuelve la posición Y para comenzar el contenido
+        }
+
+        // Función principal para generar y enviar el PDF
+        async function generateAndSendPDF(data) {
+            const reportElementsData = data.reportElements || [];
+            const extraNotes = data.extraNotes || '';
+
+            // Calcular el número total de páginas (1 de información + 1 por elemento + 1 extra para firma/notas si es necesario)
+            const totalElements = reportElementsData.length;
+            let totalPages = 1; // Página de inicio
+            if (totalElements > 0) {
+                // Si hay elementos, cada uno toma una página
+                totalPages = totalElements;
+            }
+            // La firma y las notas extra van en la ÚLTIMA página, sin contar como una página extra a menos que el último elemento no deje espacio.
+            // Para simplificar, asumiremos que si hay elementos, hay suficientes páginas o que la firma y notas caben en la última.
+            // Si no hay elementos, la página 1 es la página final.
+            if (totalElements === 0 && extraNotes) {
+                // Si no hay elementos pero sí hay notas extra, la página 1 es la única.
+                totalPages = 1; 
+            } else if (totalElements === 0 && !extraNotes) {
+                // Si no hay elementos ni notas, solo la página 1.
+                totalPages = 1;
+            }
+
+
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');
-            let pageNum = 1;
-            const totalElements = reportElementsData.length;
-            const totalPages = totalElements > 0 ? totalElements : 1;
-            let y = 15;
             const margin = 15;
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
-            const logoUrl = 'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
-            const reportDate = new Date().toLocaleDateString();
-
-            async function addHeader(doc, pageNum, finalTotalPages) {
-                const headerY = 15;
-                const headerX = pageWidth - margin;
-                const logoHeight = 17;
-                const logoWidth = 34;
-                let base64Image = '';
-
-                try {
-                    // Carga y conversión del logo
-                    const response = await fetch(logoUrl);
-                    if (!response.ok) throw new Error('Failed to fetch logo');
-                    const blob = await response.blob();
-                    const reader = new FileReader();
-                    reader.readAsDataURL(blob);
-                    base64Image = await new Promise((resolve, reject) => {
-                        reader.onloadend = () => resolve(reader.result);
-                        reader.onerror = reject;
-                    });
-                    doc.addImage(base64Image, 'PNG', margin, headerY, logoWidth, logoHeight);
-                } catch (error) {
-                    console.warn('No se pudo cargar el logo para el PDF:', error.message);
-                }
-
-                doc.setFontSize(8);
-                doc.setFont('helvetica', 'normal');
-                doc.text('Tiendas 01.001.0001.0001', headerX, headerY, null, null, 'right');
-                doc.text('Redes y Soporte', headerX, headerY + 4, null, null, 'right');
-                doc.text('Telecomunicaciones', headerX, headerY + 8, null, null, 'right');
-                doc.text(`Fecha de Reporte: ${reportDate}`, headerX, headerY + 12, null, null, 'right');
-
-                const titleY = headerY + (Math.max(logoHeight, 15) / 2) + 2;
-                doc.setFontSize(16);
-                doc.setFont('helvetica', 'bold');
-                doc.text(data.nombre_reporte.toUpperCase() || 'REPORTE DE EVIDENCIA', pageWidth / 2, titleY, { align: 'center' });
-
-                let currentY = headerY + Math.max(logoHeight, 15) + 10;
-                doc.line(margin, currentY, pageWidth - margin, currentY);
-                currentY += 8;
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'normal');
-                doc.text(`Página ${pageNum} de ${finalTotalPages}`, pageWidth - margin, currentY - 2, null, null, 'right');
-
-                return currentY;
-            }
-
-            async function addSignatureSection(doc, data, pageHeight, margin, isSigned) {
-                const signatureImageHeight = 30;
-                const signatureWidth = 80;
-                const signatureBlockHeight = 40;
-                
-                let currentY = pageHeight - margin - signatureBlockHeight + 5;
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'bold');
-                doc.text('Firma:', margin + 10, currentY - 2); 
-                
-                if (hasSigned) {
-                    const signatureX = margin + 10;
-                    doc.addImage(signatureData, 'PNG', signatureX, currentY, signatureWidth, signatureImageHeight);
-                }
-                currentY += signatureImageHeight + 2;
-
-                doc.line(margin + 10, currentY, margin + 10 + signatureWidth, currentY);
-                currentY += 5;
-
-                const tecnicoName = data.nombre_tecnico;
-                const tecnicoText = "Nombre: " + tecnicoName;
-                doc.text(tecnicoText, margin + 10, currentY);
-            }
-
-            function addExtraNotesToPage(doc, notes, yStart, pageHeight, margin) {
-                const signatureBlockHeight = 40;
-                const notesMaxY = pageHeight - margin - signatureBlockHeight - 10;
-                const notesBoxWidth = doc.internal.pageSize.getWidth() - (margin * 2);
-                
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'bold');
-                const titleAndPaddingHeight = 12;
-
-                doc.setFont('helvetica', 'normal');
-                const notesLines = doc.splitTextToSize(notes, notesBoxWidth - 4);
-                const textHeight = notesLines.length * 5;
-                
-                let notesBoxHeight = textHeight + titleAndPaddingHeight;
-                let finalYStart = yStart;
-
-                if ((yStart + notesBoxHeight) > notesMaxY) {
-                    finalYStart = notesMaxY - notesBoxHeight;
-                }
-
-                if (finalYStart < 50) {
-                    finalYStart = 50;
-                    notesBoxHeight = notesMaxY - finalYStart - 5;
-                    const maxTextHeight = notesBoxHeight - titleAndPaddingHeight;
-                    const maxLines = Math.floor(maxTextHeight / 5);
-                    notesLines.length = Math.min(notesLines.length, maxLines);
-                    notesBoxHeight = (notesLines.length * 5) + titleAndPaddingHeight;
-                    finalYStart = notesMaxY - notesBoxHeight - 5;
-                }
-
-                const currentY = finalYStart;
-
-                doc.setFillColor(240, 240, 240);
-                doc.rect(margin, currentY, notesBoxWidth, notesBoxHeight, 'F');
-                doc.setDrawColor(0, 0, 0);
-
-                doc.rect(margin, currentY, notesBoxWidth, notesBoxHeight);
-
-                doc.setFont('helvetica', 'bold');
-                doc.text('Notas Extra del Reporte:', margin + 2, currentY + 4);
-                doc.setFont('helvetica', 'normal');
-                doc.text(notesLines, margin + 2, currentY + 10);
-
-                return finalYStart + notesBoxHeight + 5;
-            }
-
-
-            // --- Page 1: Información General y Primer Elemento ---
-            y = await addHeader(doc, pageNum, totalPages);
+            let pageNum = 1;
             
-            doc.setFontSize(11);
+            let y = 0; // Posición Y de inicio de contenido
+
+            // --- Page 1: Information and First Element (if exists) ---
+            if (totalElements === 0) {
+                y = await addHeader(doc, data, 1, 1); // 1 página total
+            } else {
+                y = await addHeader(doc, data, 1, totalPages);
+            }
+            
             doc.setFont('helvetica', 'bold');
-            doc.text('Información General del Reporte:', margin, y);
-            y += 6;
-            doc.setFont('helvetica', 'normal');
-            doc.text(`Asunto: ${data.nombre_reporte}`, margin, y);
-            y += 5;
-            doc.text(`Reporta: ${data.nombre_tecnico}`, margin, y);
-            y += 10;
-            doc.line(margin, y, pageWidth - margin, y);
-            y += 5;
+            doc.text(`Técnico: ${data.nombre_tecnico}`, margin, y);
+            y += 8;
 
-
+            // Dibujar el primer elemento (si existe)
             if (totalElements > 0) {
                 const element = reportElementsData[0];
-                doc.setFontSize(14);
+                
                 doc.setFont('helvetica', 'bold');
                 doc.text(`${element.description || 'SIN SUB-TEMA'}`, margin, y);
                 y += 8;
@@ -868,51 +864,38 @@
                 doc.text(`Página de Detalle #1`, margin, y);
                 y += 5;
 
-                const maxImgWidth = pageWidth - (margin * 2);
+                // Image (First Page)
                 if (element.image) {
                     const img = new Image();
-                    let imgLoaded = false;
-                    // Implementación segura de la carga de imágenes
-                    await new Promise((resolve, reject) => {
-                        img.onload = () => { imgLoaded = true; resolve(); };
-                        img.onerror = () => {
-                            console.error('Error al cargar la imagen en jspdf, saltando:', element.image.substring(0, 50) + '...');
-                            reject(new Error('Fallo al cargar la imagen'));
-                        };
-                        img.src = element.image;
-                    }).catch(e => {
-                         // Si la promesa falla (la imagen no carga), no hacemos nada y la imagen no se dibuja.
-                    });
+                    await new Promise(resolve => { img.onload = resolve; img.src = element.image; });
                     
-                    if (imgLoaded && img.naturalHeight !== 0) {
-                        doc.setFontSize(10);
-                        doc.setFont('helvetica', 'normal');
-                        const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth - 4);
-                        const detailsBoxHeight = 4 + 5 + 4 + (detailsLines.length * 5) + 4;
-                        const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5;
-                        
-                        let imgWidth = img.width;
-                        let imgHeight = img.height;
+                    const maxImgWidth = pageWidth - (margin * 2);
+                    
+                    // Calcular detallesBoxHeight para estimar maxImgHeight
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'normal');
+                    const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth - 4);
+                    const detailsBoxHeight = 4 + 5 + 4 + (detailsLines.length * 5) + 4; // Borde, padding, texto
 
-                        if (imgWidth > maxImgWidth || imgHeight > maxImgHeight) {
-                            const ratio = Math.min(maxImgWidth / imgWidth, maxImgHeight / imgHeight);
-                            imgWidth = imgWidth * ratio;
-                            imgHeight = imgHeight * ratio;
-                        }
+                    const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5;
+                    let imgWidth = img.width;
+                    let imgHeight = img.height;
 
-                        const imgX = (pageWidth - imgWidth) / 2;
-                        // Se utiliza 'JPEG' ya que las imágenes de evidencia están comprimidas en ese formato
-                        doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight); 
-                        y += imgHeight + 5;
-                    } else {
-                        doc.text('No se pudo adjuntar o cargar la imagen para este elemento.', margin, y);
-                        y += 10;
+                    if (imgWidth > maxImgWidth || imgHeight > maxImgHeight) {
+                        const ratio = Math.min(maxImgWidth / imgWidth, maxImgHeight / imgHeight);
+                        imgWidth = imgWidth * ratio;
+                        imgHeight = imgHeight * ratio;
                     }
+
+                    const imgX = (pageWidth - imgWidth) / 2;
+                    doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight);
+                    y += imgHeight + 5;
                 } else {
                     doc.text('No se adjuntó imagen para este elemento.', margin, y);
                     y += 10;
                 }
 
+                // Details Text (Inside Box - First Page)
                 const detailsBoxYStart = y;
                 const detailsBoxWidth = pageWidth - (margin * 2);
                 doc.setFontSize(10);
@@ -923,21 +906,19 @@
                 const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', detailsBoxWidth - 4);
                 doc.text(detailsLines, margin + 2, y);
                 y += (detailsLines.length * 5) + 4;
-
                 const finalDetailsBoxHeight = y - detailsBoxYStart;
                 doc.rect(margin, detailsBoxYStart, detailsBoxWidth, finalDetailsBoxHeight);
                 y += 5;
             }
 
-
-            // --- Pages 2 to N (loop de paginas de detalle) ---
+            // --- Pages 2 to N: Elements (Remaining elements, each on a new page) ---
             for (let i = 1; i < totalElements; i++) {
                 const element = reportElementsData[i];
+                
                 doc.addPage();
                 pageNum++;
-                y = await addHeader(doc, pageNum, totalPages);
+                y = await addHeader(doc, data, pageNum, totalPages);
                 
-                doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
                 doc.text(`${element.description || 'SIN SUB-TEMA'}`, margin, y);
                 y += 8;
@@ -945,50 +926,39 @@
                 doc.setFont('helvetica', 'normal');
                 doc.text(`Página de Detalle #${i + 1}`, margin, y);
                 y += 5;
-
-                const maxImgWidth = pageWidth - (margin * 2);
+                
+                // Image
                 if (element.image) {
                     const img = new Image();
-                    let imgLoaded = false;
-                    await new Promise((resolve, reject) => {
-                        img.onload = () => { imgLoaded = true; resolve(); };
-                        img.onerror = () => {
-                            console.error('Error al cargar la imagen en jspdf, saltando:', element.image.substring(0, 50) + '...');
-                            reject(new Error('Fallo al cargar la imagen'));
-                        };
-                        img.src = element.image;
-                    }).catch(e => {
-                         // Si la promesa falla (la imagen no carga), no hacemos nada y la imagen no se dibuja.
-                    });
+                    await new Promise(resolve => { img.onload = resolve; img.src = element.image; });
                     
-                    if (imgLoaded && img.naturalHeight !== 0) {
-                        doc.setFontSize(10);
-                        doc.setFont('helvetica', 'normal');
-                        const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth - 4);
-                        const detailsBoxHeight = 4 + 5 + 4 + (detailsLines.length * 5) + 4;
-                        const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5; 
-                        
-                        let imgWidth = img.width;
-                        let imgHeight = img.height;
+                    const maxImgWidth = pageWidth - (margin * 2);
+                    
+                    // Calcular detallesBoxHeight para estimar maxImgHeight
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'normal');
+                    const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth - 4);
+                    const detailsBoxHeight = 4 + 5 + 4 + (detailsLines.length * 5) + 4;
 
-                        if (imgWidth > maxImgWidth || imgHeight > maxImgHeight) {
-                            const ratio = Math.min(maxImgWidth / imgWidth, maxImgHeight / imgHeight);
-                            imgWidth = imgWidth * ratio;
-                            imgHeight = imgHeight * ratio;
-                        }
+                    const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5;
+                    let imgWidth = img.width;
+                    let imgHeight = img.height;
 
-                        const imgX = (pageWidth - imgWidth) / 2;
-                        doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight);
-                        y += imgHeight + 5;
-                    } else {
-                        doc.text('No se pudo adjuntar o cargar la imagen para este elemento.', margin, y);
-                        y += 10;
+                    if (imgWidth > maxImgWidth || imgHeight > maxImgHeight) {
+                        const ratio = Math.min(maxImgWidth / imgWidth, maxImgHeight / imgHeight);
+                        imgWidth = imgWidth * ratio;
+                        imgHeight = imgHeight * ratio;
                     }
+
+                    const imgX = (pageWidth - imgWidth) / 2;
+                    doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight);
+                    y += imgHeight + 5;
                 } else {
                     doc.text('No se adjuntó imagen para este elemento.', margin, y);
                     y += 10;
                 }
 
+                // Details Text (Inside Box)
                 const detailsBoxYStart = y;
                 const detailsBoxWidth = pageWidth - (margin * 2);
                 doc.setFontSize(10);
@@ -999,153 +969,98 @@
                 const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', detailsBoxWidth - 4);
                 doc.text(detailsLines, margin + 2, y);
                 y += (detailsLines.length * 5) + 4;
-
                 const finalDetailsBoxHeight = y - detailsBoxYStart;
                 doc.rect(margin, detailsBoxYStart, detailsBoxWidth, finalDetailsBoxHeight);
                 y += 5;
             }
 
-
-            // --- Firma y Notas Finales ---
+            // --- Signature and Notes Placement (Always on the last page) ---
             doc.setPage(totalPages);
 
+            // 1. Añadir Notas Extra si existen
             if (extraNotes) {
+                // 'y' es la posición después del último contenido, se usa como punto de inicio para la nota.
                 y = addExtraNotesToPage(doc, extraNotes, y, pageHeight, margin);
             }
 
-            await addSignatureSection(doc, data, pageHeight, margin, hasSigned);
+            // 2. Añadir Firma (Siempre fija al final)
+            await addSignatureSection(doc, data, pageHeight, margin, canvas, hasSigned);
+
+            // 3. Obtener Base64 del PDF y metadatos
+            const pdfBase64 = doc.output('datauristring').split(',')[1];
+            const fileName = data.nombre_reporte.replace(/[^a-z0-9]/gi, '_').substring(0, 30);
             
-            // Retornar como Blob
-            return doc.output('blob'); 
-        }
+            // 4. Enviar a Google Apps Script
+            const dataToSend = {
+                pdfBase64: pdfBase64,
+                fileName: `${fileName}_${new Date().getTime()}.pdf`,
+                recipientEmail: data.recipient_email,
+                reportName: data.nombre_reporte,
+                reporterName: data.nombre_tecnico
+            };
 
-        // Función auxiliar para la descarga local
-        function downloadLocal(pdfBlob, fileName) {
-            const url = URL.createObjectURL(pdfBlob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            // Mensaje más específico para móviles
-            showMessage('PDF descargado localmente. Búsquelo en la carpeta "Descargas" o en el historial de su navegador.', 'success');
-        }
+            const response = await fetch(GAS_WEB_APP_URL, {
+                method: 'POST',
+                mode: 'cors', // Necesario para peticiones a GAS
+                headers: {
+                    'Content-Type': 'text/plain', // Usar text/plain o vacío para evitar errores CORS complejos en GAS
+                },
+                body: JSON.stringify(dataToSend)
+            });
 
-        // FUNCIÓN: Compartir el Blob previamente generado
-        // El parámetro isAutoAttempt nos ayuda a dar un mensaje de error más útil.
-        async function handleDeferredShare(isAutoAttempt = false) {
-            if (!lastGeneratedPdfBlob) {
-                showMessage('ERROR: Primero debe generar y descargar el PDF localmente.', 'error');
-                return;
+            if (!response.ok) {
+                throw new Error('Error al conectar con Google Apps Script.');
             }
 
-            // Desactivar el botón para evitar clics múltiples mientras se intenta el compartir
-            shareAfterDownloadButton.disabled = true;
+            const result = await response.json();
 
-            try {
-                // Crear un objeto File necesario para la API de compartir
-                const pdfFile = new File([lastGeneratedPdfBlob], lastGeneratedPdfFileName, { type: 'application/pdf' });
-
-                if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-                    await navigator.share({
-                        files: [pdfFile],
-                        title: `Reporte: ${lastGeneratedPdfFileName.replace(/_/g, ' ').replace('.pdf', '')}`,
-                        text: `Adjunto el reporte de evidencia generado.`,
-                    });
-                    showMessage('PDF compartido con éxito. Seleccione su aplicación de destino (Correo, WhatsApp, etc.).', 'success');
-                    
-                    // Si el compartir fue exitoso (no cancelado), podemos ocultar el botón manual.
-                    if (!isAutoAttempt) { 
-                        shareAfterDownloadButton.classList.add('hidden');
-                    }
-                    
-                } else {
-                    if (isAutoAttempt) {
-                         showMessage('Compartir Nativo no disponible. Por favor, utilice el botón "2. Compartir PDF" manualmente.', 'error');
-                    } else {
-                         showMessage('La opción de Compartir Nativo no está disponible en su dispositivo.', 'info');
-                    }
-                }
-            } catch (error) {
-                if (error.name !== 'AbortError') {
-                    console.error('Fallo en la API de Compartir Nativo (deferred):', error);
-                    
-                    // Mensaje específico si el error es por bloqueo de seguridad
-                    if (isAutoAttempt && (error.name === 'NotAllowedError' || error.name === 'SecurityError')) {
-                         showMessage('El navegador ha bloqueado la apertura automática del menú de Compartir. Por favor, haga clic en el botón "2. Compartir PDF" manualmente.', 'error');
-                    } else if (!isAutoAttempt) {
-                         showMessage('Fallo al abrir el menú de Compartir Nativo. Intente buscar el archivo en la carpeta "Descargas".', 'error');
-                    }
-                } else {
-                    showMessage('Compartición cancelada por el usuario.', 'info');
-                }
-            } finally {
-                shareAfterDownloadButton.disabled = false;
-                // Si fue un intento automático, el botón manual siempre debe ser visible como plan B.
-                if (isAutoAttempt) {
-                    shareAfterDownloadButton.classList.remove('hidden'); 
-                }
+            if (result.success) {
+                showMessage(`✅ Correo enviado a: ${data.recipient_email}`, 'success');
+            } else {
+                showMessage(`❌ Error de GAS: ${result.message || 'Error desconocido'}`, 'error');
+                throw new Error(result.message);
             }
         }
-        
+
         // --- EVENT HANDLERS ---
         
-        // EVENTO DEL BOTÓN COMPARTIR MANUAL (FALLBACK)
-        shareAfterDownloadButton.addEventListener('click', () => handleDeferredShare(false));
-
-
-        // Evento para el botón de GENERAR Y COMPARTIR (AHORA CON INTENTO AUTOMÁTICO)
-        document.getElementById('downloadPdfButton').addEventListener('click', async function() {
-            document.getElementById('loadingOverlay').classList.remove('hidden');
-            // Ocultar el botón de compartir previo
-            shareAfterDownloadButton.classList.add('hidden');
-            lastGeneratedPdfBlob = null; 
-
-            const formData = new FormData(form);
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formInputs = new FormData(form);
             const data = {};
-            for (const [key, value] of formData.entries()) {
+            for (const [key, value] of formInputs.entries()) {
                 data[key] = value;
             }
+            data.reportElements = reportElements;
+            data.extraNotes = extraNotesInput.value;
+
+            // Simple validation
+            if (!data.nombre_reporte || !data.nombre_tecnico || !data.recipient_email) {
+                showMessage('Por favor, complete todos los campos requeridos.', 'error');
+                return;
+            }
             
-            const signatureData = hasSigned ? canvas.toDataURL('image/png') : null;
-            const extraNotes = localStorage.getItem('extraNotes_reporte_simple') || '';
-            const fileNamePrefix = data.nombre_reporte.replace(/[^a-z0-9]/gi, '_').substring(0, 50) || 'reporte_evidencia';
-            const reportDate = new Date().toLocaleDateString().replace(/\//g, '-');
-            const finalFileName = `${fileNamePrefix}_${reportDate}_DESCARGA.pdf`;
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.display = 'flex';
 
             try {
-                showMessage('Generando PDF y preparando la descarga...', 'info');
-                // 1. Generar el PDF y obtener el objeto Blob
-                const pdfBlob = await generatePDF(data, reportElements, signatureData, extraNotes, canvas, hasSigned);
+                // Generar y Enviar
+                await generateAndSendPDF(data);
                 
-                // 2. Descargar localmente
-                downloadLocal(pdfBlob, finalFileName);
-
-                // 3. ALMACENAR EL BLOB 
-                lastGeneratedPdfBlob = pdfBlob;
-                lastGeneratedPdfFileName = finalFileName;
+                // Si el envío es exitoso, limpiar el formulario (opcional, pero buena práctica)
+                // Esto simula la acción de Nuevo Reporte para no duplicar envíos
+                // document.getElementById('clearFormButton_reporte').click(); 
                 
-                showMessage('Generación completada. Archivo guardado. Intentando abrir el menú de Compartir...', 'info');
-                
-                // 4. INTENTAR COMPARTIR AUTOMÁTICAMENTE (Lo más probable es que falle en móviles, pero lo intentamos)
-                setTimeout(async () => {
-                     await handleDeferredShare(true); // Flag true para intento automático
-                }, 500); // Pequeño retraso de 500ms
-                
-                saveFormData();
-
             } catch (error) {
-                console.error("Error al generar el PDF para descarga:", error);
-                showMessage(`ERROR (Generación): Falló la generación. Detalle: ${error.message || error.name || 'Error desconocido'}.`, 'error');
+                console.error("Error al generar o enviar PDF:", error);
+                showMessage(`Error: ${error.message || 'No se pudo generar/enviar el PDF.'}`, 'error');
             } finally {
-                document.getElementById('loadingOverlay').classList.add('hidden');
+                loadingOverlay.style.display = 'none';
             }
         });
 
-
-        // Lógica de Limpiar Formulario y Firma
+        // Eventos para el botón de "Nuevo Reporte" (Clear Form)
         document.getElementById('clearFormButton_reporte').addEventListener('click', function() {
             document.getElementById('confirmationModal_reporte').classList.remove('hidden');
         });
@@ -1155,28 +1070,22 @@
         });
 
         document.getElementById('confirmClearButton_reporte').addEventListener('click', function() {
-            document.getElementById('documentForm_reporte').reset();
-            
+            form.reset();
             reportElements = [];
             elementCounter = 0;
             document.getElementById('reportElementsContainer').innerHTML = '';
-            
+            addReportElement(); // Añadir un elemento vacío al limpiar
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             hasSigned = false;
             drawPlaceholder();
-
+            saveFormData(); // Guardar el estado limpio
             document.getElementById('confirmationModal_reporte').classList.add('hidden');
             showMessage('Formulario limpiado. Listo para un nuevo reporte.', 'success');
             localStorage.removeItem('documentFormData_reporte_simple');
-            localStorage.removeItem('extraNotes_reporte_simple');
-            extraNotesInput.value = '';
-            
-            lastGeneratedPdfBlob = null;
-            shareAfterDownloadButton.classList.add('hidden');
-
-            addReportElement(); 
+            localStorage.removeItem('extraNotes_reporte_simple'); // Limpiar notas extra
+            extraNotesInput.value = ''; // Limpiar el input de notas
         });
 
         document.getElementById('clearSignatureButton_reporte').addEventListener('click', function() {
@@ -1198,6 +1107,7 @@
             showMessage('Firma borrada.', 'success');
         });
         
+        // Inicialización de un elemento si no hay datos guardados
         if (reportElements.length === 0) {
             addReportElement();
         }
