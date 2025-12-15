@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Entrega de Equipo - Freund (Final con Modificaciones)</title>
+    <title>Registro de Entrega de Equipo - Freund</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
@@ -36,7 +36,7 @@
         }
         h1 {
             text-align: center;
-            color: #1a4d8c; 
+            color: #1a4d8c; /* Azul corporativo */
             border-bottom: 3px solid #f29c1f; 
             padding-bottom: 10px;
             margin-bottom: 20px;
@@ -113,7 +113,7 @@
             color: white;
         }
 
-        /* Botón 1: Firmar */
+        /* Botón 1: Firmar (Azul corporativo) */
         #startSignatureBtn {
             background-color: #1a4d8c; 
         }
@@ -121,7 +121,7 @@
             background-color: #153c6e;
         }
 
-        /* Botón 2: Generar PDF con firma (Aparece después de firmar) */
+        /* Botón 2: Generar PDF con firma (Naranja corporativo) */
         #generatePdfBtn {
             background-color: #f29c1f; 
             display: none; 
@@ -130,17 +130,17 @@
             background-color: #d1871a;
         }
 
-        /* Botón 3: Generar PDF sin firma */
+        /* Botón 3: Generar PDF sin firma (Verde Claro) */
         #generatePdfNoSigBtn {
-            background-color: #8c8c8c; /* Gris para diferenciar */
+            background-color: #4CAF50; 
         }
         #generatePdfNoSigBtn:hover {
-            background-color: #6d6d6d;
+            background-color: #45a049;
         }
 
-        /* Botón 4: Inicio (Celeste) */
+        /* Botón 4: Inicio (Celeste Claro del logo) */
         #homeBtn {
-            background-color: #00bcd4; /* Celeste */
+            background-color: #00bcd4; /* Celeste Claro */
         }
         #homeBtn:hover {
             background-color: #0097a7;
@@ -169,7 +169,7 @@
                 gap: 15px;
             }
             .btn-group button {
-                flex: 1 1 calc(50% - 10px); /* 2 botones por fila */
+                flex: 1 1 calc(50% - 10px); 
             }
             #generatePdfBtn, #generatePdfNoSigBtn, #homeBtn, #startSignatureBtn {
                  flex: 1 1 calc(50% - 10px);
@@ -266,16 +266,16 @@
         <h2>Entrega:</h2> 
         <div class="form-group">
             <div class="form-field">
-                <label for="nombreEntregador">Nombre:</label>
+                <label for="nombreEntregador">Nombre del personal de Entrega:</label>
                 <input type="text" id="nombreEntregador" name="nombreEntregador" required value="Jonathan Alexander Navas">
             </div>
             <div class="form-field">
-                <label for="cargoEntregador">Cargo:</label>
+                <label for="cargoEntregador">Cargo del personal de Entrega:</label>
                 <input type="text" id="cargoEntregador" name="cargoEntregador" required value="Soporte Técnico">
             </div>
         </div>
 
-        <h2>Registro de Hardware Entregado (Laptop)</h2>
+        <h2>Registro de Hardware Entregado</h2>
         <div class="form-group">
             <div class="form-field full-width">
                 <label for="marcaModeloHW">Marca y Modelo de la Laptop:</label>
@@ -338,7 +338,7 @@
 
 <div id="signatureModal" class="signature-modal">
     <div class="modal-content">
-        <h3 id="signerName">Firma del Entregador</h3>
+        <h3 id="signerName">Firma del personal de Entrega</h3>
         <canvas id="signature-canvas"></canvas>
         <div class="modal-buttons">
             <button type="button" class="clear-button" id="clearSignatureBtn">Limpiar</button>
@@ -419,7 +419,7 @@
         const cargoEntregador = document.getElementById('cargoEntregador').value;
 
         if (currentSigner === 'deliverer') {
-            signerNameElement.textContent = `Firma del Entregador (${nombreEntregador} - ${cargoEntregador})`;
+            signerNameElement.textContent = `Firma del personal de Entrega (${nombreEntregador} - ${cargoEntregador})`;
             confirmSignatureBtn.textContent = 'Confirmar y Continuar';
         } else if (currentSigner === 'receiver') {
             signerNameElement.textContent = `Firma del Receptor (${nombreEmpleado})`;
@@ -536,6 +536,25 @@
             doc.addImage(logoData, 'PNG', 14, 10, LOGO_WIDTH, LOGO_HEIGHT); 
         }
         
+        // Nuevo Encabezado Superior Derecho (Ajustado)
+        const newFontSize = 8 * 0.85; // Reducido 15% (aprox 6.8 pt)
+        const startYOffset = 3.5; // Baja 1 renglón (3.5 mm)
+        const rightMargin = 205; 
+        let headerY = 10 + startYOffset;
+        
+        doc.setFontSize(newFontSize); 
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(0, 0, 0); 
+        
+        doc.text('Tiendas 01.001.0001.0001', rightMargin, headerY, { align: 'right' });
+        headerY += 3;
+        doc.text('Redes Soporte y', rightMargin, headerY, { align: 'right' });
+        headerY += 3;
+        doc.text('Telecomunicaciones', rightMargin, headerY, { align: 'right' });
+        headerY += 4; // Espacio antes de la fecha
+        doc.text(`Fecha de Reporte: ${todayShort}`, rightMargin, headerY, { align: 'right' }); 
+
+        // Título Central
         const titleX = 107.95; 
         const titleY = 20; 
         
@@ -546,23 +565,21 @@
         
         doc.text('HARDWARE Y SOFTWARE', titleX, titleY + 4, { align: 'center' }); 
         
-        // LÍNEA ELIMINADA: doc.text('DEPARTAMENTO DE SISTEMAS - Freund', titleX, titleY + 8, { align: 'center' });
-        
         doc.setTextColor(0, 0, 0);
         doc.setFontSize(10);
-        // Dejamos un espacio en blanco donde estaba el texto eliminado
-        let currentY = titleY + 8; // Mantenemos la posición para la siguiente tabla
+        
+        let currentY = titleY + 8; // Posición de la tabla después del espacio en blanco
 
         // --- 3. TABLA DE INFORMACIÓN DEL USUARIO ---
         doc.autoTable({
-            startY: currentY + 3, // Ajustamos la posición inicial
+            startY: currentY + 3, 
             head: [['Campo', 'Detalle']],
             body: [
                 ['Nombre Completo (Receptor):', nombre],
                 ['Nombre de Usuario (Login):', usuario],
                 ['Departamento / Sucursal (Receptor):', depto],
-                ['Nombre Completo (Entregador):', nombreEntregador], 
-                ['Cargo (Entregador):', cargoEntregador], 
+                ['Nombre Completo (Entrega):', nombreEntregador], 
+                ['Cargo (Entrega):', cargoEntregador], 
                 ['Fecha de Entrega:', fechaEntrega], 
                 ['Estado del Equipo:', estado],
                 ['Asunto:', 'Entrega de Hardware y Software AUTORIZADO.'],
@@ -577,7 +594,7 @@
         // --- 4. REGISTRO DE HARDWARE ---
         doc.setFontSize(12); 
         doc.setFont(undefined, 'bold');
-        doc.text('Registro de Hardware Entregado (LAPTOP)', 14, finalY);
+        doc.text('Registro de Hardware Entregado', 14, finalY);
         finalY += 3;
 
         const hardwareData = [
@@ -665,15 +682,17 @@
         // 3. Colocar Nombres y Títulos (Usando las variables de input)
         let nameY = lineY + 5;
 
+        // Nombre personal de Entrega
         doc.setFont(undefined, 'normal');
-        doc.text(nombreEntregador, 20, nameY); // Nombre Entregador
-        doc.text(nombre, 120, nameY); // Nombre Receptor
+        doc.text(nombreEntregador, 20, nameY); 
+        // Nombre Receptor
+        doc.text(nombre, 120, nameY); 
         nameY += 5;
 
-        // CAMBIO SOLICITADO: Entregador ahora muestra "Departamento: [Cargo]"
+        // Entregador: "Departamento: [Cargo]"
         doc.text(`Departamento: ${cargoEntregador}`, 20, nameY); 
         
-        // Receptor mantiene "Departamento: [Depto]"
+        // Receptor: "Departamento: [Depto]"
         doc.text(`Departamento: ${depto}`, 120, nameY); 
 
 
