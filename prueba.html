@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Entrega de Equipo - Freund (Final con Firma Digital Optimizada)</title>
+    <title>Registro de Entrega de Equipo - Freund (Final con Modificaciones)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     
     <style>
-        /* --- ESTILOS BASE (Sin cambios visuales) --- */
+        /* --- ESTILOS BASE --- */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f9;
@@ -24,6 +24,15 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        /* Estilo para centrar el logo */
+        .header-logo-container {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .header-logo {
+            width: 120px; 
+            height: auto;
         }
         h1 {
             text-align: center;
@@ -84,38 +93,88 @@
             flex: 1 1 calc(50% - 10px); 
             font-size: 0.9em;
         }
-        /* Botón de Firmar */
-        #startSignatureBtn {
-            background-color: #1a4d8c; 
-            color: white;
+        
+        /* --- ESTILOS DE BOTONES --- */
+        .btn-group {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-base {
             padding: 12px 20px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
             transition: background-color 0.3s;
-            margin-top: 20px;
             width: 100%;
+            color: white;
+        }
+
+        /* Botón 1: Firmar */
+        #startSignatureBtn {
+            background-color: #1a4d8c; 
         }
         #startSignatureBtn:hover {
             background-color: #153c6e;
         }
-        /* Botón de generar PDF (deshabilitado hasta firmar) */
+
+        /* Botón 2: Generar PDF con firma (Aparece después de firmar) */
         #generatePdfBtn {
             background-color: #f29c1f; 
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-            margin-top: 10px;
-            width: 100%;
             display: none; 
         }
         #generatePdfBtn:hover {
             background-color: #d1871a;
+        }
+
+        /* Botón 3: Generar PDF sin firma */
+        #generatePdfNoSigBtn {
+            background-color: #8c8c8c; /* Gris para diferenciar */
+        }
+        #generatePdfNoSigBtn:hover {
+            background-color: #6d6d6d;
+        }
+
+        /* Botón 4: Inicio (Celeste) */
+        #homeBtn {
+            background-color: #00bcd4; /* Celeste */
+        }
+        #homeBtn:hover {
+            background-color: #0097a7;
+        }
+
+        /* MEDIA QUERY PARA ESCRITORIO */
+        @media (min-width: 600px) {
+            .container {
+                padding: 30px;
+            }
+            .form-field {
+                flex: 1 1 45%; 
+            }
+            .radio-group label {
+                display: inline-block; 
+                margin-right: 15px;
+            }
+            .software-list div {
+                flex: 1 1 calc(33.333% - 10px); 
+                font-size: 1em;
+            }
+            .btn-group {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                gap: 15px;
+            }
+            .btn-group button {
+                flex: 1 1 calc(50% - 10px); /* 2 botones por fila */
+            }
+            #generatePdfBtn, #generatePdfNoSigBtn, #homeBtn, #startSignatureBtn {
+                 flex: 1 1 calc(50% - 10px);
+                 max-width: 49%;
+            }
         }
         /* --- ESTILOS DE MODAL DE FIRMA --- */
         .signature-modal {
@@ -162,34 +221,21 @@
             background-color: #ccc !important;
             color: #333 !important;
         }
-
-        /* MEDIA QUERY PARA ESCRITORIO */
-        @media (min-width: 600px) {
-            .container {
-                padding: 30px;
-            }
-            .form-field {
-                flex: 1 1 45%; 
-            }
-            .radio-group label {
-                display: inline-block; 
-                margin-right: 15px;
-            }
-            .software-list div {
-                flex: 1 1 calc(33.333% - 10px); 
-                font-size: 1em;
-            }
-        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Freund - REGISTRO DE ENTREGA DE EQUIPO</h1>
+    
+    <div class="header-logo-container">
+        <img src="https://raw.githubusercontent.com/invs99/FF/SEGUNDA/freund1.png" alt="Logo Freund" class="header-logo">
+    </div>
+    
+    <h1>REGISTRO DE ENTREGA DE EQUIPO</h1>
     
     <form id="deliveryForm">
         
-        <h2>Datos del Empleado</h2>
+        <h2>Nombre de Receptor</h2>
         <div class="form-group">
             <div class="form-field">
                 <label for="nombre">Nombre Completo:</label>
@@ -202,13 +248,9 @@
         </div>
 
         <div class="form-group">
-            <div class="form-field">
+            <div class="form-field full-width">
                 <label for="depto">Departamento/Sucursal:</label>
                 <input type="text" id="depto" name="depto" required value="SUPERVISOR INDUSTRIA">
-            </div>
-            <div class="form-field">
-                <label>Fecha de Entrega (Automática):</label>
-                <input type="text" value="Se genera automáticamente al crear el PDF" disabled>
             </div>
         </div>
 
@@ -218,6 +260,18 @@
                 <label><input type="radio" name="estado" value="Equipo Nuevo" checked> Equipo Nuevo</label>
                 <label><input type="radio" name="estado" value="Renovación"> Renovación</label>
                 <label><input type="radio" name="estado" value="Cambio"> Cambio</label>
+            </div>
+        </div>
+
+        <h2>Entrega:</h2> 
+        <div class="form-group">
+            <div class="form-field">
+                <label for="nombreEntregador">Nombre:</label>
+                <input type="text" id="nombreEntregador" name="nombreEntregador" required value="Jonathan Alexander Navas">
+            </div>
+            <div class="form-field">
+                <label for="cargoEntregador">Cargo:</label>
+                <input type="text" id="cargoEntregador" name="cargoEntregador" required value="Soporte Técnico">
             </div>
         </div>
 
@@ -270,8 +324,15 @@
             </div>
         </div>
 
-        <button type="button" id="startSignatureBtn">Realizar firmas</button>
-        <button type="button" id="generatePdfBtn" style="display:none;">Generar Documento de Entrega (PDF)</button>
+        <div class="btn-group">
+            <button type="button" id="startSignatureBtn" class="btn-base">Realizar firmas</button>
+            
+            <button type="button" id="generatePdfBtn" class="btn-base">Generar Documento de Entrega (PDF)</button>
+
+            <button type="button" id="generatePdfNoSigBtn" class="btn-base">Generar Documento sin firma</button>
+            
+            <button type="button" id="homeBtn" class="btn-base">Inicio</button>
+        </div>
     </form>
 </div>
 
@@ -290,7 +351,7 @@
 <script>
     window.jsPDF = window.jspdf.jsPDF;
     
-    // URL del logo
+    // URL del logo (Se mantiene la constante)
     const LOGO_URL = 'https://raw.githubusercontent.com/invs99/FF/SEGUNDA/freund1.png';
     const LOGO_WIDTH = 35; 
     const LOGO_HEIGHT = 15; 
@@ -309,6 +370,8 @@
     const clearSignatureBtn = document.getElementById('clearSignatureBtn');
     const startSignatureBtn = document.getElementById('startSignatureBtn');
     const generatePdfBtn = document.getElementById('generatePdfBtn');
+    const generatePdfNoSigBtn = document.getElementById('generatePdfNoSigBtn');
+    const homeBtn = document.getElementById('homeBtn');
     
     // Función para convertir la URL de la imagen a Base64
     function urlToBase64(url, callback) {
@@ -332,7 +395,6 @@
     
     // --- LÓGICA DE FIRMA DIGITAL ---
 
-    // Función para redimensionar y calibrar el canvas
     function resizeAndCalibrateCanvas() {
         const ratio = Math.max(window.devicePixelRatio || 1, 1);
         
@@ -351,12 +413,13 @@
         signaturePad.clear();
     }
 
-    // 1. Mostrar modal de firma
     function showSignatureModal() {
         const nombreEmpleado = document.getElementById('nombre').value;
+        const nombreEntregador = document.getElementById('nombreEntregador').value;
+        const cargoEntregador = document.getElementById('cargoEntregador').value;
 
         if (currentSigner === 'deliverer') {
-            signerNameElement.textContent = 'Firma del Entregador (Jonathan Alexander Navas - Soporte Técnico)';
+            signerNameElement.textContent = `Firma del Entregador (${nombreEntregador} - ${cargoEntregador})`;
             confirmSignatureBtn.textContent = 'Confirmar y Continuar';
         } else if (currentSigner === 'receiver') {
             signerNameElement.textContent = `Firma del Receptor (${nombreEmpleado})`;
@@ -368,31 +431,29 @@
         setTimeout(resizeAndCalibrateCanvas, 100); 
     }
 
-    // 2. Confirmar y pasar a la siguiente etapa/generar PDF
     function confirmSignature() {
         if (!signaturePad || signaturePad.isEmpty()) {
             alert("Por favor, escriba su firma antes de confirmar.");
             return;
         }
         
-        // *** CAMBIO CRUCIAL: Usar JPEG con calidad 0.8 para reducir el tamaño del archivo. ***
         const signatureData = signaturePad.toDataURL('image/jpeg', 0.8); 
         signatureModal.style.display = 'none'; 
 
         if (currentSigner === 'deliverer') {
             delivererSignatureData = signatureData;
             currentSigner = 'receiver';
-            showSignatureModal(); // Ir a la firma del Receptor
+            showSignatureModal(); 
         } else if (currentSigner === 'receiver') {
             receiverSignatureData = signatureData;
             
-            startSignatureBtn.style.display = 'none';
-            generatePdfBtn.style.display = 'block';
+            startSignatureBtn.style.display = 'none'; 
+            generatePdfBtn.style.display = 'block'; 
             alert("¡Firmas capturadas con éxito! Ahora puede generar el PDF.");
         }
     }
 
-    // --- Event Listeners ---
+    // --- EVENT LISTENERS ---
     
     startSignatureBtn.addEventListener('click', function() {
         currentSigner = 'deliverer';
@@ -404,12 +465,23 @@
     generatePdfBtn.addEventListener('click', function() {
         if (delivererSignatureData && receiverSignatureData) {
             urlToBase64(LOGO_URL, function(logoData) {
-                generatePDF(logoData);
+                generatePDF(logoData, true); // Incluye firmas
             });
         } else {
-            alert("Debe capturar ambas firmas antes de generar el PDF.");
+            alert("Debe capturar ambas firmas digitales antes de usar este botón.");
         }
     });
+
+    generatePdfNoSigBtn.addEventListener('click', function() {
+        urlToBase64(LOGO_URL, function(logoData) {
+            generatePDF(logoData, false); // NO incluye firmas
+        });
+    });
+
+    homeBtn.addEventListener('click', function() {
+        window.location.href = 'https://invs99.github.io/FF/index.html';
+    });
+
 
     clearSignatureBtn.addEventListener('click', () => {
         if (signaturePad) {
@@ -420,8 +492,8 @@
     confirmSignatureBtn.addEventListener('click', confirmSignature);
 
 
-    // --- FUNCIÓN PRINCIPAL DE GENERACIÓN DE PDF ---
-    function generatePDF(logoData) {
+    // --- FUNCIÓN PRINCIPAL DE GENERACIÓN DE PDF (Acepta 'includeSignatures') ---
+    function generatePDF(logoData, includeSignatures = true) {
         const doc = new jsPDF('p', 'mm', 'letter'); 
         const form = document.getElementById('deliveryForm');
 
@@ -436,6 +508,9 @@
         const cargador = form.elements['cargador'].value;
         const cableSeguridad = form.elements['cableSeguridad'].value;
         
+        const nombreEntregador = form.elements['nombreEntregador'].value;
+        const cargoEntregador = form.elements['cargoEntregador'].value;
+
         const today = new Date();
         const fechaEntrega = today.toLocaleDateString('es-SV', { day: 'numeric', month: 'long', year: 'numeric' });
         const todayShort = today.toLocaleDateString('es-SV', { year: 'numeric', month: '2-digit', day: '2-digit' });
@@ -471,19 +546,24 @@
         
         doc.text('HARDWARE Y SOFTWARE', titleX, titleY + 4, { align: 'center' }); 
         
+        // LÍNEA ELIMINADA: doc.text('DEPARTAMENTO DE SISTEMAS - Freund', titleX, titleY + 8, { align: 'center' });
+        
         doc.setTextColor(0, 0, 0);
         doc.setFontSize(10);
-        doc.text('DEPARTAMENTO DE SISTEMAS - Freund', titleX, titleY + 8, { align: 'center' });
+        // Dejamos un espacio en blanco donde estaba el texto eliminado
+        let currentY = titleY + 8; // Mantenemos la posición para la siguiente tabla
 
         // --- 3. TABLA DE INFORMACIÓN DEL USUARIO ---
         doc.autoTable({
-            startY: titleY + 11,
+            startY: currentY + 3, // Ajustamos la posición inicial
             head: [['Campo', 'Detalle']],
             body: [
-                ['Nombre Completo:', nombre],
+                ['Nombre Completo (Receptor):', nombre],
                 ['Nombre de Usuario (Login):', usuario],
-                ['Departamento / Sucursal:', depto],
-                ['Fecha de Entrega:', fechaEntrega],
+                ['Departamento / Sucursal (Receptor):', depto],
+                ['Nombre Completo (Entregador):', nombreEntregador], 
+                ['Cargo (Entregador):', cargoEntregador], 
+                ['Fecha de Entrega:', fechaEntrega], 
                 ['Estado del Equipo:', estado],
                 ['Asunto:', 'Entrega de Hardware y Software AUTORIZADO.'],
             ],
@@ -566,18 +646,15 @@
         doc.text('Atentamente,', 25, fixedSignatureY);
         doc.text('Recibí Conforme,', 125, fixedSignatureY);
         
-        // 1. Insertar Firmas (Imágenes JPEG optimizadas)
-        
-        // Firma 1: Entregador (Izquierda)
-        if (delivererSignatureData) {
-            // *** Formato cambiado a 'JPEG' ***
-            doc.addImage(delivererSignatureData, 'JPEG', 14, signatureImageY, signatureImageW, signatureImageH);
-        }
-        
-        // Firma 2: Receptor (Derecha)
-        if (receiverSignatureData) {
-            // *** Formato cambiado a 'JPEG' ***
-            doc.addImage(receiverSignatureData, 'JPEG', 114, signatureImageY, signatureImageW, signatureImageH);
+        // CONDICIONAL PARA INSERTAR FIRMAS DIGITALES
+        if (includeSignatures) { 
+            if (delivererSignatureData) {
+                doc.addImage(delivererSignatureData, 'JPEG', 14, signatureImageY, signatureImageW, signatureImageH);
+            }
+            
+            if (receiverSignatureData) {
+                doc.addImage(receiverSignatureData, 'JPEG', 114, signatureImageY, signatureImageW, signatureImageH);
+            }
         }
 
         // 2. Dibujar líneas de separación 
@@ -585,20 +662,23 @@
         doc.line(14, lineY, 99, lineY); 
         doc.line(114, lineY, 199, lineY);
 
-        // 3. Colocar Nombres y Títulos
+        // 3. Colocar Nombres y Títulos (Usando las variables de input)
         let nameY = lineY + 5;
 
         doc.setFont(undefined, 'normal');
-        doc.text('Jonathan Alexander Navas', 20, nameY);
-        doc.text(nombre, 120, nameY);
+        doc.text(nombreEntregador, 20, nameY); // Nombre Entregador
+        doc.text(nombre, 120, nameY); // Nombre Receptor
         nameY += 5;
 
-        doc.text('Soporte Técnico', 20, nameY);
-        doc.text(`Departamento: ${depto}`, 120, nameY);
+        // CAMBIO SOLICITADO: Entregador ahora muestra "Departamento: [Cargo]"
+        doc.text(`Departamento: ${cargoEntregador}`, 20, nameY); 
+        
+        // Receptor mantiene "Departamento: [Depto]"
+        doc.text(`Departamento: ${depto}`, 120, nameY); 
 
 
         // --- 8. GUARDAR PDF ---
-        doc.save(`Registro_Entrega_${usuario}_${todayShort}.pdf`);
+        doc.save(`Registro_Entrega_${usuario}_${todayShort}${includeSignatures ? '' : '_SinFirma'}.pdf`);
     }
 </script>
 
