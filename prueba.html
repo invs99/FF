@@ -211,15 +211,35 @@
             margin-top: 15px;
             display: flex;
             justify-content: space-between;
+            flex-wrap: wrap; /* Permite que los botones se envuelvan si es necesario */
+            gap: 10px;
         }
         .modal-buttons button {
-            width: 48%;
+            width: 48%; /* Ajuste para tres botones en móvil */
             padding: 10px;
             font-size: 14px;
         }
         .clear-button {
             background-color: #ccc !important;
             color: #333 !important;
+        }
+        /* Estilos para el nuevo botón Cancelar */
+        #cancelSignatureBtn {
+            background-color: #f44336; /* Rojo */
+        }
+        #cancelSignatureBtn:hover {
+            background-color: #d32f2f;
+        }
+
+        /* Ajuste de ancho de botones en escritorio (3 botones) */
+        @media (min-width: 600px) {
+            .modal-buttons {
+                justify-content: flex-start;
+                gap: 10px;
+            }
+            .modal-buttons button {
+                width: calc(33.333% - 10px); /* Ajuste para tres botones */
+            }
         }
     </style>
 </head>
@@ -343,6 +363,7 @@
         <div class="modal-buttons">
             <button type="button" class="clear-button" id="clearSignatureBtn">Limpiar</button>
             <button type="button" id="confirmSignatureBtn">Confirmar y Continuar</button>
+             <button type="button" class="btn-base" id="cancelSignatureBtn">Cancelar</button>
         </div>
         <p style="font-size: 0.8em; color: #555; margin-top: 10px;">* Utilice el mouse o la pantalla táctil para firmar.</p>
     </div>
@@ -368,6 +389,7 @@
     const signerNameElement = document.getElementById('signerName');
     const confirmSignatureBtn = document.getElementById('confirmSignatureBtn');
     const clearSignatureBtn = document.getElementById('clearSignatureBtn');
+    const cancelSignatureBtn = document.getElementById('cancelSignatureBtn'); // Nuevo botón
     const startSignatureBtn = document.getElementById('startSignatureBtn');
     const generatePdfBtn = document.getElementById('generatePdfBtn');
     const generatePdfNoSigBtn = document.getElementById('generatePdfNoSigBtn');
@@ -431,6 +453,20 @@
         setTimeout(resizeAndCalibrateCanvas, 100); 
     }
 
+    function cancelSignatureProcess() {
+        // Restablece las variables de firma
+        delivererSignatureData = null;
+        receiverSignatureData = null;
+        currentSigner = 'deliverer';
+        
+        // Oculta el modal
+        signatureModal.style.display = 'none';
+        
+        // Asegura que solo se muestren los botones de inicio de firma
+        startSignatureBtn.style.display = 'block'; 
+        generatePdfBtn.style.display = 'none'; 
+    }
+
     function confirmSignature() {
         if (!signaturePad || signaturePad.isEmpty()) {
             alert("Por favor, escriba su firma antes de confirmar.");
@@ -457,7 +493,7 @@
     
     startSignatureBtn.addEventListener('click', function() {
         currentSigner = 'deliverer';
-        delivererSignatureData = null;
+        delivererSignatureData = null; // Limpiar datos de intentos anteriores
         receiverSignatureData = null;
         showSignatureModal();
     });
@@ -490,6 +526,9 @@
     });
 
     confirmSignatureBtn.addEventListener('click', confirmSignature);
+    
+    // NUEVO EVENTO PARA CANCELAR
+    cancelSignatureBtn.addEventListener('click', cancelSignatureProcess);
 
 
     // --- FUNCIÓN PRINCIPAL DE GENERACIÓN DE PDF (Acepta 'includeSignatures') ---
