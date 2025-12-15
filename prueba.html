@@ -1,1107 +1,424 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Reporte de Evidencia con Cámara y Páginas</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Entrega de Equipo - Freund (Final con Logo)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                },
-            },
-        };
-    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    
     <style>
-        /* Estilos generales */
-        #signatureCanvas_reporte {
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
-            background-color: white;
-            cursor: crosshair;
-            touch-action: none;
+        /* --- ESTILOS CSS (Sin cambios, solo para el formulario web) --- */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 10px; 
         }
-        #signatureCanvasContainer_reporte {
-            min-height: 150px;
+        .container {
+            width: 100%; 
+            max-width: 850px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-        .modal-overlay {
-            z-index: 999;
+        h1 {
+            text-align: center;
+            color: #1a4d8c; 
+            border-bottom: 3px solid #f29c1f; 
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 1.5em; 
         }
-        .main-content {
-            z-index: 10;
+        h2 {
+            color: #333;
+            margin-top: 20px;
+            border-left: 5px solid #1a4d8c;
+            padding-left: 10px;
+            font-size: 1.2em; 
         }
-        .camera-video {
-            width: 100%;
-            border-radius: 5px;
-            display: none;
-        }
-        .camera-controls {
+        .form-group {
+            margin-bottom: 15px;
             display: flex;
-            justify-content: center;
-            padding-top: 10px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
-        /* Estilos para Drag and Drop */
-        .drag-drop-area {
-            border: 2px dashed #9ca3af;
-            border-radius: 0.375rem;
-            transition: border-color 0.15s ease-in-out;
+        .form-field {
+            flex: 1 1 100%; 
         }
-        .drag-drop-area.drag-over {
-            border-color: #3b82f6; /* Blue 500 */
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+            font-size: 0.9em;
+        }
+        input[type="text"],
+        input[type="date"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; 
+        }
+        .full-width {
+            flex: 1 1 100%; 
+        }
+        .radio-group label {
+            font-weight: normal;
+            display: block; 
+            margin-right: 0;
+            margin-bottom: 5px;
+        }
+        .software-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .software-list div {
+            flex: 1 1 calc(50% - 10px); 
+            font-size: 0.9em;
+        }
+        button {
+            background-color: #f29c1f; 
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #d1871a;
+        }
+
+        /* MEDIA QUERY PARA ESCRITORIO */
+        @media (min-width: 600px) {
+            .container {
+                padding: 30px;
+            }
+            .form-field {
+                flex: 1 1 45%; 
+            }
+            .radio-group label {
+                display: inline-block; 
+                margin-right: 15px;
+            }
+            .software-list div {
+                flex: 1 1 calc(33.333% - 10px); 
+                font-size: 1em;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-100 flex flex-col items-center justify-start min-h-screen p-4 font-sans">
-    <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-[998] hidden">
-        <div class="bg-white p-6 rounded-lg shadow-xl flex items-center space-x-3">
-            <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p class="text-gray-700">Generando PDF y Enviando...</p>
-        </div>
-    </div>
+<body>
 
-    <div id="confirmationModal_reporte" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
-        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Confirmar</h3>
-            <p class="text-gray-700 text-center mb-6">¿Estás seguro que quieres limpiar el formulario? Los datos actuales se perderán.</p>
-            <div class="flex space-x-4">
-                <button id="cancelClearButton_reporte" class="flex-1 justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Cancelar
-                </button>
-                <button id="confirmClearButton_reporte" class="flex-1 justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                    Confirmar
-                </button>
-            </div>
-        </div>
-    </div>
+<div class="container">
+    <h1>Freund - REGISTRO DE ENTREGA DE EQUIPO</h1>
     
-    <div id="clearSignatureConfirmationModal_reporte" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
-        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Confirmar</h3>
-            <p class="text-gray-700 text-center mb-6">¿Estás seguro que quieres borrar la firma?</p>
-            <div class="flex space-x-4">
-                <button id="cancelClearSignatureButton_reporte" class="flex-1 justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Cancelar
-                </button>
-                <button id="confirmClearSignatureButton_reporte" class="flex-1 justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                    Confirmar
-                </button>
+    <form id="deliveryForm">
+        
+        <h2>Datos del Empleado</h2>
+        <div class="form-group">
+            <div class="form-field">
+                <label for="nombre">Nombre Completo:</label>
+                <input type="text" id="nombre" name="nombre" required value="JOSE MAURICIO SHUPAN GUTIERREZ">
+            </div>
+            <div class="form-field">
+                <label for="usuario">Nombre de Usuario:</label>
+                <input type="text" id="usuario" name="usuario" required value="JSHUPAN">
             </div>
         </div>
-    </div>
+
+        <div class="form-group">
+            <div class="form-field">
+                <label for="depto">Departamento/Sucursal:</label>
+                <input type="text" id="depto" name="depto" required value="SUPERVISOR INDUSTRIA">
+            </div>
+            <div class="form-field">
+                <label>Fecha de Entrega (Automática):</label>
+                <input type="text" value="Se genera automáticamente al crear el PDF" disabled>
+            </div>
+        </div>
+
+        <div class="form-group full-width">
+            <label>Estado del Equipo:</label>
+            <div class="radio-group">
+                <label><input type="radio" name="estado" value="Equipo Nuevo" checked> Equipo Nuevo</label>
+                <label><input type="radio" name="estado" value="Renovación"> Renovación</label>
+                <label><input type="radio" name="estado" value="Cambio"> Cambio</label>
+            </div>
+        </div>
+
+        <h2>Registro de Hardware Entregado (Laptop)</h2>
+        <div class="form-group">
+            <div class="form-field full-width">
+                <label for="marcaModeloHW">Marca y Modelo de la Laptop:</label>
+                <input type="text" id="marcaModeloHW" name="marcaModeloHW" value="Lenovo T14 Gen 4">
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="form-field">
+                <label for="caracteristicas">Características (Ej: Procesador, RAM, Disco):</label>
+                <textarea id="caracteristicas" name="caracteristicas" rows="3">Intel Core ultra 5, 1.3 GHz, 32GB RAM, 500 GB SSD</textarea>
+            </div>
+            <div class="form-field">
+                <label for="serie">No. de Serie / IMEI:</label>
+                <input type="text" id="serie" name="serie" value="PF-5M9BWP">
+            </div>
+        </div>
+
+        <h2>Accesorios Entregados</h2>
+        <div class="form-group">
+            <div class="form-field">
+                <label for="cargador">Cargador (Marca/Especificación):</label>
+                <input type="text" id="cargador" name="cargador" value="Lenovo ADLX65YSDC2A (20v-3.25a, 65w)">
+            </div>
+            <div class="form-field">
+                <label for="cableSeguridad">Cable de Seguridad:</label>
+                <input type="text" id="cableSeguridad" name="cableSeguridad" value="Lenovo nano">
+            </div>
+        </div>
+
+        <h2>Registro de Software Instalado</h2>
+        <div class="form-group full-width">
+            <label>Programas Autorizados (Seleccionar los instalados):</label>
+            <div class="software-list">
+                <div><label><input type="checkbox" name="software" value="Windows 11" checked> Windows 11</label></div>
+                <div><label><input type="checkbox" name="software" value="Office 365" checked> Office 365</label></div>
+                <div><label><input type="checkbox" name="software" value="Google Chrome" checked> Google Chrome</label></div>
+                <div><label><input type="checkbox" name="software" value="BitLocker" checked> BitLocker</label></div>
+                <div><label><input type="checkbox" name="software" value="Trend Micro" checked> Trend Micro</label></div>
+                <div><label><input type="checkbox" name="software" value="Acrobat Reader" checked> Acrobat Reader</label></div>
+                <div><label><input type="checkbox" name="software" value="Citrix" checked> Citrix</label></div>
+                <div><label><input type="checkbox" name="software" value="Libre office" checked> Libre office</label></div>
+                <div><label><input type="checkbox" name="software" value="Neskope" checked> Neskope</label></div>
+                <div><label><input type="checkbox" name="software" value="VLC media player" checked> VLC media player</label></div>
+                <div><label><input type="checkbox" name="software" value="Zoom Workplace" checked> Zoom Workplace</label></div>
+                <div><label><input type="checkbox" name="software" value="Microsoft Edge" checked> Microsoft Edge</label></div>
+            </div>
+        </div>
+
+        <button type="submit">Generar Documento de Entrega (PDF)</button>
+    </form>
+</div>
+
+<script>
+    window.jsPDF = window.jspdf.jsPDF;
     
-    <div id="cameraModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
-        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-xl">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Tomar Foto para Evidencia</h3>
-            <div class="relative">
-                <video id="cameraVideo" class="camera-video" autoplay playsinline></video>
-                <canvas id="cameraCanvas" class="hidden"></canvas>
-            </div>
-            <div id="cameraControls" class="camera-controls">
-                <button type="button" id="takePhotoButton" class="bg-green-500 text-white font-medium py-2 px-4 rounded-full shadow-lg hover:bg-green-600 transition disabled:bg-gray-400">
-                    Capturar
-                </button>
-            </div>
-            <div class="flex justify-between mt-4">
-                <button type="button" id="cancelCameraButton" class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                    Cancelar
-                </button>
-                <button type="button" id="confirmImageButton" class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400" disabled>
-                    Usar Imagen
-                </button>
-            </div>
-        </div>
-    </div>
+    // URL del logo
+    const LOGO_URL = 'https://raw.githubusercontent.com/invs99/FF/SEGUNDA/freund1.png';
+    const LOGO_WIDTH = 35; // Ancho en mm
+    const LOGO_HEIGHT = 15; // Altura en mm
 
-    <div id="extraNotesModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
-        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Notas Extra del Reporte</h3>
-            <textarea id="extraNotesInput" rows="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" placeholder="Escribe aquí cualquier nota general, conclusión o comentario importante del reporte."></textarea>
-            <div class="flex justify-end mt-4">
-                <button type="button" id="closeExtraNotesButton" class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
-                    Guardar y Cerrar
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg mb-6 main-content">
-        <div class="flex justify-center mb-6">
-            <img src="https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png" alt="Logo Freund" class="h-16 w-auto" />
-        </div>
-        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Generador de Reporte de Evidencia</h1>
-        <form id="documentForm_reporte" class="space-y-4">
-            
-            <div class="space-y-4 border p-4 rounded-md bg-gray-50">
-                <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Información del Reporte</h2>
-                <div>
-                    <label for="nombre_reporte" class="block text-sm font-medium text-gray-700">Nombre del Reporte (Asunto)</label>
-                    <input type="text" id="nombre_reporte" name="nombre_reporte" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" required/>
-                </div>
-                <div>
-                    <label for="nombre_tecnico" class="block text-sm font-medium text-gray-700">Nombre de quien Reporta</label>
-                    <input type="text" id="nombre_tecnico" name="nombre_tecnico" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" required/>
-                </div>
-                <div>
-                    <label for="correo_destino" class="block text-sm font-medium text-gray-700">Correo Electrónico Destino</label>
-                    <input type="email" id="correo_destino" name="correo_destino" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" placeholder="ejemplo@dominio.com" required/>
-                </div>
-            </div>
+    // Función para convertir la URL de la imagen a Base64
+    function urlToBase64(url, callback) {
+        var xhr = new XMLHttpRequest();
+        xhr.onload = function() {
+            var reader = new FileReader();
+            reader.onloadend = function() {
+                callback(reader.result);
+            }
+            xhr.response.type = 'image/png';
+            reader.readAsDataURL(xhr.response);
+        };
+        xhr.onerror = function() {
+            console.error("Error al cargar la imagen del logo.");
+            callback(null); 
+        };
+        xhr.open('GET', url);
+        xhr.responseType = 'blob';
+        xhr.send();
+    }
 
-            <div class="space-y-4 border p-4 rounded-md bg-gray-50">
-                <h2 class="text-lg font-semibold text-gray-700 border-b pb-2 flex justify-between items-center">
-                    Detalle de Reporte
-                </h2>
-                <div id="reportElementsContainer" class="space-y-6">
-                </div>
-            </div>
 
-            <div class="space-y-4 border p-4 rounded-md bg-gray-50">
-                <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Firma</h2>
-                <div class="mt-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Firma Digital</label>
-                    <div id="signatureCanvasContainer_reporte" class="border rounded-md p-1 relative w-full h-auto">
-                        <canvas id="signatureCanvas_reporte" class="w-full"></canvas>
-                    </div>
-                    <button type="button" id="clearSignatureButton_reporte" class="mt-2 w-1/2 mx-auto flex justify-center py-2 px-4 border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-800 bg-green-200 hover:bg-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-400">
-                        Borrar Firma
-                    </button>
-                </div>
-            </div>
-            
-            <div class="flex flex-col space-y-2 mt-4">
-                <button type="button" id="openExtraNotesButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                    Notas Extra
-                </button>
-                <button type="button" id="generatePdfButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    Generar y Enviar Reporte PDF
-                </button>
-                <button type="button" id="clearFormButton_reporte" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                    Nuevo Reporte
-                </button>
-                <a href="index.html" class="w-full flex justify-center py-1.5 px-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-400 no-underline">
-                    Inicio
-                </a>
-            </div>
-        </form>
-    </div>
-    <div id="messageBox" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 hidden">
-        Mensaje de éxito/error.
-    </div>
-
-    <script>
-        // ***************************************************************
-        // 🚨 CONFIGURACIÓN CRÍTICA 🚨
-        // ** URL DE DESPLIEGUE FINAL DE SU SCRIPT DE GOOGLE APPS **
-        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxVdtHi5Pn8dCDNX_to8v-nZP5MajcHCEpMI_WIRfMdzbQwB4unVGgIoglfgB85DqwO/exec'; 
-        // ***************************************************************
-
-        // --- DATA MANAGEMENT & DYNAMIC ELEMENTS ---
-        let reportElements = []; // Stores objects: { id, description, image, details }
-        let elementCounter = 0;
-        let currentElementIdForCamera = null;
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadFormData();
+    document.getElementById('deliveryForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        // Generamos el PDF solo DESPUÉS de obtener la imagen
+        urlToBase64(LOGO_URL, function(logoData) {
+            generatePDF(logoData);
         });
+    });
 
-        // --- EXTRA NOTES LOGIC (NEW) ---
-        const extraNotesInput = document.getElementById('extraNotesInput');
-        const openExtraNotesButton = document.getElementById('openExtraNotesButton');
-        const closeExtraNotesButton = document.getElementById('closeExtraNotesButton');
-        const extraNotesModal = document.getElementById('extraNotesModal');
-        openExtraNotesButton.addEventListener('click', () => {
-            extraNotesModal.classList.remove('hidden');
-            extraNotesInput.value = localStorage.getItem('extraNotes_reporte_simple') || '';
-        });
-        closeExtraNotesButton.addEventListener('click', () => {
-            // Guarda la nota en localStorage y el formulario
-            localStorage.setItem('extraNotes_reporte_simple', extraNotesInput.value);
-            extraNotesModal.classList.add('hidden');
-            saveFormData(); 
-        });
+    function generatePDF(logoData) {
+        // Inicializar jsPDF con tamaño Carta (215.9 x 279.4 mm) y unidad 'mm'
+        const doc = new jsPDF('p', 'mm', 'letter'); 
+        const form = document.getElementById('deliveryForm');
 
-        // --- CAMERA LOGIC ---
-        const cameraModal = document.getElementById('cameraModal');
-        const cameraVideo = document.getElementById('cameraVideo');
-        const cameraCanvas = document.getElementById('cameraCanvas');
-        const takePhotoButton = document.getElementById('takePhotoButton');
-        const confirmImageButton = document.getElementById('confirmImageButton');
-        const cancelCameraButton = document.getElementById('cancelCameraButton');
-        let stream = null;
-        let capturedImage = null;
+        // --- 1. CAPTURA DE DATOS DEL FORMULARIO ---
+        const nombre = form.elements['nombre'].value;
+        const usuario = form.elements['usuario'].value;
+        const depto = form.elements['depto'].value;
+        const estado = form.elements['estado'].value;
+        const marcaModeloHW = form.elements['marcaModeloHW'].value; 
+        const caracteristicas = form.elements['caracteristicas'].value.replace(/\n/g, ', ');
+        const serie = form.elements['serie'].value;
+        const cargador = form.elements['cargador'].value;
+        const cableSeguridad = form.elements['cableSeguridad'].value;
+        
+        // Obtener la fecha actual para el PDF
+        const today = new Date();
+        const fechaEntrega = today.toLocaleDateString('es-SV', { day: 'numeric', month: 'long', year: 'numeric' });
+        const todayShort = today.toLocaleDateString('es-SV', { year: 'numeric', month: '2-digit', day: '2-digit' });
 
-        async function openCamera(elementId) {
-            currentElementIdForCamera = elementId;
-            capturedImage = null;
-            confirmImageButton.disabled = true;
-            cameraVideo.style.display = 'block';
+        const softwareList = Array.from(form.querySelectorAll('input[name="software"]:checked'))
+                                       .map(cb => cb.value);
+        
+        const half = Math.ceil(softwareList.length / 2);
+        const softwareCol1 = softwareList.slice(0, half);
+        const softwareCol2 = softwareList.slice(half);
 
-            try {
-                // Request access to the back camera (ideal for mobile)
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' }, 
-                    audio: false 
-                });
-                cameraVideo.srcObject = stream;
-                cameraVideo.play();
-                cameraModal.classList.remove('hidden');
-            } catch (err) {
-                console.error("Error al acceder a la cámara:", err);
-                alert("No se pudo acceder a la cámara. Asegúrate de tener permisos. Si estás en una PC, a veces la cámara no está disponible. Usa la opción 'Seleccionar Archivo'.");
-                closeCameraModal();
-            }
-        }
-
-        function closeCameraModal() {
-            cameraModal.classList.add('hidden');
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-            }
-            cameraVideo.pause();
-            cameraVideo.srcObject = null;
-            currentElementIdForCamera = null;
-            capturedImage = null;
-        }
-
-        takePhotoButton.addEventListener('click', () => {
-            if (!stream) return;
-
-            const videoWidth = cameraVideo.videoWidth;
-            const videoHeight = cameraVideo.videoHeight;
-
-            cameraCanvas.width = videoWidth;
-            cameraCanvas.height = videoHeight;
-            const ctx = cameraCanvas.getContext('2d');
-            
-            // Draw the video frame to the canvas
-            ctx.drawImage(cameraVideo, 0, 0, videoWidth, videoHeight);
-            
-            // Get the image data as Data URL
-            capturedImage = cameraCanvas.toDataURL('image/jpeg', 0.8); // 80% quality
-            
-            // Display captured image and hide video feed temporarily
-            cameraVideo.style.display = 'none';
-            ctx.clearRect(0, 0, videoWidth, videoHeight);
-            
-            // Draw captured image back onto canvas for temporary display in modal
-            const img = new Image();
-            img.onload = function() {
-                ctx.drawImage(img, 0, 0, cameraCanvas.width, cameraCanvas.height);
-            };
-            img.src = capturedImage;
-
-            confirmImageButton.disabled = false;
-        });
-
-        cancelCameraButton.addEventListener('click', closeCameraModal);
-        confirmImageButton.addEventListener('click', () => {
-            if (capturedImage && currentElementIdForCamera) {
-                const elementDiv = document.getElementById(currentElementIdForCamera);
-                if (elementDiv) {
-                    const element = reportElements.find(e => e.id === currentElementIdForCamera);
-                    if (element) {
-                        element.image = capturedImage;
-                        
-                        // Update the preview
-                        const previewDiv = elementDiv.querySelector(`[data-preview-id="${currentElementIdForCamera}"]`);
-                        previewDiv.classList.remove('hidden');
-                        previewDiv.querySelector('img').src = capturedImage;
-                        
-                        const fileInput = elementDiv.querySelector('input[data-type="image"]');
-                        if (fileInput) fileInput.value = '';
-
-                        saveFormData();
-                    }
-                }
-                closeCameraModal();
-            }
-        });
-
-        // --- DYNAMIC ELEMENTS (FORM) ---
-        function addReportElement(elementData = {}) {
-            elementCounter++;
-            const id = `el_${elementCounter}`;
-            
-            const container = document.getElementById('reportElementsContainer');
-            const newElement = document.createElement('div');
-            newElement.id = id;
-            newElement.classList.add('p-3', 'border', 'rounded-md', 'bg-white', 'shadow-sm');
-            newElement.innerHTML = `
-                <div class="flex justify-between items-center mb-2 border-b pb-2">
-                    <h3 class="font-medium text-gray-700">Página #${elementCounter}</h3> 
-                    <button type="button" onclick="removeReportElement('${id}')" class="text-red-500 hover:text-red-700 text-sm">
-                        Eliminar
-                    </button>
-                </div>
-                <div class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700">Sub-Tema o Breve Descripción</label>
-                    <input type="text" data-type="description" 
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" placeholder="Ej: Estado del Rack Principal" value="${elementData.description || ''}">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Foto (Arrastra o Selecciona)</label>
-                    <div data-dnd-id="${id}" class="drag-drop-area flex flex-col items-center justify-center p-4 mt-1">
-                        <div class="flex space-x-2 w-full">
-                            <button type="button" data-action="capture" data-element-id="${id}" class="flex-1 flex items-center justify-center py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-yellow-50 hover:bg-yellow-100 transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A.5.5 0 0011 3H9a.5.5 0 00-.354.146L7.293 4.586a1 1 0 01-.707.293H4zm7 5a1 1 0 10-2 0 1 1 0 002 0zm-1 3a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
-                                Tomar Foto
-                            </button>
-                            <input type="file" data-type="image" accept="image/*" class="flex-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
-                        </div>
-                    </div>
-                    <div data-preview-id="${id}" class="mt-2 ${elementData.image ? '' : 'hidden'}">
-                        <img src="${elementData.image || ''}" class="w-32 h-32 object-cover rounded-md border p-1" alt="Preview"/>
-                    </div>
-                </div>
-                <div class="mt-3">
-                    <label class="block text-sm font-medium text-gray-700">Detalles Adicionales de la Foto</label>
-                    <textarea data-type="details" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" placeholder="Observaciones, valores o comentarios específicos sobre la imagen subida.">${elementData.details || ''}</textarea>
-                </div>
-                <div class="pt-3 border-t mt-3">
-                    <button type="button" onclick="addReportElement()" class="w-full bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-md hover:bg-blue-700 transition">
-                        + Añadir Otra Página
-                    </button>
-                </div>
-            `;
-            
-            container.appendChild(newElement);
-
-            // Add new element to internal data structure
-            const newElementObject = { 
-                id: id, 
-                description: elementData.description || '', 
-                image: elementData.image || '',
-                details: elementData.details || '' 
-            };
-            reportElements.push(newElementObject);
-
-            // Add event listeners for the new element's inputs
-            const descInput = newElement.querySelector('input[data-type="description"]');
-            const detailsInput = newElement.querySelector('textarea[data-type="details"]'); 
-            const imageInput = newElement.querySelector('input[data-type="image"]');
-            const captureButton = newElement.querySelector('button[data-action="capture"]');
-            const dndArea = newElement.querySelector(`[data-dnd-id="${id}"]`);
-
-            // --- Drag and Drop Logic ---
-            const handleDrop = (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                dndArea.classList.remove('drag-over');
-
-                const files = event.dataTransfer.files;
-                if (files.length > 0 && files[0].type.startsWith('image/')) {
-                    const file = files[0];
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const element = reportElements.find(e => e.id === id);
-                        if (element) {
-                            element.image = e.target.result;
-                            const previewDiv = newElement.querySelector(`[data-preview-id="${id}"]`);
-                            previewDiv.classList.remove('hidden');
-                            previewDiv.querySelector('img').src = e.target.result;
-                            // Clear file input value to reflect new image source
-                            imageInput.value = '';
-                            saveFormData();
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
-
-            dndArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dndArea.classList.add('drag-over');
-            });
-            dndArea.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dndArea.classList.remove('drag-over');
-            });
-            dndArea.addEventListener('drop', handleDrop);
-            // --- End Drag and Drop Logic ---
-
-            // Listener para el botón de cámara
-            captureButton.addEventListener('click', (event) => {
-                const elementId = event.currentTarget.getAttribute('data-element-id');
-                openCamera(elementId);
-            });
-
-            // Listener for Description
-            descInput.addEventListener('input', () => {
-                const element = reportElements.find(e => e.id === id);
-                if (element) {
-                    element.description = descInput.value;
-                    saveFormData();
-                }
-            });
-
-            // Listener for Details
-            detailsInput.addEventListener('input', () => {
-                const element = reportElements.find(e => e.id === id);
-                if (element) {
-                    element.details = detailsInput.value;
-                    saveFormData();
-                }
-            });
-
-            imageInput.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const element = reportElements.find(e => e.id === id);
-                        if (element) {
-                            element.image = e.target.result;
-                            const previewDiv = newElement.querySelector(`[data-preview-id="${id}"]`);
-                            previewDiv.classList.remove('hidden');
-                            previewDiv.querySelector('img').src = e.target.result;
-                            saveFormData();
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    const element = reportElements.find(e => e.id === id);
-                    if (element) {
-                        element.image = '';
-                        const previewDiv = newElement.querySelector(`[data-preview-id="${id}"]`);
-                        previewDiv.classList.add('hidden');
-                        previewDiv.querySelector('img').src = '';
-                        saveFormData();
-                    }
-                }
-            });
-            saveFormData();
-        }
-
-        function removeReportElement(id) {
-            document.getElementById(id).remove();
-            reportElements = reportElements.filter(e => e.id !== id);
-            
-            // Re-render to update element numbers (Page #) and save data
-            const savedReportElements = [...reportElements];
-            reportElements = [];
-            elementCounter = 0;
-            document.getElementById('reportElementsContainer').innerHTML = '';
-            savedReportElements.forEach(el => addReportElement(el));
-            // If all elements were removed, add a blank one back
-            if (reportElements.length === 0) {
-                addReportElement();
-            }
-            saveFormData();
-        }
-
-        // --- COMMON FUNCTIONS ---
-        function showMessage(message, type = 'success') {
-            const messageBox = document.getElementById('messageBox');
-            messageBox.textContent = message;
-            if (type === 'success') {
-                messageBox.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-            } else if (type === 'error') {
-                messageBox.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-            } else if (type === 'info') {
-                 messageBox.className = 'fixed bottom-4 right-4 bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-            }
-            messageBox.classList.remove('hidden');
-            setTimeout(() => {
-                messageBox.classList.add('hidden');
-            }, 5000); // Aumentado a 5 segundos para errores
-        }
-
-        // --- SIGNATURE CANVAS LOGIC ---
-        const canvas = document.getElementById('signatureCanvas_reporte');
-        const ctx = canvas.getContext('2d');
-        let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
-        let hasSigned = false;
-
-        function drawPlaceholder() {
-            if (!hasSigned) {
-                ctx.save();
-                ctx.fillStyle = '#E5E7EB';
-                ctx.font = '24px Inter, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                const x = canvas.width / 2;
-                const y = canvas.height / 2;
-                ctx.fillText('Firma del Reporteador', x, y);
-                ctx.restore();
-            }
-        }
-
-        function resizeCanvas() {
-            const container = document.getElementById('signatureCanvasContainer_reporte');
-            const newWidth = container.offsetWidth;
-            const newHeight = 150; // Altura fija
-            canvas.width = newWidth;
-            canvas.height = newHeight;
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, newWidth, newHeight);
-            
-            const savedData = localStorage.getItem('documentFormData_reporte_simple');
-            if (savedData) {
-                const data = JSON.parse(savedData);
-                if (data.signature) {
-                    hasSigned = true;
-                    const img = new Image();
-                    img.onload = function() {
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    };
-                    img.src = data.signature;
-                    return;
-                }
-            }
-            hasSigned = false;
-            drawPlaceholder();
-        }
-
-        document.addEventListener('DOMContentLoaded', resizeCanvas);
-        window.addEventListener('resize', resizeCanvas);
-
-        function draw(e) {
-            if (!isDrawing) return;
-
-            if (!hasSigned) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                hasSigned = true;
-            }
-            const rect = canvas.getBoundingClientRect();
-            const x = (e.clientX || e.touches[0].clientX) - rect.left;
-            const y = (e.clientY || e.touches[0].clientY) - rect.top;
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(x, y);
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 2;
-            ctx.lineCap = 'round';
-            ctx.stroke();
-            [lastX, lastY] = [x, y];
-        }
-
-        canvas.addEventListener('mousedown', (e) => {
-            isDrawing = true;
-            const rect = canvas.getBoundingClientRect();
-            [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
-        });
-        canvas.addEventListener('touchstart', (e) => {
-            isDrawing = true;
-            const rect = canvas.getBoundingClientRect();
-            [lastX, lastY] = [e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top];
-            e.preventDefault();
-        });
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('touchmove', draw);
-        canvas.addEventListener('mouseup', () => { isDrawing = false; saveFormData(); }); // Guardar al levantar el dedo/ratón
-        canvas.addEventListener('touchend', () => { isDrawing = false; saveFormData(); }); // Guardar al finalizar el toque
-        canvas.addEventListener('mouseout', () => isDrawing = false);
-
-        // --- FORM AND STORAGE LOGIC ---
-        const form = document.getElementById('documentForm_reporte');
-
-        function saveFormData() {
-            const formData = new FormData(form);
-            const data = {};
-            for (const [key, value] of formData.entries()) {
-                data[key] = value;
-            }
-            // La firma solo se guarda si hasSigned es true
-            if (hasSigned) {
-                data.signature = canvas.toDataURL('image/png');
-            } else {
-                data.signature = null;
-            }
-            
-            data.reportElements = reportElements;
-            data.extraNotes = extraNotesInput.value; // Guardar notas extra
-            localStorage.setItem('documentFormData_reporte_simple', JSON.stringify(data));
-            localStorage.setItem('extraNotes_reporte_simple', extraNotesInput.value); // Guardar notas separadamente
-        }
-
-        function loadFormData() {
-            const savedData = localStorage.getItem('documentFormData_reporte_simple');
-            const savedNotes = localStorage.getItem('extraNotes_reporte_simple');
-            
-            if (savedNotes !== null) {
-                extraNotesInput.value = savedNotes; // Cargar notas extra
-            }
-            
-            if (savedData) {
-                const data = JSON.parse(savedData);
-                for (const key in data) {
-                    const input = document.getElementById(key);
-                    if (input) {
-                        input.value = data[key];
-                    }
-                }
-                
-                if (data.reportElements && Array.isArray(data.reportElements)) {
-                    reportElements = [];
-                    elementCounter = 0;
-                    document.getElementById('reportElementsContainer').innerHTML = '';
-                    data.reportElements.forEach(el => addReportElement(el));
-                }
-
-                if (data.signature) {
-                    hasSigned = true;
-                    const img = new Image();
-                    img.onload = function() {
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    };
-                    img.src = data.signature;
-                } else {
-                    hasSigned = false;
-                    drawPlaceholder();
-                }
-            } else {
-                hasSigned = false;
-                drawPlaceholder();
-                if (reportElements.length === 0) {
-                    addReportElement();
-                }
-            }
+        const softwareTableData = [];
+        for (let i = 0; i < half; i++) {
+            softwareTableData.push([
+                softwareCol1[i] || '',
+                softwareCol2[i] || ''
+            ]);
         }
         
-        form.addEventListener('input', saveFormData);
-        window.addEventListener('load', loadFormData);
-
-        // FUNCIÓN para dibujar la firma ALINEADA AL FONDO 
-        async function addSignatureSection(doc, data, pageHeight, margin, canvas, hasSigned) {
-            const signatureBlockHeight = 40;
-            // Calcula la coordenada Y inicial para que el bloque quede pegado al margen inferior
-            let currentY = pageHeight - margin - signatureBlockHeight;
-            
-            // 1. FIRMA Title
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.text('FIRMA', margin, currentY); 
-            currentY += 5; // Espacio después del título
-            
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(12);
-            
-            const signatureData = canvas.toDataURL('image/png');
-            const signatureImageHeight = 20;
-            const signatureWidth = 60;
-            // 2. Signature Image/Box
-            if (hasSigned) {
-                const signatureX = margin + 10;
-                doc.addImage(signatureData, 'PNG', signatureX, currentY, signatureWidth, signatureImageHeight);
-            }
-            currentY += signatureImageHeight + 2;
-            // 3. Signature Line
-            doc.line(margin + 10, currentY, margin + 10 + signatureWidth, currentY);
-            currentY += 5; 
-            
-            // 4. Name
-            const tecnicoName = data.nombre_tecnico;
-            const tecnicoText = "Nombre: " + tecnicoName;
-            doc.text(tecnicoText, margin + 10, currentY);
-        }
-
-        // FUNCIÓN para dibujar la sección de Notas Extra (MODIFICADA para sombreado)
-        function addExtraNotesToPage(doc, notes, yStart, pageHeight, margin) {
-            const signatureBlockHeight = 40;
-            const notesMaxY = pageHeight - margin - signatureBlockHeight - 10; 
-            const notesBoxWidth = doc.internal.pageSize.getWidth() - (margin * 2);
-            
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            
-            const titleAndPaddingHeight = 12;
-
-            doc.setFont('helvetica', 'normal');
-            const notesLines = doc.splitTextToSize(notes, notesBoxWidth - 4);
-            const textHeight = notesLines.length * 5; 
-            let notesBoxHeight = textHeight + titleAndPaddingHeight; 
-            
-            let finalYStart = yStart;
-
-            if ((yStart + notesBoxHeight) > notesMaxY) {
-                finalYStart = notesMaxY - notesBoxHeight;
-            }
-            
-            // Ajuste para evitar solapamiento con el header (si la nota es muy larga)
-            if (finalYStart < 50) { 
-                 finalYStart = 50;
-                 notesBoxHeight = notesMaxY - finalYStart - 5;
-                 const maxTextHeight = notesBoxHeight - titleAndPaddingHeight;
-                 const maxLines = Math.floor(maxTextHeight / 5);
-                 notesLines.length = Math.min(notesLines.length, maxLines);
-                 notesBoxHeight = (notesLines.length * 5) + titleAndPaddingHeight;
-                 finalYStart = notesMaxY - notesBoxHeight - 5;
-            }
-
-            const currentY = finalYStart;
-            // *** INICIO DEL CAMBIO: AÑADIR SOMBREADO ***
-            doc.setFillColor(240, 240, 240); // Color gris claro (#f0f0f0)
-            doc.rect(margin, currentY, notesBoxWidth, notesBoxHeight, 'F'); // Dibujar rectángulo relleno (F: fill)
-            doc.setDrawColor(0, 0, 0); // Restaurar color de línea a negro
-            // *** FIN DEL CAMBIO ***
-
-            // Dibujar el Borde
-            doc.rect(margin, currentY, notesBoxWidth, notesBoxHeight);
-            doc.setFont('helvetica', 'bold');
-            doc.text('NOTAS GENERALES DEL REPORTE:', margin + 2, currentY + 4); 
-            
-            doc.setFont('helvetica', 'normal');
-            doc.text(notesLines, margin + 2, currentY + 12);
-
-            return finalYStart + notesBoxHeight + 5;
-        }
-
-        // FUNCIÓN para añadir el encabezado del reporte
-        async function addHeader(doc, pageNum, finalTotalPages, data, logoUrl, reportDate, pageWidth, margin, logoHeight = 17, logoWidth = 34) {
-            const headerY = 15;
-            const headerX = pageWidth - margin;
-
-            let base64Image = '';
-            try {
-                const response = await fetch(logoUrl);
-                if (!response.ok) throw new Error('Failed to fetch logo');
-                const blob = await response.blob();
-                const reader = new FileReader();
-                reader.readAsDataURL(blob);
-                base64Image = await new Promise((resolve, reject) => {
-                    reader.onloadend = () => resolve(reader.result);
-                    reader.onerror = reject;
-                });
-                doc.addImage(base64Image, 'PNG', margin, headerY, logoWidth, logoHeight);
-            } catch (error) {
-                console.warn('No se pudo cargar el logo para el PDF:', error);
-            }
-
-            doc.setFontSize(8);
-            doc.setFont('helvetica', 'normal');
-            doc.text('Tiendas 01.001.0001.0001', headerX, headerY, null, null, 'right');
-            doc.text('Redes y Soporte', headerX, headerY + 4, null, null, 'right');
-            doc.text('Telecomunicaciones', headerX, headerY + 8, null, null, 'right');
-            doc.text(`Fecha de Reporte: ${reportDate}`, headerX, headerY + 12, null, null, 'right');
-
-            const titleY = headerY + (Math.max(logoHeight, 15) / 2) + 2;
-            doc.setFontSize(16);
-            doc.setFont('helvetica', 'bold');
-            doc.text(data.nombre_reporte.toUpperCase() || 'REPORTE DE EVIDENCIA', pageWidth / 2, titleY, { align: 'center' });
-
-            let currentY = headerY + Math.max(logoHeight, 15) + 10;
-            doc.line(margin, currentY, pageWidth - margin, currentY);
-            currentY += 8;
-            
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.text(`Página ${pageNum} de ${finalTotalPages}`, pageWidth - margin, currentY - 2, null, null, 'right');
-            
-            return currentY;
-        }
-
-        // FUNCIÓN para crear el PDF y convertirlo a Base64
-        async function createPdfBase64() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const formData = new FormData(document.getElementById('documentForm_reporte'));
-            const data = Object.fromEntries(formData.entries());
-            
-            const extraNotes = extraNotesInput.value.trim();
-            const reportElementsData = reportElements.filter(el => el.description || el.image || el.details); 
-
-            const totalElements = reportElementsData.length;
-            let totalPages = totalElements === 0 ? 1 : totalElements; 
-            
-            let y = 15;
-            const margin = 15;
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const pageHeight = doc.internal.pageSize.getHeight(); 
-            const logoUrl = 'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
-            const reportDate = new Date().toLocaleDateString();
-
-            // --- Page 1: Information and First Element (if exists) ---
-            let pageNum = 1;
-            y = await addHeader(doc, pageNum, totalPages, data, logoUrl, reportDate, pageWidth, margin);
-
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.text('INFORMACIÓN Y RESUMEN', margin, y);
-            y += 6;
-            doc.setFont('helvetica', 'normal');
-            doc.text(`Reporte generado por: ${data.nombre_tecnico}`, margin, y);
-            doc.text(`Correo Destino: ${data.correo_destino}`, pageWidth / 2, y); // Agregado al resumen
-            y += 5;
-            doc.text(`Fecha de Generación: ${reportDate}`, pageWidth / 2, y);
-            y += 5;
-            doc.text(`Asunto del Reporte: ${data.nombre_reporte}`, margin, y);
-            y += 10;
-
-            // --- Insert First Evidence Element here (if exists) ---
-            if (totalElements > 0) {
-                const element = reportElementsData[0];
-                doc.setFont('helvetica', 'bold');
-                doc.text(`${element.description || 'SIN SUB-TEMA'}`, margin, y);
-                y += 8;
-
-                doc.setFontSize(11);
-                doc.setFont('helvetica', 'normal');
-                doc.text(`Página de Detalle #1`, margin, y);
-                y += 5;
-                
-                // Image
-                if (element.image) {
-                    const img = new Image();
-                    await new Promise(resolve => {
-                        img.onload = resolve;
-                        img.src = element.image;
-                    });
-                    const maxImgWidth = pageWidth - (margin * 2);
-                    
-                    doc.setFontSize(10);
-                    doc.setFont('helvetica', 'normal');
-                    const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth - 4);
-                    const detailsBoxHeight = 4 + 5 + 4 + (detailsLines.length * 5) + 4;
-                    const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5; 
-                    
-                    let imgWidth = img.width;
-                    let imgHeight = img.height;
-
-                    if (imgWidth > maxImgWidth || imgHeight > maxImgHeight) {
-                        const ratio = Math.min(maxImgWidth / imgWidth, maxImgHeight / imgHeight);
-                        imgWidth = imgWidth * ratio;
-                        imgHeight = imgHeight * ratio;
-                    }
-                    
-                    const imgX = (pageWidth - imgWidth) / 2;
-                    doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight);
-                    y += imgHeight + 5;
-                } else {
-                    doc.text('No se adjuntó imagen para este elemento.', margin, y);
-                    y += 10;
-                }
-
-                // Details Text (Inside Box)
-                const detailsBoxYStart = y;
-                const detailsBoxWidth = pageWidth - (margin * 2);
-
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'bold');
-                doc.text('Detalles Adicionales:', margin + 2, y + 4);
-                y += 8;
-
-                doc.setFont('helvetica', 'normal');
-                const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', detailsBoxWidth - 4);
-                doc.text(detailsLines, margin + 2, y);
-                y += (detailsLines.length * 5) + 4; 
-
-                const finalDetailsBoxHeight = y - detailsBoxYStart;
-                doc.rect(margin, detailsBoxYStart, detailsBoxWidth, finalDetailsBoxHeight);
-                y += 5;
-            }
-
-            // --- Pages 2 to N: Elements (Remaining elements, each on a new page) ---
-            for (let i = 1; i < totalElements; i++) {
-                const element = reportElementsData[i];
-                doc.addPage();
-                pageNum++;
-                y = await addHeader(doc, pageNum, totalPages, data, logoUrl, reportDate, pageWidth, margin);
-
-                doc.setFont('helvetica', 'bold');
-                doc.text(`${element.description || 'SIN SUB-TEMA'}`, margin, y);
-                y += 8;
-
-                doc.setFontSize(11);
-                doc.setFont('helvetica', 'normal');
-                doc.text(`Página de Detalle #${i + 1}`, margin, y);
-                y += 5;
-
-                // Image
-                if (element.image) {
-                    const img = new Image();
-                    await new Promise(resolve => {
-                        img.onload = resolve;
-                        img.src = element.image;
-                    });
-                    const maxImgWidth = pageWidth - (margin * 2);
-                    
-                    doc.setFontSize(10);
-                    doc.setFont('helvetica', 'normal');
-                    const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth - 4);
-                    const detailsBoxHeight = 4 + 5 + 4 + (detailsLines.length * 5) + 4;
-                    const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5; 
-                    
-                    let imgWidth = img.width;
-                    let imgHeight = img.height;
-
-                    if (imgWidth > maxImgWidth || imgHeight > maxImgHeight) {
-                        const ratio = Math.min(maxImgWidth / imgWidth, maxImgHeight / imgHeight);
-                        imgWidth = imgWidth * ratio;
-                        imgHeight = imgHeight * ratio;
-                    }
-                    
-                    const imgX = (pageWidth - imgWidth) / 2;
-                    doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight);
-                    y += imgHeight + 5;
-                } else {
-                    doc.text('No se adjuntó imagen para este elemento.', margin, y);
-                    y += 10;
-                }
-
-                // Details Text (Inside Box)
-                const detailsBoxYStart = y;
-                const detailsBoxWidth = pageWidth - (margin * 2);
-
-                doc.setFontSize(10);
-                doc.setFont('helvetica', 'bold');
-                doc.text('Detalles Adicionales:', margin + 2, y + 4);
-                y += 8;
-
-                doc.setFont('helvetica', 'normal');
-                const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', detailsBoxWidth - 4);
-                doc.text(detailsLines, margin + 2, y);
-                y += (detailsLines.length * 5) + 4; 
-
-                const finalDetailsBoxHeight = y - detailsBoxYStart;
-                doc.rect(margin, detailsBoxYStart, detailsBoxWidth, finalDetailsBoxHeight);
-                y += 5;
-            }
-
-            // --- Signature and Notes Placement (Always on the last page) ---
-            
-            doc.setPage(totalPages);
-
-            // 1. Añadir Notas Extra si existen
-            if (extraNotes) {
-                // 'y' es la posición después del último contenido, se usa como punto de inicio para la nota.
-                y = addExtraNotesToPage(doc, extraNotes, y, pageHeight, margin); 
-            }
-
-            // 2. Añadir Firma (Siempre fija al final)
-            await addSignatureSection(doc, data, pageHeight, margin, canvas, hasSigned);
-            
-            // 3. Devolver PDF como Base64
-            return doc.output('datauristring').split(',')[1];
-        }
-
-        // --- PDF GENERATION AND SENDING LOGIC (MODIFICADA) ---
-        document.getElementById('generatePdfButton').addEventListener('click', async function(e) {
-            e.preventDefault();
-            const loadingOverlay = document.getElementById('loadingOverlay');
-
-            // 1. Validación básica (Añadido correo destino)
-            const nombreReporte = document.getElementById('nombre_reporte').value.trim();
-            const nombreTecnico = document.getElementById('nombre_tecnico').value.trim();
-            const correoDestino = document.getElementById('correo_destino').value.trim();
-
-            if (!nombreReporte || !nombreTecnico || !correoDestino) {
-                showMessage("Por favor, complete el 'Nombre del Reporte', el 'Nombre de quien Reporta' y el 'Correo Electrónico Destino'.", 'info');
-                return;
-            }
-
-            loadingOverlay.style.display = 'flex';
-
-            try {
-                // 2. Generar el PDF en Base64
-                const pdfBase64 = await createPdfBase64();
-                
-                // 3. Preparar los datos para enviar al GAS
-                const sendData = {
-                    action: 'sendReport',
-                    pdfBase64: pdfBase64,
-                    fileName: nombreReporte.replace(/[^a-z0-9]/gi, '_').substring(0, 30),
-                    nombreReporte: nombreReporte,
-                    nombreTecnico: nombreTecnico,
-                    correoDestino: correoDestino // Enviamos el correo de destino al Script
-                };
-
-                // 4. Enviar a Google Apps Script
-                const response = await fetch(GAS_WEB_APP_URL, {
-                    method: 'POST',
-                    mode: 'cors', // Necesario para evitar CORS (Failed to fetch)
-                    headers: {
-                        'Content-Type': 'text/plain;charset=utf-8', // Google Script espera text/plain o no especificado
-                    },
-                    body: JSON.stringify(sendData),
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Error en la solicitud: ${response.status} ${response.statusText}`);
-                }
-
-                const result = await response.json();
-
-                if (result.status === 'success') {
-                    showMessage('Reporte generado y enviado con éxito al correo.', 'success');
-                    // Opcional: limpiar el formulario después del envío exitoso
-                    // document.getElementById('clearFormButton_reporte').click(); 
-                } else {
-                    throw new Error(result.message || 'Error desconocido en el Script de Google.');
-                }
-
-            } catch (error) {
-                console.error('Error al generar o enviar el PDF:', error);
-                // Si el error es de tipo "Failed to fetch" o similar, la causa es el despliegue/permisos.
-                showMessage(`Error: ${error.message || 'Error de conexión o script.'} Por favor, asegúrese que la URL de despliegue final sea correcta y que los permisos estén en "Cualquier persona".`, 'error');
-            } finally {
-                loadingOverlay.style.display = 'none';
-            }
-        });
-
-        // --- CLEAR FORM AND SIGNATURE LOGIC ---
-        document.getElementById('clearFormButton_reporte').addEventListener('click', function() {
-            document.getElementById('confirmationModal_reporte').classList.remove('hidden');
-        });
-        document.getElementById('cancelClearButton_reporte').addEventListener('click', function() {
-            document.getElementById('confirmationModal_reporte').classList.add('hidden');
-        });
-        document.getElementById('confirmClearButton_reporte').addEventListener('click', function() {
-            document.getElementById('documentForm_reporte').reset();
-            
-            reportElements = [];
-            elementCounter = 0;
-            document.getElementById('reportElementsContainer').innerHTML = '';
-            addReportElement();
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            hasSigned = false;
-            drawPlaceholder();
-            
-            document.getElementById('confirmationModal_reporte').classList.add('hidden');
-            showMessage('Formulario limpiado. Listo para un nuevo reporte.', 'success');
-       
-            localStorage.removeItem('documentFormData_reporte_simple');
-            localStorage.removeItem('extraNotes_reporte_simple'); // Limpiar notas extra
-            extraNotesInput.value = ''; // Limpiar el input de notas
-        });
-
-        document.getElementById('clearSignatureButton_reporte').addEventListener('click', function() {
-            document.getElementById('clearSignatureConfirmationModal_reporte').classList.remove('hidden');
-        });
-        document.getElementById('cancelClearSignatureButton_reporte').addEventListener('click', function() {
-            document.getElementById('clearSignatureConfirmationModal_reporte').classList.add('hidden');
-        });
-        document.getElementById('confirmClearSignatureButton_reporte').addEventListener('click', function() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            hasSigned = false;
-            drawPlaceholder();
-            saveFormData();
-            document.getElementById('clearSignatureConfirmationModal_reporte').classList.add('hidden');
-            showMessage('Firma borrada.', 'success');
-        });
+        // --- 2. ENCABEZADO, LOGO Y TÍTULOS ---
         
-        if (reportElements.length === 0) {
-            addReportElement();
+        // 2a. LOGO (Colocado en 14, 10)
+        if (logoData) {
+            doc.addImage(logoData, 'PNG', 14, 10, LOGO_WIDTH, LOGO_HEIGHT); 
         }
-    </script>
+        
+        // 2b. Títulos (Movidos 2 renglones hacia abajo, título principal inicia en Y=20)
+        const titleX = 107.95; // Centro de la página Carta
+        const titleY = 20; // Altura inicial ALINEADA con el logo (Movido de 12 a 20)
+        
+        // Título Principal: 12pt
+        doc.setFontSize(12); 
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(26, 77, 140); 
+        doc.text('REGISTRO DE ENTREGA DE EQUIPO DE OFICINA', titleX, titleY, { align: 'center' }); 
+        
+        // Subtítulo
+        doc.text('HARDWARE Y SOFTWARE', titleX, titleY + 4, { align: 'center' }); 
+        
+        // Departamento
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(10);
+        doc.text('DEPARTAMENTO DE SISTEMAS - Freund', titleX, titleY + 8, { align: 'center' });
+
+        // --- 3. TABLA DE INFORMACIÓN DEL USUARIO ---
+        doc.autoTable({
+            startY: titleY + 11, // Iniciamos la tabla después del espacio del encabezado (20 + 11 = 31)
+            head: [['Campo', 'Detalle']],
+            body: [
+                ['Nombre Completo:', nombre],
+                ['Nombre de Usuario (Login):', usuario],
+                ['Departamento / Sucursal:', depto],
+                ['Fecha de Entrega:', fechaEntrega],
+                ['Estado del Equipo:', estado],
+                ['Asunto:', 'Entrega de Hardware y Software AUTORIZADO.'],
+            ],
+            theme: 'striped',
+            headStyles: { fillColor: [242, 156, 31], textColor: 255 }, 
+            styles: { fontSize: 9, cellPadding: 1.5, lineColor: 150, lineWidth: 0.1 }
+        });
+
+        let finalY = doc.autoTable.previous.finalY + 4; 
+
+        // --- 4. REGISTRO DE HARDWARE ---
+        doc.setFontSize(12); 
+        doc.setFont(undefined, 'bold');
+        doc.text('Registro de Hardware Entregado (LAPTOP)', 14, finalY);
+        finalY += 3;
+
+        const hardwareData = [
+            ['Tipo de Hardware', 'Laptop'], 
+            ['Marca y Modelo', marcaModeloHW], 
+            ['Características', caracteristicas],
+            ['No. de Serie / IMEI', serie],
+            ['Cargador', cargador],
+            ['Cable de Seguridad', cableSeguridad]
+        ];
+        
+        doc.autoTable({
+            startY: finalY + 3,
+            head: [['Unidad', 'Detalle']],
+            body: hardwareData,
+            theme: 'grid',
+            headStyles: { fillColor: [26, 77, 140], textColor: 255 }, 
+            styles: { fontSize: 9, cellPadding: 1.5, lineColor: 150, lineWidth: 0.1 }
+        });
+
+        finalY = doc.autoTable.previous.finalY + 4;
+
+        // --- 5. REGISTRO DE SOFTWARE (EN TABLA) ---
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.text('Registro de Software Instalado', 14, finalY);
+        finalY += 3;
+
+        doc.autoTable({
+            startY: finalY + 3,
+            head: [['Programas Autorizados', '']],
+            body: softwareTableData,
+            theme: 'grid',
+            headStyles: { fillColor: [150, 150, 150], textColor: 255 }, 
+            styles: { fontSize: 8, cellPadding: 1.5, lineColor: 150, lineWidth: 0.1 },
+            columnStyles: { 0: { cellWidth: 90 }, 1: { cellWidth: 90 } } 
+        });
+
+        finalY = doc.autoTable.previous.finalY + 4;
+
+
+        // --- 6. DECLARACIÓN DE RESPONSABILIDAD ---
+        const policyText = "Por medio del presente le estamos entregando una computadora con su software previamente instalado, y que cumple con las regulaciones de protección Intelectual. El uso o instalación de otro software que no sea el autorizado por la Gerencia General, corren bajo su propio riesgo, por lo tanto la instalación de software no autorizado queda terminantemente prohibido y en el caso de haber una revisión de parte de la fiscalía será su responsabilidad responder ante cualquier acción legal. Además la Gerencia General deducirá responsabilidades por la instalación de software no autorizado por la empresa y pérdida o daño que resulten por el uso inadecuado del equipo que se le está entregando.";
+        
+        doc.setFontSize(8); 
+        doc.setFont(undefined, 'bold');
+        doc.text("DECLARACIÓN DE POLÍTICA DE USO:", 14, finalY);
+        finalY += 1;
+        
+        doc.setFont(undefined, 'normal');
+        const policyLines = doc.splitTextToSize(policyText, 185); 
+        doc.text(policyLines, 14, finalY + 4);
+        
+        // finalY después de la política, para mantener el flujo, aunque las firmas se muevan
+        finalY += (policyLines.length * 3.5) + 5; 
+
+
+        // --- 7. ESPACIOS DE FIRMA (MOVIDO AL PIE DE PÁGINA) ---
+        // La altura de una hoja carta es 279.4mm. Usamos 245mm como punto de partida para que quepa en el pie.
+        const fixedSignatureY = 245; 
+
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'bold');
+        doc.text('Atentamente,', 25, fixedSignatureY);
+        doc.text('Recibí Conforme,', 125, fixedSignatureY);
+        
+        let signatureLineY = fixedSignatureY + 15;
+
+        doc.setFont(undefined, 'normal');
+        doc.text('__________________________________', 14, signatureLineY);
+        doc.text('__________________________________', 114, signatureLineY);
+        signatureLineY += 5;
+        
+        doc.text('Jonathan Alexander Navas', 20, signatureLineY);
+        doc.text(nombre, 120, signatureLineY);
+        signatureLineY += 5;
+
+        doc.text('Soporte Técnico', 20, signatureLineY);
+        doc.text(`Departamento: ${depto}`, 120, signatureLineY);
+
+
+        // --- 8. GUARDAR PDF ---
+        doc.save(`Registro_Entrega_${usuario}_${todayShort}.pdf`);
+    }
+</script>
+
 </body>
 </html>
