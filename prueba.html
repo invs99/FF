@@ -211,11 +211,11 @@
             margin-top: 15px;
             display: flex;
             justify-content: space-between;
-            flex-wrap: wrap; /* Permite que los botones se envuelvan si es necesario */
+            flex-wrap: wrap;
             gap: 10px;
         }
         .modal-buttons button {
-            width: 48%; /* Ajuste para tres botones en móvil */
+            width: 48%; 
             padding: 10px;
             font-size: 14px;
         }
@@ -223,7 +223,7 @@
             background-color: #ccc !important;
             color: #333 !important;
         }
-        /* Estilos para el nuevo botón Cancelar */
+        /* Estilos para el botón Cancelar */
         #cancelSignatureBtn {
             background-color: #f44336; /* Rojo */
         }
@@ -238,7 +238,7 @@
                 gap: 10px;
             }
             .modal-buttons button {
-                width: calc(33.333% - 10px); /* Ajuste para tres botones */
+                width: calc(33.333% - 10px); 
             }
         }
     </style>
@@ -389,7 +389,7 @@
     const signerNameElement = document.getElementById('signerName');
     const confirmSignatureBtn = document.getElementById('confirmSignatureBtn');
     const clearSignatureBtn = document.getElementById('clearSignatureBtn');
-    const cancelSignatureBtn = document.getElementById('cancelSignatureBtn'); // Nuevo botón
+    const cancelSignatureBtn = document.getElementById('cancelSignatureBtn'); 
     const startSignatureBtn = document.getElementById('startSignatureBtn');
     const generatePdfBtn = document.getElementById('generatePdfBtn');
     const generatePdfNoSigBtn = document.getElementById('generatePdfNoSigBtn');
@@ -575,9 +575,9 @@
             doc.addImage(logoData, 'PNG', 14, 10, LOGO_WIDTH, LOGO_HEIGHT); 
         }
         
-        // Nuevo Encabezado Superior Derecho (Ajustado)
-        const newFontSize = 8 * 0.85; // Reducido 15% (aprox 6.8 pt)
-        const startYOffset = 3.5; // Baja 1 renglón (3.5 mm)
+        // Encabezado Superior Derecho (Ajustado en v23.0)
+        const newFontSize = 8 * 0.85; 
+        const startYOffset = 3.5; 
         const rightMargin = 205; 
         let headerY = 10 + startYOffset;
         
@@ -590,7 +590,7 @@
         doc.text('Redes Soporte y', rightMargin, headerY, { align: 'right' });
         headerY += 3;
         doc.text('Telecomunicaciones', rightMargin, headerY, { align: 'right' });
-        headerY += 4; // Espacio antes de la fecha
+        headerY += 4; 
         doc.text(`Fecha de Reporte: ${todayShort}`, rightMargin, headerY, { align: 'right' }); 
 
         // Título Central
@@ -669,7 +669,8 @@
             theme: 'grid',
             headStyles: { fillColor: [150, 150, 150], textColor: 255 }, 
             styles: { fontSize: 8, cellPadding: 1.5, lineColor: 150, lineWidth: 0.1 },
-            columnStyles: { 0: { cellWidth: 90 }, 1: { cellWidth: 90 } } 
+            // *** CAMBIO REALIZADO: SE ELIMINARON LOS ESTILOS DE ANCHO DE COLUMNA ***
+            // La tabla ahora se expandirá al ancho completo del documento, igual que las otras.
         });
 
         finalY = doc.autoTable.previous.finalY + 4;
