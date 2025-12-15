@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Entrega de Equipo - Freund (Final con Logo)</title>
+    <title>Registro de Entrega de Equipo - Freund (Final con Firma Digital Optimizada)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     
     <style>
-        /* --- ESTILOS CSS (Sin cambios, solo para el formulario web) --- */
+        /* --- ESTILOS BASE (Sin cambios visuales) --- */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f9;
@@ -55,10 +56,7 @@
             color: #555;
             font-size: 0.9em;
         }
-        input[type="text"],
-        input[type="date"],
-        select,
-        textarea {
+        input[type="text"], input[type="date"], select, textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
@@ -86,8 +84,9 @@
             flex: 1 1 calc(50% - 10px); 
             font-size: 0.9em;
         }
-        button {
-            background-color: #f29c1f; 
+        /* Botón de Firmar */
+        #startSignatureBtn {
+            background-color: #1a4d8c; 
             color: white;
             padding: 12px 20px;
             border: none;
@@ -98,8 +97,70 @@
             margin-top: 20px;
             width: 100%;
         }
-        button:hover {
+        #startSignatureBtn:hover {
+            background-color: #153c6e;
+        }
+        /* Botón de generar PDF (deshabilitado hasta firmar) */
+        #generatePdfBtn {
+            background-color: #f29c1f; 
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+            width: 100%;
+            display: none; 
+        }
+        #generatePdfBtn:hover {
             background-color: #d1871a;
+        }
+        /* --- ESTILOS DE MODAL DE FIRMA --- */
+        .signature-modal {
+            display: none; 
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.7);
+            padding-top: 50px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        #signature-canvas {
+            border: 1px solid #000;
+            width: 100%;
+            height: 200px;
+            cursor: crosshair;
+            background-color: #fff;
+            touch-action: none; 
+        }
+        .modal-buttons {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .modal-buttons button {
+            width: 48%;
+            padding: 10px;
+            font-size: 14px;
+        }
+        .clear-button {
+            background-color: #ccc !important;
+            color: #333 !important;
         }
 
         /* MEDIA QUERY PARA ESCRITORIO */
@@ -209,8 +270,21 @@
             </div>
         </div>
 
-        <button type="submit">Generar Documento de Entrega (PDF)</button>
+        <button type="button" id="startSignatureBtn">Realizar firmas</button>
+        <button type="button" id="generatePdfBtn" style="display:none;">Generar Documento de Entrega (PDF)</button>
     </form>
+</div>
+
+<div id="signatureModal" class="signature-modal">
+    <div class="modal-content">
+        <h3 id="signerName">Firma del Entregador</h3>
+        <canvas id="signature-canvas"></canvas>
+        <div class="modal-buttons">
+            <button type="button" class="clear-button" id="clearSignatureBtn">Limpiar</button>
+            <button type="button" id="confirmSignatureBtn">Confirmar y Continuar</button>
+        </div>
+        <p style="font-size: 0.8em; color: #555; margin-top: 10px;">* Utilice el mouse o la pantalla táctil para firmar.</p>
+    </div>
 </div>
 
 <script>
@@ -218,9 +292,24 @@
     
     // URL del logo
     const LOGO_URL = 'https://raw.githubusercontent.com/invs99/FF/SEGUNDA/freund1.png';
-    const LOGO_WIDTH = 35; // Ancho en mm
-    const LOGO_HEIGHT = 15; // Altura en mm
+    const LOGO_WIDTH = 35; 
+    const LOGO_HEIGHT = 15; 
 
+    // --- VARIABLES DE FIRMA DIGITAL ---
+    let delivererSignatureData = null;
+    let receiverSignatureData = null;
+    let signaturePad = null;
+    let currentSigner = 'deliverer'; 
+
+    // Elementos del DOM
+    const signatureModal = document.getElementById('signatureModal');
+    const signatureCanvas = document.getElementById('signature-canvas');
+    const signerNameElement = document.getElementById('signerName');
+    const confirmSignatureBtn = document.getElementById('confirmSignatureBtn');
+    const clearSignatureBtn = document.getElementById('clearSignatureBtn');
+    const startSignatureBtn = document.getElementById('startSignatureBtn');
+    const generatePdfBtn = document.getElementById('generatePdfBtn');
+    
     // Función para convertir la URL de la imagen a Base64
     function urlToBase64(url, callback) {
         var xhr = new XMLHttpRequest();
@@ -240,18 +329,99 @@
         xhr.responseType = 'blob';
         xhr.send();
     }
+    
+    // --- LÓGICA DE FIRMA DIGITAL ---
 
+    // Función para redimensionar y calibrar el canvas
+    function resizeAndCalibrateCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        
+        signatureCanvas.width = signatureCanvas.offsetWidth * ratio;
+        signatureCanvas.height = signatureCanvas.offsetHeight * ratio;
+        
+        signatureCanvas.getContext("2d").scale(ratio, ratio);
 
-    document.getElementById('deliveryForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        // Generamos el PDF solo DESPUÉS de obtener la imagen
-        urlToBase64(LOGO_URL, function(logoData) {
-            generatePDF(logoData);
-        });
+        if (!signaturePad) {
+            signaturePad = new SignaturePad(signatureCanvas, {
+                backgroundColor: 'rgb(255, 255, 255)',
+                penColor: 'rgb(0, 0, 0)'
+            });
+        }
+
+        signaturePad.clear();
+    }
+
+    // 1. Mostrar modal de firma
+    function showSignatureModal() {
+        const nombreEmpleado = document.getElementById('nombre').value;
+
+        if (currentSigner === 'deliverer') {
+            signerNameElement.textContent = 'Firma del Entregador (Jonathan Alexander Navas - Soporte Técnico)';
+            confirmSignatureBtn.textContent = 'Confirmar y Continuar';
+        } else if (currentSigner === 'receiver') {
+            signerNameElement.textContent = `Firma del Receptor (${nombreEmpleado})`;
+            confirmSignatureBtn.textContent = 'Confirmar y Terminar';
+        }
+
+        signatureModal.style.display = 'block';
+        
+        setTimeout(resizeAndCalibrateCanvas, 100); 
+    }
+
+    // 2. Confirmar y pasar a la siguiente etapa/generar PDF
+    function confirmSignature() {
+        if (!signaturePad || signaturePad.isEmpty()) {
+            alert("Por favor, escriba su firma antes de confirmar.");
+            return;
+        }
+        
+        // *** CAMBIO CRUCIAL: Usar JPEG con calidad 0.8 para reducir el tamaño del archivo. ***
+        const signatureData = signaturePad.toDataURL('image/jpeg', 0.8); 
+        signatureModal.style.display = 'none'; 
+
+        if (currentSigner === 'deliverer') {
+            delivererSignatureData = signatureData;
+            currentSigner = 'receiver';
+            showSignatureModal(); // Ir a la firma del Receptor
+        } else if (currentSigner === 'receiver') {
+            receiverSignatureData = signatureData;
+            
+            startSignatureBtn.style.display = 'none';
+            generatePdfBtn.style.display = 'block';
+            alert("¡Firmas capturadas con éxito! Ahora puede generar el PDF.");
+        }
+    }
+
+    // --- Event Listeners ---
+    
+    startSignatureBtn.addEventListener('click', function() {
+        currentSigner = 'deliverer';
+        delivererSignatureData = null;
+        receiverSignatureData = null;
+        showSignatureModal();
     });
 
+    generatePdfBtn.addEventListener('click', function() {
+        if (delivererSignatureData && receiverSignatureData) {
+            urlToBase64(LOGO_URL, function(logoData) {
+                generatePDF(logoData);
+            });
+        } else {
+            alert("Debe capturar ambas firmas antes de generar el PDF.");
+        }
+    });
+
+    clearSignatureBtn.addEventListener('click', () => {
+        if (signaturePad) {
+            signaturePad.clear();
+        }
+    });
+
+    confirmSignatureBtn.addEventListener('click', confirmSignature);
+
+
+    // --- FUNCIÓN PRINCIPAL DE GENERACIÓN DE PDF ---
     function generatePDF(logoData) {
-        // Inicializar jsPDF con tamaño Carta (215.9 x 279.4 mm) y unidad 'mm'
         const doc = new jsPDF('p', 'mm', 'letter'); 
         const form = document.getElementById('deliveryForm');
 
@@ -266,7 +436,6 @@
         const cargador = form.elements['cargador'].value;
         const cableSeguridad = form.elements['cableSeguridad'].value;
         
-        // Obtener la fecha actual para el PDF
         const today = new Date();
         const fechaEntrega = today.toLocaleDateString('es-SV', { day: 'numeric', month: 'long', year: 'numeric' });
         const todayShort = today.toLocaleDateString('es-SV', { year: 'numeric', month: '2-digit', day: '2-digit' });
@@ -288,32 +457,27 @@
         
         // --- 2. ENCABEZADO, LOGO Y TÍTULOS ---
         
-        // 2a. LOGO (Colocado en 14, 10)
         if (logoData) {
             doc.addImage(logoData, 'PNG', 14, 10, LOGO_WIDTH, LOGO_HEIGHT); 
         }
         
-        // 2b. Títulos (Movidos 2 renglones hacia abajo, título principal inicia en Y=20)
-        const titleX = 107.95; // Centro de la página Carta
-        const titleY = 20; // Altura inicial ALINEADA con el logo (Movido de 12 a 20)
+        const titleX = 107.95; 
+        const titleY = 20; 
         
-        // Título Principal: 12pt
         doc.setFontSize(12); 
         doc.setFont(undefined, 'bold');
         doc.setTextColor(26, 77, 140); 
         doc.text('REGISTRO DE ENTREGA DE EQUIPO DE OFICINA', titleX, titleY, { align: 'center' }); 
         
-        // Subtítulo
         doc.text('HARDWARE Y SOFTWARE', titleX, titleY + 4, { align: 'center' }); 
         
-        // Departamento
         doc.setTextColor(0, 0, 0);
         doc.setFontSize(10);
         doc.text('DEPARTAMENTO DE SISTEMAS - Freund', titleX, titleY + 8, { align: 'center' });
 
         // --- 3. TABLA DE INFORMACIÓN DEL USUARIO ---
         doc.autoTable({
-            startY: titleY + 11, // Iniciamos la tabla después del espacio del encabezado (20 + 11 = 31)
+            startY: titleY + 11,
             head: [['Campo', 'Detalle']],
             body: [
                 ['Nombre Completo:', nombre],
@@ -387,32 +551,50 @@
         const policyLines = doc.splitTextToSize(policyText, 185); 
         doc.text(policyLines, 14, finalY + 4);
         
-        // finalY después de la política, para mantener el flujo, aunque las firmas se muevan
-        finalY += (policyLines.length * 3.5) + 5; 
+        finalY += (policyLines.length * 3.5) + 10; 
 
 
-        // --- 7. ESPACIOS DE FIRMA (MOVIDO AL PIE DE PÁGINA) ---
-        // La altura de una hoja carta es 279.4mm. Usamos 245mm como punto de partida para que quepa en el pie.
+        // --- 7. ESPACIOS DE FIRMA (POSICIONADO AL PIE DE PÁGINA) ---
         const fixedSignatureY = 245; 
+        const signatureImageY = 248; 
+        const signatureImageW = 85; 
+        const signatureImageH = 12; 
+        const lineY = 260; 
 
         doc.setFontSize(10);
         doc.setFont(undefined, 'bold');
         doc.text('Atentamente,', 25, fixedSignatureY);
         doc.text('Recibí Conforme,', 125, fixedSignatureY);
         
-        let signatureLineY = fixedSignatureY + 15;
+        // 1. Insertar Firmas (Imágenes JPEG optimizadas)
+        
+        // Firma 1: Entregador (Izquierda)
+        if (delivererSignatureData) {
+            // *** Formato cambiado a 'JPEG' ***
+            doc.addImage(delivererSignatureData, 'JPEG', 14, signatureImageY, signatureImageW, signatureImageH);
+        }
+        
+        // Firma 2: Receptor (Derecha)
+        if (receiverSignatureData) {
+            // *** Formato cambiado a 'JPEG' ***
+            doc.addImage(receiverSignatureData, 'JPEG', 114, signatureImageY, signatureImageW, signatureImageH);
+        }
+
+        // 2. Dibujar líneas de separación 
+        doc.setLineWidth(0.5);
+        doc.line(14, lineY, 99, lineY); 
+        doc.line(114, lineY, 199, lineY);
+
+        // 3. Colocar Nombres y Títulos
+        let nameY = lineY + 5;
 
         doc.setFont(undefined, 'normal');
-        doc.text('__________________________________', 14, signatureLineY);
-        doc.text('__________________________________', 114, signatureLineY);
-        signatureLineY += 5;
-        
-        doc.text('Jonathan Alexander Navas', 20, signatureLineY);
-        doc.text(nombre, 120, signatureLineY);
-        signatureLineY += 5;
+        doc.text('Jonathan Alexander Navas', 20, nameY);
+        doc.text(nombre, 120, nameY);
+        nameY += 5;
 
-        doc.text('Soporte Técnico', 20, signatureLineY);
-        doc.text(`Departamento: ${depto}`, 120, signatureLineY);
+        doc.text('Soporte Técnico', 20, nameY);
+        doc.text(`Departamento: ${depto}`, 120, nameY);
 
 
         // --- 8. GUARDAR PDF ---
