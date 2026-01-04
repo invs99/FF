@@ -2,69 +2,109 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mantenimiento Freund - TI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Freund TI - Mantenimiento</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .freund-red { background-color: #CC0000; }
+        .card-pend { border-left: 5px solid #fbbf24; }
+        .card-done { border-left: 5px solid #10b981; }
+        .loader { border-top-color: #CC0000; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
-<body class="bg-slate-100 pb-10">
+<body class="bg-gray-100 min-h-screen">
 
-    <nav class="bg-red-700 text-white p-4 shadow-lg sticky top-0 z-50">
-        <h1 class="text-center font-bold italic">FREUND TI - APP WEB</h1>
-    </nav>
-
-    <div class="p-4">
-        <input type="text" id="buscador" onkeyup="filtrar()" placeholder="🔍 Buscar equipo o sucursal..." 
-               class="w-full p-4 rounded-2xl border-none shadow-md mb-4 focus:ring-2 focus:ring-red-500">
-
-        <div id="contenedor" class="space-y-3">
-            <div class="text-center py-10 text-gray-500 italic">Cargando equipos...</div>
+    <header class="freund-red text-white p-4 sticky top-0 z-50 shadow-md">
+        <div class="flex justify-between items-center max-w-2xl mx-auto">
+            <h1 class="text-xl font-bold italic underline">FREUND TI</h1>
+            <span class="text-xs font-mono bg-white text-red-700 px-2 py-1 rounded">v2.0</span>
         </div>
-    </div>
+        <div class="mt-3 max-w-2xl mx-auto">
+            <input type="text" id="bus" onkeyup="filtrar()" placeholder="Buscar equipo o tienda..." 
+                   class="w-full p-3 rounded-xl text-black shadow-inner outline-none focus:ring-2 focus:ring-yellow-400">
+        </div>
+    </header>
+
+    <main class="p-4 max-w-2xl mx-auto">
+        <div id="status" class="text-center py-10">
+            <div class="loader w-12 h-12 border-4 border-gray-200 rounded-full mx-auto mb-4"></div>
+            <p class="text-gray-500 font-medium">Sincronizando con Excel...</p>
+        </div>
+        <div id="lista" class="space-y-3"></div>
+    </main>
 
     <script>
-        // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT DESPUÉS
-        const WEB_APP_URL = "TU_URL_DE_IMPLEMENTACION_AQUI";
+        // TU URL DE GOOGLE APPS SCRIPT
+        const API_URL = "https://script.google.com/macros/s/AKfycbzwzXhI0tjQvVgDOILYNvwJWDXJ8RmrFuqGErJlRvEY89GlE8YMcw_2izroTp77t8u99w/exec";
+        
+        let datos = [];
 
-        let equipos = [];
-
-        async function cargarDatos() {
-            const resp = await fetch(WEB_APP_URL);
-            equipos = await resp.json();
-            render(equipos);
+        // Cargar datos al abrir la página
+        async function cargar() {
+            try {
+                const res = await fetch(API_URL);
+                datos = await res.json();
+                document.getElementById('status').classList.add('hidden');
+                render(datos);
+            } catch (e) {
+                document.getElementById('status').innerHTML = "❌ Error al conectar con Google Sheets";
+            }
         }
 
-        function render(lista) {
-            const cont = document.getElementById('contenedor');
-            cont.innerHTML = lista.map(eq => `
-                <div class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-red-500 flex justify-between items-center">
-                    <div>
-                        <p class="font-bold text-gray-800 text-lg">${eq.equipo}</p>
-                        <p class="text-xs text-red-600 font-bold uppercase">${eq.sucursal}</p>
+        function render(arr) {
+            const lista = document.getElementById('lista');
+            lista.innerHTML = '';
+            
+            arr.forEach(item => {
+                const div = document.createElement('div');
+                div.className = `bg-white p-4 rounded-xl shadow-sm flex justify-between items-center ${item.estado === 'Completado' ? 'card-done' : 'card-pend'}`;
+                div.innerHTML = `
+                    <div onclick="marcar('${item.sucursal}', '${item.fila}', '${item.equipo}')" class="flex-1 cursor-pointer">
+                        <h3 class="font-bold text-gray-800 text-lg">${item.equipo}</h3>
+                        <p class="text-xs font-bold text-red-600 uppercase tracking-widest">${item.sucursal}</p>
                     </div>
-                    <button onclick="marcar('${eq.sucursal}', '${eq.fila}')" 
-                            class="bg-green-500 text-white font-bold py-3 px-6 rounded-xl active:bg-green-700">
-                        OK
-                    </button>
-                </div>
-            `).join('');
+                    <div class="text-right">
+                        ${item.estado === 'Completado' ? 
+                            '<i class="fas fa-check-circle text-green-500 text-2xl"></i>' : 
+                            '<i class="fas fa-clock text-yellow-400 text-2xl"></i>'}
+                    </div>
+                `;
+                lista.appendChild(div);
+            });
         }
 
         function filtrar() {
-            const bus = document.getElementById('buscador').value.toLowerCase();
-            render(equipos.filter(e => e.equipo.toLowerCase().includes(bus) || e.sucursal.toLowerCase().includes(bus)));
+            const query = document.getElementById('bus').value.toLowerCase();
+            const filtrados = datos.filter(d => 
+                d.equipo.toLowerCase().includes(query) || 
+                d.sucursal.toLowerCase().includes(query)
+            );
+            render(filtrados);
         }
 
-        async function marcar(sucursal, fila) {
-            const nota = prompt("¿Observaciones para " + sucursal + "?");
+        async function marcar(suc, fila, equipo) {
+            const nota = prompt(`Mantenimiento para: ${equipo}\n¿Alguna observación o pieza cambiada?`);
             if (nota === null) return;
 
-            alert("Guardando en Excel...");
-            await fetch(`${WEB_APP_URL}?sucursal=${sucursal}&fila=${fila}&nota=${nota}`);
-            alert("¡Actualizado!");
+            // Mostrar carga
+            document.getElementById('status').classList.remove('hidden');
+            document.getElementById('lista').classList.add('opacity-30');
+
+            try {
+                const response = await fetch(`${API_URL}?sucursal=${suc}&fila=${fila}&nota=${nota}`);
+                if (response.ok) {
+                    alert("✅ Guardado en la hoja de " + suc);
+                    location.reload(); // Recargar para ver los cambios
+                }
+            } catch (e) {
+                alert("Error al guardar");
+                location.reload();
+            }
         }
 
-        window.onload = cargarDatos;
+        window.onload = cargar;
     </script>
 </body>
 </html>
