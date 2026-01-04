@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mantenimiento Freund - TI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-100 pb-10">
+
+    <nav class="bg-red-700 text-white p-4 shadow-lg sticky top-0 z-50">
+        <h1 class="text-center font-bold italic">FREUND TI - APP WEB</h1>
+    </nav>
+
+    <div class="p-4">
+        <input type="text" id="buscador" onkeyup="filtrar()" placeholder="🔍 Buscar equipo o sucursal..." 
+               class="w-full p-4 rounded-2xl border-none shadow-md mb-4 focus:ring-2 focus:ring-red-500">
+
+        <div id="contenedor" class="space-y-3">
+            <div class="text-center py-10 text-gray-500 italic">Cargando equipos...</div>
+        </div>
+    </div>
+
+    <script>
+        // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT DESPUÉS
+        const WEB_APP_URL = "TU_URL_DE_IMPLEMENTACION_AQUI";
+
+        let equipos = [];
+
+        async function cargarDatos() {
+            const resp = await fetch(WEB_APP_URL);
+            equipos = await resp.json();
+            render(equipos);
+        }
+
+        function render(lista) {
+            const cont = document.getElementById('contenedor');
+            cont.innerHTML = lista.map(eq => `
+                <div class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-red-500 flex justify-between items-center">
+                    <div>
+                        <p class="font-bold text-gray-800 text-lg">${eq.equipo}</p>
+                        <p class="text-xs text-red-600 font-bold uppercase">${eq.sucursal}</p>
+                    </div>
+                    <button onclick="marcar('${eq.sucursal}', '${eq.fila}')" 
+                            class="bg-green-500 text-white font-bold py-3 px-6 rounded-xl active:bg-green-700">
+                        OK
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function filtrar() {
+            const bus = document.getElementById('buscador').value.toLowerCase();
+            render(equipos.filter(e => e.equipo.toLowerCase().includes(bus) || e.sucursal.toLowerCase().includes(bus)));
+        }
+
+        async function marcar(sucursal, fila) {
+            const nota = prompt("¿Observaciones para " + sucursal + "?");
+            if (nota === null) return;
+
+            alert("Guardando en Excel...");
+            await fetch(`${WEB_APP_URL}?sucursal=${sucursal}&fila=${fila}&nota=${nota}`);
+            alert("¡Actualizado!");
+        }
+
+        window.onload = cargarDatos;
+    </script>
+</body>
+</html>
