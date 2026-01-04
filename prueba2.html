@@ -3,34 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auditoría TI Freund</title>
+    <title>Auditoría TI Freund - Reporte Completo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .signature-container { border: 2px dashed #cbd5e1; border-radius: 1rem; background: #f8fafc; }
+        #modalFirmas { display: none; }
+    </style>
 </head>
-<body class="bg-slate-100 min-h-screen pb-10">
+<body class="bg-slate-100 min-h-screen pb-20 font-sans text-slate-800">
 
     <div class="max-w-2xl mx-auto p-4">
         <div class="bg-white p-6 rounded-t-3xl shadow-sm text-center border-b border-slate-200">
-            <img src="https://github.com/invs99/FF/blob/SEGUNDA/freund1.png?raw=true" alt="Freund" class="h-12 mx-auto mb-2">
-            <h1 class="text-xl font-black text-slate-700 uppercase tracking-tighter">Auditoría de Sistemas</h1>
+            <h1 class="text-xl font-black text-slate-700 uppercase tracking-tighter">Sistema de Auditoría Freund</h1>
         </div>
 
         <div class="bg-white p-6 rounded-b-3xl shadow-xl space-y-6">
             <div class="grid grid-cols-1 gap-4">
                 <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Nombre de la Sucursal</label>
-                    <input type="text" id="sucursal" class="w-full bg-transparent font-bold outline-none text-slate-700 uppercase" placeholder="Ej: Metapán">
+                    <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase text-slate-400">Nombre de la Sucursal</label>
+                    <input type="text" id="sucursal" oninput="saveCache()" class="w-full bg-transparent font-bold outline-none text-slate-700 uppercase" placeholder="Ej: Metapán">
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Técnico Responsable</label>
-                        <input type="text" id="tecnico" class="w-full bg-transparent font-bold outline-none uppercase" placeholder="Tu nombre">
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase text-slate-400">Técnico Responsable</label>
+                        <input type="text" id="tecnico" oninput="saveCache()" class="w-full bg-transparent font-bold outline-none uppercase" placeholder="Nombre completo">
                     </div>
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Nombre de quién recibe</label>
-                        <input type="text" id="receptor" class="w-full bg-transparent font-bold outline-none uppercase" placeholder="Nombre receptor">
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase text-slate-400">Nombre de quién recibe</label>
+                        <input type="text" id="receptor" oninput="saveCache()" class="w-full bg-transparent font-bold outline-none uppercase" placeholder="Nombre encargado">
                     </div>
                 </div>
             </div>
@@ -38,34 +42,37 @@
             <hr>
 
             <div class="bg-slate-50 p-5 rounded-3xl border border-slate-200 shadow-md">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
                     <div>
                         <label class="text-[9px] font-black text-slate-500 uppercase">Tipo de Equipo</label>
                         <select id="tipoEquipo" onchange="adaptarInterfaz()" class="w-full p-3 rounded-2xl mt-1 font-bold text-sm">
-                            <option value="VENTA">TERMINALES DE VENTA (1-40)</option>
-                            <option value="ADMIN">ADMINISTRATIVAS / MRO</option>
-                            <option value="POS">CAJAS POS (1-10)</option>
-                            <option value="ETIQUETA">IMPRESOR DE ETIQUETAS</option>
-                            <option value="LASER">IMPRESOR LÁSER</option>
+                            <option value="VENTA">TERMINALES DE VENTA (1-45)</option>
+                            <option value="ADMINISTRATIVAS">ESTACIONES ADMINISTRATIVAS / MRO</option>
+                            <option value="POS">CAJAS REGISTRADORAS POS (1-10)</option>
+                            <option value="ETIQUETA">IMPRESORAS DE ETIQUETAS</option>
+                            <option value="LASER">IMPRESORAS LÁSER</option>
                         </select>
                     </div>
                     <div>
-                        <label class="text-[9px] font-black text-slate-500 uppercase">Identificador</label>
+                        <label class="text-[9px] font-black text-slate-500 uppercase">Identificador(es)</label>
                         <div id="inputIDContainer" class="mt-1"></div>
                     </div>
                 </div>
+                
+                <p id="ayudaRangos" class="text-[10px] text-blue-600 mb-4 font-bold italic px-1">
+                    💡 Tip: Puedes usar rangos (1-10) o comas (1, 5, 8).
+                </p>
 
                 <div class="mb-4">
-                    <label class="text-[9px] font-black text-slate-500 uppercase">Observaciones</label>
+                    <label class="text-[9px] font-black text-slate-500 uppercase">Observaciones Detalladas</label>
                     <input type="text" id="comentario" class="w-full p-3 rounded-2xl mt-1 text-sm font-semibold italic" placeholder="...">
                 </div>
 
                 <div class="space-y-3 mb-6">
                     <label class="flex items-center gap-3 bg-white p-3 rounded-2xl border border-slate-100 cursor-pointer">
                         <input type="checkbox" id="no_existe" onchange="togglePerifericos()" class="w-5 h-5 accent-blue-600">
-                        <span class="text-[10px] font-black text-slate-600 uppercase italic">⚠️ El equipo NO existe</span>
+                        <span class="text-[10px] font-black text-slate-600 uppercase italic text-red-500">⚠️ El equipo NO existe en sucursal</span>
                     </label>
-
                     <div id="seccionPerifericos" class="grid grid-cols-3 gap-2">
                         <label class="bg-white p-2 rounded-xl text-[9px] font-bold border border-slate-100 uppercase flex items-center gap-1"><input type="checkbox" id="m_f"> Mouse</label>
                         <label class="bg-white p-2 rounded-xl text-[9px] font-bold border border-slate-100 uppercase flex items-center gap-1"><input type="checkbox" id="t_f"> Teclado</label>
@@ -73,16 +80,57 @@
                     </div>
                 </div>
 
-                <button onclick="guardarRegistro()" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all">
+                <button onclick="procesarGuardado()" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all">
                     Añadir al Reporte
                 </button>
             </div>
 
-            <div id="listaNovedades" class="grid grid-cols-2 gap-2"></div>
+            <div id="listaNovedades" class="space-y-2"></div>
 
-            <button onclick="exportarPDF()" class="w-full bg-[#CC0000] text-white font-black py-6 rounded-[2rem] shadow-2xl active:scale-95 transition-all uppercase text-lg italic">
-                Generar Reporte Final <i class="fas fa-file-pdf ml-2"></i>
-            </button>
+            <div class="space-y-3 pt-4">
+                <button onclick="exportarPDF(false)" class="w-full bg-[#CC0000] text-white font-black py-3 rounded-2xl shadow-md active:scale-95 transition-all uppercase text-xs italic">
+                    <i class="fas fa-file-pdf mr-2"></i> Generar Reporte (sin firmas)
+                </button>
+
+                <button onclick="abrirModalFirmas()" class="w-full bg-indigo-600 text-white font-black py-3 rounded-2xl shadow-md active:scale-95 transition-all uppercase text-xs italic">
+                    <i class="fas fa-pen-fancy mr-2"></i> Generar Reporte (Firmado)
+                </button>
+                
+                <button onclick="nuevoReporte()" class="w-full bg-gray-500 text-white font-black py-3 rounded-2xl shadow-md active:scale-95 transition-all uppercase text-xs">
+                    <i class="fas fa-redo-alt mr-2"></i> Nuevo Reporte (Limpiar Todo)
+                </button>
+
+                <button onclick="window.location.href='index.html'" class="w-full bg-sky-500 text-white font-black py-3 rounded-2xl shadow-md active:scale-95 transition-all uppercase text-xs">
+                    <i class="fas fa-home mr-2"></i> Inicio
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalFirmas" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-lg rounded-3xl p-6 space-y-4">
+            <h2 class="text-center font-black uppercase text-slate-700">Panel de Firmas</h2>
+            
+            <div>
+                <label class="text-[9px] font-black text-slate-400 uppercase">Firma del Técnico:</label>
+                <div class="signature-container">
+                    <canvas id="padTecnico" class="w-full h-32"></canvas>
+                </div>
+                <button onclick="padTecnico.clear()" class="text-[9px] font-bold text-red-500 uppercase mt-1">Limpiar</button>
+            </div>
+
+            <div>
+                <label class="text-[9px] font-black text-slate-400 uppercase">Firma de quién recibe:</label>
+                <div class="signature-container">
+                    <canvas id="padReceptor" class="w-full h-32"></canvas>
+                </div>
+                <button onclick="padReceptor.clear()" class="text-[9px] font-bold text-red-500 uppercase mt-1">Limpiar</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="cerrarModalFirmas()" class="bg-slate-200 py-3 rounded-xl font-bold uppercase text-xs">Cancelar</button>
+                <button onclick="exportarPDF(true)" class="bg-indigo-600 text-white py-3 rounded-xl font-black uppercase text-xs">Finalizar y Guardar</button>
+            </div>
         </div>
     </div>
 
@@ -91,20 +139,51 @@
         const listaEtiquetas = ["SALA DE RECIBO", "RECEPCIÓN", "FONTANERÍA", "HERRAJE", "ELÉCTRICO", "PINTURAS", "HERRAMIENTAS"];
         const listaLaser = ["SISTEMAS", "RECEPCIÓN", "CONSTRUCCIÓN", "SALA DE RECIBO", "VENTAS DIRECTAS"];
         
-        let dbVenta = {}, dbAdmin = {}, dbPOS = {}, dbEtiqueta = {}, dbLaser = {};
+        let dbMaster = { venta: {}, admin: {}, pos: {}, etiqueta: {}, laser: {} };
+        let padTecnico, padReceptor;
+
+        window.onload = () => {
+            loadCache();
+            padTecnico = new SignaturePad(document.getElementById('padTecnico'));
+            padReceptor = new SignaturePad(document.getElementById('padReceptor'));
+        };
+
+        function abrirModalFirmas() { document.getElementById('modalFirmas').style.display = 'flex'; }
+        function cerrarModalFirmas() { document.getElementById('modalFirmas').style.display = 'none'; }
+
+        function saveCache() {
+            const data = { sucursal: document.getElementById('sucursal').value, tecnico: document.getElementById('tecnico').value, receptor: document.getElementById('receptor').value, dbMaster: dbMaster };
+            localStorage.setItem('freund_audit_cache', JSON.stringify(data));
+        }
+
+        function loadCache() {
+            const cache = localStorage.getItem('freund_audit_cache');
+            if (cache) {
+                const data = JSON.parse(cache);
+                document.getElementById('sucursal').value = data.sucursal || "";
+                document.getElementById('tecnico').value = data.tecnico || "";
+                document.getElementById('receptor').value = data.receptor || "";
+                dbMaster = data.dbMaster || dbMaster;
+                renderVista();
+            }
+        }
+
+        function nuevoReporte() {
+            if(confirm("¿Borrar todo?")) { localStorage.removeItem('freund_audit_cache'); location.reload(); }
+        }
 
         function adaptarInterfaz() {
             const tipo = document.getElementById('tipoEquipo').value;
             const container = document.getElementById('inputIDContainer');
             const perifericos = document.getElementById('seccionPerifericos');
-            perifericos.style.display = (tipo === "VENTA" || tipo === "ADMIN") ? "grid" : "none";
-
+            const ayuda = document.getElementById('ayudaRangos');
+            perifericos.style.display = (tipo === "VENTA" || tipo === "ADMINISTRATIVAS") ? "grid" : "none";
+            ayuda.style.display = (tipo === "VENTA" || tipo === "POS") ? "block" : "none";
             if (tipo === "VENTA" || tipo === "POS") {
-                container.innerHTML = `<input type="number" id="idEq" class="w-full p-3 rounded-2xl border-none shadow-sm font-bold text-sm" placeholder="Número">`;
+                container.innerHTML = `<input type="text" id="idEq" class="w-full p-3 rounded-2xl border-none shadow-sm font-bold text-sm" placeholder="Ej: 1-5, 8">`;
             } else {
-                let lista = tipo === "ADMIN" ? listaAdmin : (tipo === "ETIQUETA" ? listaEtiquetas : listaLaser);
-                let opts = lista.map(e => `<option value="${e}">${e}</option>`).join('');
-                container.innerHTML = `<select id="idEq" class="w-full p-3 rounded-2xl border-none shadow-sm font-bold text-sm uppercase">${opts}</select>`;
+                let lista = tipo === "ADMINISTRATIVAS" ? listaAdmin : (tipo === "ETIQUETA" ? listaEtiquetas : listaLaser);
+                container.innerHTML = `<select id="idEq" class="w-full p-3 rounded-2xl border-none shadow-sm font-bold text-sm uppercase">${lista.map(e => `<option value="${e}">${e}</option>`).join('')}</select>`;
             }
         }
 
@@ -113,162 +192,142 @@
             document.querySelectorAll('#seccionPerifericos input').forEach(c => c.disabled = disable);
         }
 
-        function guardarRegistro() {
+        function procesarGuardado() {
             const tipo = document.getElementById('tipoEquipo').value;
-            const id = document.getElementById('idEq').value;
-            if(!id) return alert("Ingrese ID de equipo");
+            const valorInput = document.getElementById('idEq').value;
+            if(!valorInput) return alert("Ingrese ID");
+            if (tipo === "VENTA" || tipo === "POS") {
+                const partes = valorInput.split(',');
+                partes.forEach(p => {
+                    p = p.trim();
+                    if (p.includes('-')) {
+                        const r = p.split('-');
+                        const ini = parseInt(r[0]), fin = parseInt(r[1]);
+                        if(!isNaN(ini) && !isNaN(fin)) for(let i = Math.min(ini, fin); i <= Math.max(ini, fin); i++) guardarIndividual(tipo, i.toString());
+                    } else if(p !== "") guardarIndividual(tipo, p);
+                });
+            } else { guardarIndividual(tipo, valorInput); }
+            saveCache(); renderVista();
+        }
 
-            const info = {
-                noExiste: document.getElementById('no_existe').checked,
-                m: document.getElementById('m_f').checked,
-                t: document.getElementById('t_f').checked,
-                s: document.getElementById('s_f').checked,
-                obs: document.getElementById('comentario').value
-            };
-
-            if(tipo === "VENTA") dbVenta[id] = info;
-            else if(tipo === "ADMIN") dbAdmin[id] = info;
-            else if(tipo === "POS") dbPOS[id] = info;
-            else if(tipo === "ETIQUETA") dbEtiqueta[id] = info;
-            else if(tipo === "LASER") dbLaser[id] = info;
-
-            renderVista();
+        function guardarIndividual(tipo, id) {
+            const data = { tipoRef: tipo, noExiste: document.getElementById('no_existe').checked, m: document.getElementById('m_f').checked, t: document.getElementById('t_f').checked, s: document.getElementById('s_f').checked, obs: document.getElementById('comentario').value };
+            const map = { VENTA: 'venta', ADMINISTRATIVAS: 'admin', POS: 'pos', ETIQUETA: 'etiqueta', LASER: 'laser' };
+            dbMaster[map[tipo]][id] = data;
         }
 
         function renderVista() {
-            const cont = document.getElementById('listaNovedades');
-            cont.innerHTML = '';
-            const all = {...dbVenta, ...dbAdmin, ...dbPOS, ...dbEtiqueta, ...dbLaser};
-            for(let k in all) {
-                const badge = document.createElement('div');
-                badge.className = "bg-blue-50 text-blue-700 p-2 rounded-xl text-[9px] font-black border border-blue-100 flex justify-between";
-                badge.innerHTML = `${k} <i class="fas fa-times cursor-pointer" onclick="eliminar('${k}')"></i>`;
-                cont.appendChild(badge);
+            const cont = document.getElementById('listaNovedades'); cont.innerHTML = '';
+            for(let cat in dbMaster) {
+                for(let k in dbMaster[cat]) {
+                    const item = dbMaster[cat][k];
+                    cont.innerHTML += `<div class="bg-blue-50 p-2 rounded-xl text-[10px] font-bold border flex justify-between uppercase"><span>${item.tipoRef}: ${k} - ${item.noExiste?'ELIMINADA':'ACTUALIZADA'}</span><i class="fas fa-trash-alt cursor-pointer" onclick="deleteItem('${cat}', '${k}')"></i></div>`;
+                }
             }
         }
 
-        function eliminar(k) { delete dbVenta[k]; delete dbAdmin[k]; delete dbPOS[k]; delete dbEtiqueta[k]; delete dbLaser[k]; renderVista(); }
+        function deleteItem(cat, k) { delete dbMaster[cat][k]; saveCache(); renderVista(); }
 
-        // FUNCIÓN CLAVE: Convertir imagen de URL a Base64 para evitar errores de CORS y carga en PDF
-        function getBase64Image(url) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.setAttribute('crossOrigin', 'anonymous');
-                img.onload = () => {
-                    const canvas = document.createElement("canvas");
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext("canvas");
-                    ctx.drawImage(img, 0, 0);
-                    resolve(canvas.toDataURL("image/png"));
-                };
-                img.onerror = reject;
-                img.src = url;
-            });
-        }
-
-        async function exportarPDF() {
+        function exportarPDF(conFirmas) {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            const doc = new jsPDF({ format: 'letter' });
             const tec = document.getElementById('tecnico').value;
             const suc = document.getElementById('sucursal').value;
             const rec = document.getElementById('receptor').value;
-            const logoUrl = "https://github.com/invs99/FF/blob/SEGUNDA/freund1.png?raw=true";
+            if(!tec || !suc || !rec) return alert("Faltan datos generales");
+            
+            const img = new Image();
+            img.src = "https://invs99.github.io/FF/freund1.png";
+            img.crossOrigin = "anonymous";
 
-            if(!tec || !suc || !rec) return alert("Complete los datos de Sucursal, Técnico y Receptor.");
-
-            try {
-                // Dibujar encabezado estilo imagen adjunta
-                const base64Logo = await getBase64Image(logoUrl);
-                doc.addImage(base64Logo, 'PNG', 15, 10, 40, 15);
-                
-                doc.setFontSize(14);
-                doc.setFont("helvetica", "bold");
-                doc.text("AUDITORÍA Y MANTENIMIENTO PREVENTIVO TI", 58, 18);
-                
-                doc.setFontSize(8);
-                doc.setFont("helvetica", "normal");
-                doc.text("Tiendas 01.001.0001.0001", 160, 13);
-                doc.text("Redes y Telecomunicaciones", 157, 17);
-                doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 168, 21);
-                
-                doc.setLineWidth(0.5);
-                doc.line(15, 28, 195, 28);
-
-                // Datos sucursal
+            const dibujarEncabezado = () => {
+                doc.addImage(img, 'PNG', 15, 5, 36, 15.6);
+                doc.setFontSize(13); doc.setFont("helvetica", "bold");
+                doc.text("MANTENIMIENTO PREVENTIVO TI", 65, 11);
+                doc.setFontSize(6); doc.setFont("helvetica", "normal");
+                doc.text("REDES SOPORTE Y", 195, 10, {align: "right"});
+                doc.text("TELECOMUNICACIONES", 195, 13, {align: "right"});
+                doc.setFontSize(8); doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 195, 18, {align: "right"});
+                doc.line(15, 20, 195, 20);
                 doc.setFontSize(9);
-                doc.text(`SUCURSAL: ${suc.toUpperCase()}`, 15, 36);
-                doc.text(`TÉCNICO: ${tec.toUpperCase()}`, 15, 41);
+                doc.text(`SUCURSAL: ${suc.toUpperCase()}`, 15, 25);
+                doc.text(`TÉCNICO: ${tec.toUpperCase()}`, 15, 30);
+            };
 
-                const aplicarIconos = (data) => {
-                    if (data.section === 'body') {
-                        const val = data.cell.text[0];
-                        if (val === "V") {
-                            doc.setTextColor(0, 153, 0);
-                            data.cell.text = ["\u2713"]; // Símbolo Cheque
-                        } else if (val === "X") {
-                            doc.setTextColor(204, 0, 0);
-                        }
-                    }
-                };
+            const renderIcons = (data) => {
+                if (data.section === 'body') {
+                    if (data.cell.text[0] === "OK") { doc.setTextColor(0, 150, 0); data.cell.text = ["\u2713"]; }
+                    else if (data.cell.text[0] === "X") { doc.setTextColor(200, 0, 0); }
+                }
+            };
 
-                // 1. VENTAS
+            img.onload = function() {
+                // PAG 1: VENTA
+                dibujarEncabezado();
                 const rowsV = [];
-                for(let i=1; i<=40; i++){
-                    let m="V", t="V", s="V", o="";
-                    if(dbVenta[i]){
-                        if(dbVenta[i].noExiste){ m="X"; t="X"; s="X"; o="NO EXISTE"; }
-                        else { if(dbVenta[i].m) m="X"; if(dbVenta[i].t) t="X"; if(dbVenta[i].s) s="X"; o=dbVenta[i].obs; }
-                    }
+                for(let i=1; i<=45; i++){
+                    const d = dbMaster.venta[i]; if(d && d.noExiste) continue;
+                    let m="OK", t="OK", s="OK", o="";
+                    if(d){ if(d.m) m="X"; if(d.t) t="X"; if(d.s) s="X"; o=d.obs; }
                     rowsV.push([`Venta ${i}`, m, t, s, o]);
                 }
-                doc.text("1. TERMINALES DE VENTA WINDOWS", 15, 50);
-                doc.autoTable({ 
-                    startY: 52, head:[['Identificador','Mouse','Teclado','Scanner','Observaciones']], 
-                    body:rowsV, theme:'striped', headStyles:{fillColor:[0, 82, 155]}, styles:{fontSize:6},
-                    didDrawCell: aplicarIconos
+                doc.text("1. TERMINALES DE VENTA WINDOWS", 15, 35);
+                doc.autoTable({ startY: 37, head:[['ID','Mouse','Teclado','Scanner','Obs']], body:rowsV, theme:'striped', headStyles:{fillColor:[0, 82, 155]}, styles:{fontSize:7.0, cellPadding: 1.02}, didDrawCell: renderIcons });
+
+                // PAG 2: ADMIN Y POS
+                doc.addPage(); dibujarEncabezado();
+                const rowsA = [];
+                listaAdmin.forEach(n => {
+                    const d = dbMaster.admin[n]; if(d && d.noExiste) return;
+                    let m="OK", t="OK", s="OK", o="";
+                    if(d){ if(d.m) m="X"; if(d.t) t="X"; if(d.s) s="X"; o=d.obs; }
+                    rowsA.push([n, m, t, s, o]);
                 });
+                doc.text("2. ESTACIONES ADMINISTRATIVAS / MRO", 15, 35);
+                doc.autoTable({ startY: 37, head:[['Equipo','Mouse','Teclado','Scanner','Obs']], body:rowsA, theme:'striped', headStyles:{fillColor:[60, 60, 60]}, styles:{fontSize:8.5}, didDrawCell: renderIcons });
 
-                // 2. POS / ETIQUETAS / LASER
-                const agregarBloque = (titulo, db, lista, h) => {
-                    const rows = [];
-                    lista.forEach(n => {
-                        let m="V", o="";
-                        if(db[n]){ if(db[n].noExiste){ m="X"; o="NO EXISTE"; } else { o=db[n].obs; } }
-                        rows.push([n, m, o]);
-                    });
-                    doc.setTextColor(0);
-                    doc.text(titulo, 15, doc.lastAutoTable.finalY + 10);
-                    doc.autoTable({ 
-                        startY: doc.lastAutoTable.finalY + 12, head:[[h,'Mantenimiento','Observaciones']], 
-                        body:rows, theme:'grid', headStyles:{fillColor:[60,60,60]}, styles:{fontSize:7},
-                        didDrawCell: aplicarIconos
-                    });
-                };
+                const rowsP = [];
+                for(let i=1; i<=10; i++){
+                    const d = dbMaster.pos[i]; if(d && d.noExiste) continue;
+                    rowsP.push([`Caja POS ${i}`, "OK", d?d.obs:""]);
+                }
+                doc.text("3. CAJAS REGISTRADORAS POS", 15, doc.lastAutoTable.finalY + 10);
+                doc.autoTable({ startY: doc.lastAutoTable.finalY + 12, head:[['ID','Manto','Obs']], body:rowsP, theme:'grid', styles:{fontSize:8.5}, didDrawCell: renderIcons });
 
-                agregarBloque("2. CAJAS POS", dbPOS, Array.from({length:10},(_,i)=>`Caja ${i+1}`), "Identificador");
-                agregarBloque("3. ETIQUETADORAS", dbEtiqueta, listaEtiquetas, "Ubicación");
-                agregarBloque("4. IMPRESORES LÁSER", dbLaser, listaLaser, "Ubicación");
+                // PAG 3: ETIQUETAS, LASER Y FIRMAS
+                doc.addPage(); dibujarEncabezado();
+                const rowsE = [];
+                listaEtiquetas.forEach(n => {
+                    const d = dbMaster.etiqueta[n]; if(d && d.noExiste) return;
+                    rowsE.push([n, "OK", d?d.obs:""]);
+                });
+                doc.text("4. IMPRESORAS DE ETIQUETAS", 15, 35);
+                doc.autoTable({ startY: 37, head:[['Ubicación','Manto','Obs']], body:rowsE, theme:'grid', styles:{fontSize:9}, didDrawCell: renderIcons });
+
+                const rowsL = [];
+                listaLaser.forEach(n => {
+                    const d = dbMaster.laser[n]; if(d && d.noExiste) return;
+                    rowsL.push([n, "OK", d?d.obs:""]);
+                });
+                doc.text("5. IMPRESORAS LÁSER", 15, doc.lastAutoTable.finalY + 10);
+                doc.autoTable({ startY: doc.lastAutoTable.finalY + 12, head:[['Ubicación','Manto','Obs']], body:rowsL, theme:'grid', styles:{fontSize:9}, didDrawCell: renderIcons });
 
                 // FIRMAS
-                const finalY = doc.lastAutoTable.finalY + 30;
-                doc.setTextColor(0);
-                doc.line(25, finalY, 85, finalY);
-                doc.text(`${tec.toUpperCase()}`, 25, finalY + 5);
-                doc.text("Técnico Responsable", 25, finalY + 10);
-                
-                doc.line(125, finalY, 185, finalY);
-                doc.text(`${rec.toUpperCase()}`, 125, finalY + 5);
-                doc.text("Recibido por (Nombre y Firma)", 125, finalY + 10);
+                const fY = 250;
+                doc.line(25, fY, 85, fY); doc.line(125, fY, 185, fY);
+                doc.setFontSize(8);
+                doc.text(tec.toUpperCase(), 25, fY + 5); doc.text("TÉCNICO RESPONSABLE", 25, fY + 10);
+                doc.text(rec.toUpperCase(), 125, fY + 5); doc.text("RECIBIDO POR (NOMBRE Y FIRMA)", 125, fY + 10);
 
-                doc.save(`Reporte_Auditoria_${suc}.pdf`);
+                if(conFirmas) {
+                    doc.addImage(padTecnico.toDataURL(), 'PNG', 35, fY - 22, 35, 18);
+                    doc.addImage(padReceptor.toDataURL(), 'PNG', 135, fY - 22, 35, 18);
+                }
 
-            } catch (error) {
-                console.error(error);
-                alert("Error cargando el logo de Freund. Verifique su conexión.");
-            }
+                doc.save(`Auditoria_${suc}.pdf`);
+                cerrarModalFirmas();
+            };
         }
-        adaptarInterfaz();
     </script>
 </body>
 </html>
