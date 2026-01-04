@@ -2,122 +2,273 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Freund TI - App de Mantenimiento</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditoría TI Freund</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .freund-red { background-color: #CC0000; }
-        .card-done { border-left: 6px solid #10b981; }
-        .card-pending { border-left: 6px solid #f59e0b; }
-        /* Animación de carga */
-        .spinner { border: 4px solid rgba(0,0,0,0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #CC0000; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
 </head>
-<body class="bg-slate-50 min-h-screen">
+<body class="bg-slate-100 min-h-screen pb-10">
 
-    <header class="freund-red text-white p-4 sticky top-0 z-50 shadow-lg">
-        <div class="max-w-md mx-auto flex flex-col gap-3">
-            <div class="flex justify-between items-center">
-                <h1 class="text-xl font-black tracking-tighter italic">FREUND <span class="font-light not-italic text-sm">| TI</span></h1>
-                <button onclick="location.reload()" class="p-2 bg-white/20 rounded-lg"><i class="fas fa-sync-alt"></i></button>
+    <div class="max-w-2xl mx-auto p-4">
+        <div class="bg-white p-6 rounded-t-3xl shadow-sm text-center border-b border-slate-200">
+            <img src="https://github.com/invs99/FF/blob/SEGUNDA/freund1.png?raw=true" alt="Freund" class="h-12 mx-auto mb-2">
+            <h1 class="text-xl font-black text-slate-700 uppercase tracking-tighter">Auditoría de Sistemas</h1>
+        </div>
+
+        <div class="bg-white p-6 rounded-b-3xl shadow-xl space-y-6">
+            <div class="grid grid-cols-1 gap-4">
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Nombre de la Sucursal</label>
+                    <input type="text" id="sucursal" class="w-full bg-transparent font-bold outline-none text-slate-700 uppercase" placeholder="Ej: Metapán">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Técnico Responsable</label>
+                        <input type="text" id="tecnico" class="w-full bg-transparent font-bold outline-none uppercase" placeholder="Tu nombre">
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Nombre de quién recibe</label>
+                        <input type="text" id="receptor" class="w-full bg-transparent font-bold outline-none uppercase" placeholder="Nombre receptor">
+                    </div>
+                </div>
             </div>
-            <input type="text" id="bus" onkeyup="filtrar()" placeholder="Buscar equipo o sucursal..." 
-                   class="w-full p-3 rounded-xl text-black shadow-inner focus:ring-4 focus:ring-yellow-400 outline-none">
-        </div>
-    </header>
 
-    <main class="max-w-md mx-auto p-4">
-        <div id="loader" class="flex flex-col items-center justify-center py-20">
-            <div class="spinner mb-4"></div>
-            <p class="text-gray-500 font-medium">Obteniendo datos de Freund...</p>
-        </div>
+            <hr>
 
-        <div id="lista" class="space-y-4"></div>
-    </main>
+            <div class="bg-slate-50 p-5 rounded-3xl border border-slate-200 shadow-md">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="text-[9px] font-black text-slate-500 uppercase">Tipo de Equipo</label>
+                        <select id="tipoEquipo" onchange="adaptarInterfaz()" class="w-full p-3 rounded-2xl mt-1 font-bold text-sm">
+                            <option value="VENTA">TERMINALES DE VENTA (1-40)</option>
+                            <option value="ADMIN">ADMINISTRATIVAS / MRO</option>
+                            <option value="POS">CAJAS POS (1-10)</option>
+                            <option value="ETIQUETA">IMPRESOR DE ETIQUETAS</option>
+                            <option value="LASER">IMPRESOR LÁSER</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-black text-slate-500 uppercase">Identificador</label>
+                        <div id="inputIDContainer" class="mt-1"></div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="text-[9px] font-black text-slate-500 uppercase">Observaciones</label>
+                    <input type="text" id="comentario" class="w-full p-3 rounded-2xl mt-1 text-sm font-semibold italic" placeholder="...">
+                </div>
+
+                <div class="space-y-3 mb-6">
+                    <label class="flex items-center gap-3 bg-white p-3 rounded-2xl border border-slate-100 cursor-pointer">
+                        <input type="checkbox" id="no_existe" onchange="togglePerifericos()" class="w-5 h-5 accent-blue-600">
+                        <span class="text-[10px] font-black text-slate-600 uppercase italic">⚠️ El equipo NO existe</span>
+                    </label>
+
+                    <div id="seccionPerifericos" class="grid grid-cols-3 gap-2">
+                        <label class="bg-white p-2 rounded-xl text-[9px] font-bold border border-slate-100 uppercase flex items-center gap-1"><input type="checkbox" id="m_f"> Mouse</label>
+                        <label class="bg-white p-2 rounded-xl text-[9px] font-bold border border-slate-100 uppercase flex items-center gap-1"><input type="checkbox" id="t_f"> Teclado</label>
+                        <label class="bg-white p-2 rounded-xl text-[9px] font-bold border border-slate-100 uppercase flex items-center gap-1"><input type="checkbox" id="s_f"> Scanner</label>
+                    </div>
+                </div>
+
+                <button onclick="guardarRegistro()" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest active:scale-95 transition-all">
+                    Añadir al Reporte
+                </button>
+            </div>
+
+            <div id="listaNovedades" class="grid grid-cols-2 gap-2"></div>
+
+            <button onclick="exportarPDF()" class="w-full bg-[#CC0000] text-white font-black py-6 rounded-[2rem] shadow-2xl active:scale-95 transition-all uppercase text-lg italic">
+                Generar Reporte Final <i class="fas fa-file-pdf ml-2"></i>
+            </button>
+        </div>
+    </div>
 
     <script>
-        // TU NUEVA URL ACTUALIZADA
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzjXN2uannIT0ZwediF4GKetCIkhzrTeqsvXlhae_U0MwGHvVhbdDVXQcCCJyhO0lmYMg/exec";
+        const listaAdmin = ["MRO1", "MRO2", "MRO3", "MRO4", "MRO5", "LIDER", "ADMON 1", "ADMON 2", "OPERACIONES", "SISMERCHAN", "TRANSPORTE", "CONSTRUCCIÓN", "SISTEMAS", "RECEPCIÓN"];
+        const listaEtiquetas = ["SALA DE RECIBO", "RECEPCIÓN", "FONTANERÍA", "HERRAJE", "ELÉCTRICO", "PINTURAS", "HERRAMIENTAS"];
+        const listaLaser = ["SISTEMAS", "RECEPCIÓN", "CONSTRUCCIÓN", "SALA DE RECIBO", "VENTAS DIRECTAS"];
         
-        let db = [];
+        let dbVenta = {}, dbAdmin = {}, dbPOS = {}, dbEtiqueta = {}, dbLaser = {};
 
-        // 1. Cargar datos al iniciar
-        window.onload = async () => {
-            try {
-                const response = await fetch(WEB_APP_URL);
-                db = await response.json();
-                document.getElementById('loader').classList.add('hidden');
-                mostrar(db);
-            } catch (error) {
-                document.getElementById('loader').innerHTML = `
-                    <div class="text-red-600 p-4 bg-red-50 rounded-xl text-center">
-                        <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
-                        <p>Error de conexión. Revisa que el Script esté publicado para "Cualquier persona".</p>
-                    </div>`;
+        function adaptarInterfaz() {
+            const tipo = document.getElementById('tipoEquipo').value;
+            const container = document.getElementById('inputIDContainer');
+            const perifericos = document.getElementById('seccionPerifericos');
+            perifericos.style.display = (tipo === "VENTA" || tipo === "ADMIN") ? "grid" : "none";
+
+            if (tipo === "VENTA" || tipo === "POS") {
+                container.innerHTML = `<input type="number" id="idEq" class="w-full p-3 rounded-2xl border-none shadow-sm font-bold text-sm" placeholder="Número">`;
+            } else {
+                let lista = tipo === "ADMIN" ? listaAdmin : (tipo === "ETIQUETA" ? listaEtiquetas : listaLaser);
+                let opts = lista.map(e => `<option value="${e}">${e}</option>`).join('');
+                container.innerHTML = `<select id="idEq" class="w-full p-3 rounded-2xl border-none shadow-sm font-bold text-sm uppercase">${opts}</select>`;
             }
-        };
+        }
 
-        // 2. Función para mostrar las tarjetas
-        function mostrar(equipos) {
-            const cont = document.getElementById('lista');
+        function togglePerifericos() {
+            const disable = document.getElementById('no_existe').checked;
+            document.querySelectorAll('#seccionPerifericos input').forEach(c => c.disabled = disable);
+        }
+
+        function guardarRegistro() {
+            const tipo = document.getElementById('tipoEquipo').value;
+            const id = document.getElementById('idEq').value;
+            if(!id) return alert("Ingrese ID de equipo");
+
+            const info = {
+                noExiste: document.getElementById('no_existe').checked,
+                m: document.getElementById('m_f').checked,
+                t: document.getElementById('t_f').checked,
+                s: document.getElementById('s_f').checked,
+                obs: document.getElementById('comentario').value
+            };
+
+            if(tipo === "VENTA") dbVenta[id] = info;
+            else if(tipo === "ADMIN") dbAdmin[id] = info;
+            else if(tipo === "POS") dbPOS[id] = info;
+            else if(tipo === "ETIQUETA") dbEtiqueta[id] = info;
+            else if(tipo === "LASER") dbLaser[id] = info;
+
+            renderVista();
+        }
+
+        function renderVista() {
+            const cont = document.getElementById('listaNovedades');
             cont.innerHTML = '';
-
-            if (equipos.length === 0) {
-                cont.innerHTML = '<p class="text-center text-gray-400 py-10">No se encontraron equipos.</p>';
-                return;
+            const all = {...dbVenta, ...dbAdmin, ...dbPOS, ...dbEtiqueta, ...dbLaser};
+            for(let k in all) {
+                const badge = document.createElement('div');
+                badge.className = "bg-blue-50 text-blue-700 p-2 rounded-xl text-[9px] font-black border border-blue-100 flex justify-between";
+                badge.innerHTML = `${k} <i class="fas fa-times cursor-pointer" onclick="eliminar('${k}')"></i>`;
+                cont.appendChild(badge);
             }
+        }
 
-            equipos.forEach(item => {
-                const card = document.createElement('div');
-                const esListo = item.estado === 'Completado';
-                card.className = `bg-white p-5 rounded-2xl shadow-sm flex justify-between items-center transition-all active:scale-95 ${esListo ? 'card-done' : 'card-pending'}`;
-                
-                card.innerHTML = `
-                    <div class="flex-1">
-                        <h3 class="font-bold text-gray-800 text-lg leading-tight">${item.equipo}</h3>
-                        <p class="text-[10px] font-black text-red-600 uppercase tracking-widest mt-1">${item.sucursal}</p>
-                    </div>
-                    <button onclick="enviarCambio('${item.sucursal}', '${item.fila}', '${item.equipo}')" 
-                            class="ml-4 ${esListo ? 'bg-green-100 text-green-600' : 'bg-red-600 text-white'} p-4 rounded-xl font-bold">
-                        ${esListo ? '<i class="fas fa-check"></i>' : 'OK'}
-                    </button>
-                `;
-                cont.appendChild(card);
+        function eliminar(k) { delete dbVenta[k]; delete dbAdmin[k]; delete dbPOS[k]; delete dbEtiqueta[k]; delete dbLaser[k]; renderVista(); }
+
+        // FUNCIÓN CLAVE: Convertir imagen de URL a Base64 para evitar errores de CORS y carga en PDF
+        function getBase64Image(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.setAttribute('crossOrigin', 'anonymous');
+                img.onload = () => {
+                    const canvas = document.createElement("canvas");
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext("canvas");
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL("image/png"));
+                };
+                img.onerror = reject;
+                img.src = url;
             });
         }
 
-        // 3. Buscador
-        function filtrar() {
-            const query = document.getElementById('bus').value.toLowerCase();
-            const filtrados = db.filter(e => 
-                e.equipo.toLowerCase().includes(query) || 
-                e.sucursal.toLowerCase().includes(query)
-            );
-            mostrar(filtrados);
-        }
+        async function exportarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const tec = document.getElementById('tecnico').value;
+            const suc = document.getElementById('sucursal').value;
+            const rec = document.getElementById('receptor').value;
+            const logoUrl = "https://github.com/invs99/FF/blob/SEGUNDA/freund1.png?raw=true";
 
-        // 4. Enviar datos a Google Sheets
-        async function enviarCambio(sucursal, fila, equipo) {
-            const nota = prompt(`Mantenimiento para ${equipo}:\nEscriba una observación (opcional):`);
-            if (nota === null) return; // Si cancela el prompt
-
-            // Bloquear pantalla mientras guarda
-            document.body.style.opacity = "0.5";
-            document.body.style.pointerEvents = "none";
+            if(!tec || !suc || !rec) return alert("Complete los datos de Sucursal, Técnico y Receptor.");
 
             try {
-                const urlFinal = `${WEB_APP_URL}?sucursal=${encodeURIComponent(sucursal)}&fila=${fila}&nota=${encodeURIComponent(nota)}`;
-                await fetch(urlFinal, { method: 'GET' });
-                alert("✅ Actualizado correctamente en: " + sucursal);
-                location.reload();
-            } catch (e) {
-                alert("❌ Error al guardar. Intente de nuevo.");
-                document.body.style.opacity = "1";
-                document.body.style.pointerEvents = "auto";
+                // Dibujar encabezado estilo imagen adjunta
+                const base64Logo = await getBase64Image(logoUrl);
+                doc.addImage(base64Logo, 'PNG', 15, 10, 40, 15);
+                
+                doc.setFontSize(14);
+                doc.setFont("helvetica", "bold");
+                doc.text("AUDITORÍA Y MANTENIMIENTO PREVENTIVO TI", 58, 18);
+                
+                doc.setFontSize(8);
+                doc.setFont("helvetica", "normal");
+                doc.text("Tiendas 01.001.0001.0001", 160, 13);
+                doc.text("Redes y Telecomunicaciones", 157, 17);
+                doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 168, 21);
+                
+                doc.setLineWidth(0.5);
+                doc.line(15, 28, 195, 28);
+
+                // Datos sucursal
+                doc.setFontSize(9);
+                doc.text(`SUCURSAL: ${suc.toUpperCase()}`, 15, 36);
+                doc.text(`TÉCNICO: ${tec.toUpperCase()}`, 15, 41);
+
+                const aplicarIconos = (data) => {
+                    if (data.section === 'body') {
+                        const val = data.cell.text[0];
+                        if (val === "V") {
+                            doc.setTextColor(0, 153, 0);
+                            data.cell.text = ["\u2713"]; // Símbolo Cheque
+                        } else if (val === "X") {
+                            doc.setTextColor(204, 0, 0);
+                        }
+                    }
+                };
+
+                // 1. VENTAS
+                const rowsV = [];
+                for(let i=1; i<=40; i++){
+                    let m="V", t="V", s="V", o="";
+                    if(dbVenta[i]){
+                        if(dbVenta[i].noExiste){ m="X"; t="X"; s="X"; o="NO EXISTE"; }
+                        else { if(dbVenta[i].m) m="X"; if(dbVenta[i].t) t="X"; if(dbVenta[i].s) s="X"; o=dbVenta[i].obs; }
+                    }
+                    rowsV.push([`Venta ${i}`, m, t, s, o]);
+                }
+                doc.text("1. TERMINALES DE VENTA WINDOWS", 15, 50);
+                doc.autoTable({ 
+                    startY: 52, head:[['Identificador','Mouse','Teclado','Scanner','Observaciones']], 
+                    body:rowsV, theme:'striped', headStyles:{fillColor:[0, 82, 155]}, styles:{fontSize:6},
+                    didDrawCell: aplicarIconos
+                });
+
+                // 2. POS / ETIQUETAS / LASER
+                const agregarBloque = (titulo, db, lista, h) => {
+                    const rows = [];
+                    lista.forEach(n => {
+                        let m="V", o="";
+                        if(db[n]){ if(db[n].noExiste){ m="X"; o="NO EXISTE"; } else { o=db[n].obs; } }
+                        rows.push([n, m, o]);
+                    });
+                    doc.setTextColor(0);
+                    doc.text(titulo, 15, doc.lastAutoTable.finalY + 10);
+                    doc.autoTable({ 
+                        startY: doc.lastAutoTable.finalY + 12, head:[[h,'Mantenimiento','Observaciones']], 
+                        body:rows, theme:'grid', headStyles:{fillColor:[60,60,60]}, styles:{fontSize:7},
+                        didDrawCell: aplicarIconos
+                    });
+                };
+
+                agregarBloque("2. CAJAS POS", dbPOS, Array.from({length:10},(_,i)=>`Caja ${i+1}`), "Identificador");
+                agregarBloque("3. ETIQUETADORAS", dbEtiqueta, listaEtiquetas, "Ubicación");
+                agregarBloque("4. IMPRESORES LÁSER", dbLaser, listaLaser, "Ubicación");
+
+                // FIRMAS
+                const finalY = doc.lastAutoTable.finalY + 30;
+                doc.setTextColor(0);
+                doc.line(25, finalY, 85, finalY);
+                doc.text(`${tec.toUpperCase()}`, 25, finalY + 5);
+                doc.text("Técnico Responsable", 25, finalY + 10);
+                
+                doc.line(125, finalY, 185, finalY);
+                doc.text(`${rec.toUpperCase()}`, 125, finalY + 5);
+                doc.text("Recibido por (Nombre y Firma)", 125, finalY + 10);
+
+                doc.save(`Reporte_Auditoria_${suc}.pdf`);
+
+            } catch (error) {
+                console.error(error);
+                alert("Error cargando el logo de Freund. Verifique su conexión.");
             }
         }
+        adaptarInterfaz();
     </script>
 </body>
 </html>
