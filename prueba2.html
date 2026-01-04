@@ -2,79 +2,121 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mantenimiento Freund</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Freund TI - App de Mantenimiento</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .freund-red { background-color: #CC0000; }
+        .card-done { border-left: 6px solid #10b981; }
+        .card-pending { border-left: 6px solid #f59e0b; }
+        /* Animación de carga */
+        .spinner { border: 4px solid rgba(0,0,0,0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #CC0000; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-slate-50 min-h-screen">
 
-    <nav class="bg-[#CC0000] text-white p-4 shadow-md sticky top-0">
-        <h1 class="text-center font-bold italic tracking-wider">FREUND TI - APP</h1>
-    </nav>
-
-    <div class="p-4">
-        <input type="text" id="bus" onkeyup="buscar()" placeholder="Buscar equipo o tienda..." 
-               class="w-full p-4 rounded-xl border-none shadow mb-4 outline-none focus:ring-2 focus:ring-red-500">
-
-        <div id="lista" class="space-y-3">
-            <div class="text-center py-10 text-gray-400">
-                <i class="fas fa-sync fa-spin text-2xl mb-2"></i>
-                <p>Cargando datos de Google Sheets...</p>
+    <header class="freund-red text-white p-4 sticky top-0 z-50 shadow-lg">
+        <div class="max-w-md mx-auto flex flex-col gap-3">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl font-black tracking-tighter italic">FREUND <span class="font-light not-italic text-sm">| TI</span></h1>
+                <button onclick="location.reload()" class="p-2 bg-white/20 rounded-lg"><i class="fas fa-sync-alt"></i></button>
             </div>
+            <input type="text" id="bus" onkeyup="filtrar()" placeholder="Buscar equipo o sucursal..." 
+                   class="w-full p-3 rounded-xl text-black shadow-inner focus:ring-4 focus:ring-yellow-400 outline-none">
         </div>
-    </div>
+    </header>
+
+    <main class="max-w-md mx-auto p-4">
+        <div id="loader" class="flex flex-col items-center justify-center py-20">
+            <div class="spinner mb-4"></div>
+            <p class="text-gray-500 font-medium">Obteniendo datos de Freund...</p>
+        </div>
+
+        <div id="lista" class="space-y-4"></div>
+    </main>
 
     <script>
-        // TU URL DE GOOGLE (YA CONECTADA)
-        const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbzwzXhI0tjQvVgDOILYNvwJWDXJ8RmrFuqGErJlRvEY89GlE8YMcw_2izroTp77t8u99w/exec";
+        // TU NUEVA URL ACTUALIZADA
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzjXN2uannIT0ZwediF4GKetCIkhzrTeqsvXlhae_U0MwGHvVhbdDVXQcCCJyhO0lmYMg/exec";
         
-        let datosFull = [];
+        let db = [];
 
-        // Cargar equipos
-        fetch(URL_GOOGLE)
-            .then(res => res.json())
-            .then(json => {
-                datosFull = json;
-                dibujar(datosFull);
-            })
-            .catch(err => {
-                document.getElementById('lista').innerHTML = `<p class="text-center text-red-500">Error: Verifica que publicaste el Script como 'Cualquier persona'</p>`;
-            });
+        // 1. Cargar datos al iniciar
+        window.onload = async () => {
+            try {
+                const response = await fetch(WEB_APP_URL);
+                db = await response.json();
+                document.getElementById('loader').classList.add('hidden');
+                mostrar(db);
+            } catch (error) {
+                document.getElementById('loader').innerHTML = `
+                    <div class="text-red-600 p-4 bg-red-50 rounded-xl text-center">
+                        <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
+                        <p>Error de conexión. Revisa que el Script esté publicado para "Cualquier persona".</p>
+                    </div>`;
+            }
+        };
 
-        function dibujar(datos) {
-            const contenedor = document.getElementById('lista');
-            contenedor.innerHTML = '';
-            datos.forEach(item => {
+        // 2. Función para mostrar las tarjetas
+        function mostrar(equipos) {
+            const cont = document.getElementById('lista');
+            cont.innerHTML = '';
+
+            if (equipos.length === 0) {
+                cont.innerHTML = '<p class="text-center text-gray-400 py-10">No se encontraron equipos.</p>';
+                return;
+            }
+
+            equipos.forEach(item => {
                 const card = document.createElement('div');
-                card.className = "bg-white p-4 rounded-xl shadow flex justify-between items-center border-l-4 border-red-600";
+                const esListo = item.estado === 'Completado';
+                card.className = `bg-white p-5 rounded-2xl shadow-sm flex justify-between items-center transition-all active:scale-95 ${esListo ? 'card-done' : 'card-pending'}`;
+                
                 card.innerHTML = `
-                    <div>
-                        <p class="font-bold text-gray-800">${item.equipo}</p>
-                        <p class="text-[10px] text-red-600 font-bold uppercase">${item.sucursal}</p>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-gray-800 text-lg leading-tight">${item.equipo}</h3>
+                        <p class="text-[10px] font-black text-red-600 uppercase tracking-widest mt-1">${item.sucursal}</p>
                     </div>
-                    <button onclick="marcar('${item.sucursal}', ${item.fila})" class="bg-green-500 text-white px-5 py-2 rounded-lg font-bold active:scale-90 transition-transform">OK</button>
+                    <button onclick="enviarCambio('${item.sucursal}', '${item.fila}', '${item.equipo}')" 
+                            class="ml-4 ${esListo ? 'bg-green-100 text-green-600' : 'bg-red-600 text-white'} p-4 rounded-xl font-bold">
+                        ${esListo ? '<i class="fas fa-check"></i>' : 'OK'}
+                    </button>
                 `;
-                contenedor.appendChild(card);
+                cont.appendChild(card);
             });
         }
 
-        function buscar() {
-            const filtro = document.getElementById('bus').value.toLowerCase();
-            const filtrados = datosFull.filter(d => d.equipo.toLowerCase().includes(filtro) || d.sucursal.toLowerCase().includes(filtro));
-            dibujar(filtrados);
+        // 3. Buscador
+        function filtrar() {
+            const query = document.getElementById('bus').value.toLowerCase();
+            const filtrados = db.filter(e => 
+                e.equipo.toLowerCase().includes(query) || 
+                e.sucursal.toLowerCase().includes(query)
+            );
+            mostrar(filtrados);
         }
 
-        function marcar(suc, fila) {
-            const obs = prompt("¿Observaciones para este equipo?");
-            if (obs === null) return;
-            
-            alert("Enviando a Excel...");
-            fetch(`${URL_GOOGLE}?sucursal=${suc}&fila=${fila}&nota=${obs}`)
-                .then(() => {
-                    alert("¡Actualizado!");
-                    location.reload();
-                });
+        // 4. Enviar datos a Google Sheets
+        async function enviarCambio(sucursal, fila, equipo) {
+            const nota = prompt(`Mantenimiento para ${equipo}:\nEscriba una observación (opcional):`);
+            if (nota === null) return; // Si cancela el prompt
+
+            // Bloquear pantalla mientras guarda
+            document.body.style.opacity = "0.5";
+            document.body.style.pointerEvents = "none";
+
+            try {
+                const urlFinal = `${WEB_APP_URL}?sucursal=${encodeURIComponent(sucursal)}&fila=${fila}&nota=${encodeURIComponent(nota)}`;
+                await fetch(urlFinal, { method: 'GET' });
+                alert("✅ Actualizado correctamente en: " + sucursal);
+                location.reload();
+            } catch (e) {
+                alert("❌ Error al guardar. Intente de nuevo.");
+                document.body.style.opacity = "1";
+                document.body.style.pointerEvents = "auto";
+            }
         }
     </script>
 </body>
