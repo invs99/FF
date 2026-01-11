@@ -9,7 +9,6 @@
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     
     <style>
-        /* --- ESTILOS BASE --- */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f9;
@@ -25,7 +24,6 @@
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-        /* Estilo para centrar el logo */
         .header-logo-container {
             text-align: center;
             margin-bottom: 10px;
@@ -36,7 +34,7 @@
         }
         h1 {
             text-align: center;
-            color: #1a4d8c; /* Azul corporativo */
+            color: #1a4d8c; 
             border-bottom: 3px solid #f29c1f; 
             padding-bottom: 10px;
             margin-bottom: 20px;
@@ -98,7 +96,7 @@
         .btn-group {
             margin-top: 20px;
             display: flex;
-            flex-direction: column;
+            flex-direction: column; 
             gap: 10px;
         }
 
@@ -113,7 +111,6 @@
             color: white;
         }
 
-        /* Botón 1: Firmar (Azul corporativo) */
         #startSignatureBtn {
             background-color: #1a4d8c; 
         }
@@ -121,7 +118,6 @@
             background-color: #153c6e;
         }
 
-        /* Botón 2: Generar PDF con firma (Naranja corporativo) */
         #generatePdfBtn {
             background-color: #f29c1f; 
             display: none; 
@@ -130,7 +126,6 @@
             background-color: #d1871a;
         }
 
-        /* Botón 3: Generar PDF sin firma (Verde Claro) */
         #generatePdfNoSigBtn {
             background-color: #4CAF50; 
         }
@@ -138,9 +133,15 @@
             background-color: #45a049;
         }
 
-        /* Botón 4: Inicio (Celeste Claro del logo) */
+        #resetFormBtn {
+             background-color: #ff7979; 
+        }
+        #resetFormBtn:hover {
+             background-color: #fa5252;
+        }
+
         #homeBtn {
-            background-color: #00bcd4; /* Celeste Claro */
+            background-color: #00bcd4; 
         }
         #homeBtn:hover {
             background-color: #0097a7;
@@ -163,17 +164,19 @@
                 font-size: 1em;
             }
             .btn-group {
-                flex-direction: row;
+                flex-direction: row; 
                 flex-wrap: wrap;
                 justify-content: space-between;
                 gap: 15px;
             }
+            /* DISTRIBUCIÓN DE BOTONES: 5 botones en una fila, ancho igual */
             .btn-group button {
-                flex: 1 1 calc(50% - 10px); 
+                flex: 1 1 calc(20% - 12px); 
+                max-width: calc(20% - 12px);
             }
-            #generatePdfBtn, #generatePdfNoSigBtn, #homeBtn, #startSignatureBtn {
-                 flex: 1 1 calc(50% - 10px);
-                 max-width: 49%;
+            #generatePdfBtn {
+                flex: 1 1 calc(20% - 12px);
+                max-width: calc(20% - 12px);
             }
         }
         /* --- ESTILOS DE MODAL DE FIRMA --- */
@@ -223,15 +226,13 @@
             background-color: #ccc !important;
             color: #333 !important;
         }
-        /* Estilos para el botón Cancelar */
         #cancelSignatureBtn {
-            background-color: #f44336; /* Rojo */
+            background-color: #f44336; 
         }
         #cancelSignatureBtn:hover {
             background-color: #d32f2f;
         }
 
-        /* Ajuste de ancho de botones en escritorio (3 botones) */
         @media (min-width: 600px) {
             .modal-buttons {
                 justify-content: flex-start;
@@ -243,7 +244,7 @@
         }
     </style>
 </head>
-<body>
+<body oninput="saveFormData()">
 
 <div class="container">
     
@@ -259,25 +260,25 @@
         <div class="form-group">
             <div class="form-field">
                 <label for="nombre">Nombre Completo:</label>
-                <input type="text" id="nombre" name="nombre" required value="JOSE MAURICIO SHUPAN GUTIERREZ">
+                <input type="text" id="nombre" name="nombre" required placeholder="Ej: JOSE MAURICIO SHUPAN GUTIERREZ">
             </div>
             <div class="form-field">
                 <label for="usuario">Nombre de Usuario:</label>
-                <input type="text" id="usuario" name="usuario" required value="JSHUPAN">
+                <input type="text" id="usuario" name="usuario" required placeholder="Ej: JSHUPAN">
             </div>
         </div>
 
         <div class="form-group">
             <div class="form-field full-width">
                 <label for="depto">Departamento/Sucursal:</label>
-                <input type="text" id="depto" name="depto" required value="SUPERVISOR INDUSTRIA">
+                <input type="text" id="depto" name="depto" required placeholder="Ej: SUPERVISOR INDUSTRIA">
             </div>
         </div>
 
         <div class="form-group full-width">
             <label>Estado del Equipo:</label>
-            <div class="radio-group">
-                <label><input type="radio" name="estado" value="Equipo Nuevo" checked> Equipo Nuevo</label>
+            <div class="radio-group" id="estado-radio-group">
+                <label><input type="radio" name="estado" value="Equipo Nuevo"> Equipo Nuevo</label>
                 <label><input type="radio" name="estado" value="Renovación"> Renovación</label>
                 <label><input type="radio" name="estado" value="Cambio"> Cambio</label>
             </div>
@@ -287,11 +288,11 @@
         <div class="form-group">
             <div class="form-field">
                 <label for="nombreEntregador">Nombre del personal de Entrega:</label>
-                <input type="text" id="nombreEntregador" name="nombreEntregador" required value="Jonathan Alexander Navas">
+                <input type="text" id="nombreEntregador" name="nombreEntregador" required placeholder="Ej: Jonathan Alexander Navas">
             </div>
             <div class="form-field">
                 <label for="cargoEntregador">Cargo del personal de Entrega:</label>
-                <input type="text" id="cargoEntregador" name="cargoEntregador" required value="Soporte Técnico">
+                <input type="text" id="cargoEntregador" name="cargoEntregador" required placeholder="Ej: Soporte Técnico">
             </div>
         </div>
 
@@ -299,17 +300,17 @@
         <div class="form-group">
             <div class="form-field full-width">
                 <label for="marcaModeloHW">Marca y Modelo de la Laptop:</label>
-                <input type="text" id="marcaModeloHW" name="marcaModeloHW" value="Lenovo T14 Gen 4">
+                <input type="text" id="marcaModeloHW" name="marcaModeloHW" placeholder="Ej: Lenovo T14 Gen 4">
             </div>
         </div>
         <div class="form-group">
             <div class="form-field">
                 <label for="caracteristicas">Características (Ej: Procesador, RAM, Disco):</label>
-                <textarea id="caracteristicas" name="caracteristicas" rows="3">Intel Core ultra 5, 1.3 GHz, 32GB RAM, 500 GB SSD</textarea>
+                <textarea id="caracteristicas" name="caracteristicas" rows="3" placeholder="Ej: Intel Core ultra 5, 1.3 GHz, 32GB RAM, 500 GB SSD"></textarea>
             </div>
             <div class="form-field">
                 <label for="serie">No. de Serie / IMEI:</label>
-                <input type="text" id="serie" name="serie" value="PF-5M9BWP">
+                <input type="text" id="serie" name="serie" placeholder="Ej: PF-5M9BWP">
             </div>
         </div>
 
@@ -317,18 +318,18 @@
         <div class="form-group">
             <div class="form-field">
                 <label for="cargador">Cargador (Marca/Especificación):</label>
-                <input type="text" id="cargador" name="cargador" value="Lenovo ADLX65YSDC2A (20v-3.25a, 65w)">
+                <input type="text" id="cargador" name="cargador" placeholder="Ej: Lenovo ADLX65YSDC2A (20v-3.25a, 65w)">
             </div>
             <div class="form-field">
                 <label for="cableSeguridad">Cable de Seguridad:</label>
-                <input type="text" id="cableSeguridad" name="cableSeguridad" value="Lenovo nano">
+                <input type="text" id="cableSeguridad" name="cableSeguridad" placeholder="Ej: Lenovo nano">
             </div>
         </div>
 
         <h2>Registro de Software Instalado</h2>
         <div class="form-group full-width">
             <label>Programas Autorizados (Seleccionar los instalados):</label>
-            <div class="software-list">
+            <div class="software-list" id="software-checkboxes">
                 <div><label><input type="checkbox" name="software" value="Windows 11" checked> Windows 11</label></div>
                 <div><label><input type="checkbox" name="software" value="Office 365" checked> Office 365</label></div>
                 <div><label><input type="checkbox" name="software" value="Google Chrome" checked> Google Chrome</label></div>
@@ -346,11 +347,9 @@
 
         <div class="btn-group">
             <button type="button" id="startSignatureBtn" class="btn-base">Realizar firmas</button>
-            
             <button type="button" id="generatePdfBtn" class="btn-base">Generar Documento de Entrega (PDF)</button>
-
             <button type="button" id="generatePdfNoSigBtn" class="btn-base">Generar Documento sin firma</button>
-            
+            <button type="button" id="resetFormBtn" class="btn-base">Nuevo Reporte</button>
             <button type="button" id="homeBtn" class="btn-base">Inicio</button>
         </div>
     </form>
@@ -363,7 +362,7 @@
         <div class="modal-buttons">
             <button type="button" class="clear-button" id="clearSignatureBtn">Limpiar</button>
             <button type="button" id="confirmSignatureBtn">Confirmar y Continuar</button>
-             <button type="button" class="btn-base" id="cancelSignatureBtn">Cancelar</button>
+            <button type="button" class="btn-base" id="cancelSignatureBtn">Cancelar</button>
         </div>
         <p style="font-size: 0.8em; color: #555; margin-top: 10px;">* Utilice el mouse o la pantalla táctil para firmar.</p>
     </div>
@@ -372,18 +371,19 @@
 <script>
     window.jsPDF = window.jspdf.jsPDF;
     
-    // URL del logo (Se mantiene la constante)
     const LOGO_URL = 'https://raw.githubusercontent.com/invs99/FF/SEGUNDA/freund1.png';
     const LOGO_WIDTH = 35; 
     const LOGO_HEIGHT = 15; 
+    const STORAGE_KEY = 'deliveryFormData';
 
-    // --- VARIABLES DE FIRMA DIGITAL ---
     let delivererSignatureData = null;
     let receiverSignatureData = null;
+    let delivererAspectRatio = null; 
+    let receiverAspectRatio = null;  
+
     let signaturePad = null;
     let currentSigner = 'deliverer'; 
 
-    // Elementos del DOM
     const signatureModal = document.getElementById('signatureModal');
     const signatureCanvas = document.getElementById('signature-canvas');
     const signerNameElement = document.getElementById('signerName');
@@ -394,29 +394,143 @@
     const generatePdfBtn = document.getElementById('generatePdfBtn');
     const generatePdfNoSigBtn = document.getElementById('generatePdfNoSigBtn');
     const homeBtn = document.getElementById('homeBtn');
-    
-    // Función para convertir la URL de la imagen a Base64
-    function urlToBase64(url, callback) {
+    const resetFormBtn = document.getElementById('resetFormBtn');
+
+    document.addEventListener('DOMContentLoaded', loadFormData);
+
+    // FUNCIÓN: Carga la imagen del logo en Base64 de forma asíncrona
+    function urlToBase64(url, callback, includeSignatures) {
         var xhr = new XMLHttpRequest();
         xhr.onload = function() {
             var reader = new FileReader();
             reader.onloadend = function() {
-                callback(reader.result);
+                callback(reader.result, includeSignatures);
             }
-            xhr.response.type = 'image/png';
             reader.readAsDataURL(xhr.response);
         };
         xhr.onerror = function() {
-            console.error("Error al cargar la imagen del logo.");
-            callback(null); 
+            console.error("Error al cargar la imagen del logo. Generando PDF sin logo.");
+            callback(null, includeSignatures); 
         };
         xhr.open('GET', url);
         xhr.responseType = 'blob';
         xhr.send();
     }
-    
-    // --- LÓGICA DE FIRMA DIGITAL ---
 
+    // FUNCIÓN: Guarda los datos del formulario en Local Storage
+    function saveFormData() {
+        const form = document.getElementById('deliveryForm');
+        const data = {};
+        const elements = form.elements;
+        
+        for (let i = 0; i < elements.length; i++) {
+            const element = elements[i];
+            if (element.name) {
+                if (element.type === 'radio' || element.type === 'checkbox') {
+                    if (element.checked) {
+                        if (!data[element.name]) {
+                            data[element.name] = [];
+                        }
+                        data[element.name].push(element.value);
+                    }
+                } else {
+                    data[element.name] = element.value;
+                }
+            }
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        
+        if (delivererSignatureData || receiverSignatureData) {
+             localStorage.setItem('delivererSignature', delivererSignatureData);
+             localStorage.setItem('receiverSignature', receiverSignatureData);
+             localStorage.setItem('delivererAspectRatio', delivererAspectRatio); 
+             localStorage.setItem('receiverAspectRatio', receiverAspectRatio);   
+             localStorage.setItem('signaturesCaptured', 'true');
+        } else {
+             localStorage.removeItem('signaturesCaptured');
+             localStorage.removeItem('delivererSignature');
+             localStorage.removeItem('receiverSignature');
+             localStorage.removeItem('delivererAspectRatio');
+             localStorage.removeItem('receiverAspectRatio');
+        }
+    }
+
+    // FUNCIÓN: Carga los datos del formulario de Local Storage al cargar la página
+    function loadFormData() {
+        const storedData = localStorage.getItem(STORAGE_KEY);
+        if (storedData) {
+            const data = JSON.parse(storedData);
+            const form = document.getElementById('deliveryForm');
+            const elements = form.elements;
+
+            for (const key in data) {
+                const element = elements[key];
+                if (element) {
+                    if (Array.isArray(data[key])) {
+                        elements[key].forEach(input => {
+                            input.checked = data[key].includes(input.value);
+                        });
+                    } else if (element.type === 'radio') {
+                        elements[key].forEach(input => {
+                            if (input.value === data[key]) {
+                                input.checked = true;
+                            }
+                        });
+                    } else {
+                        element.value = data[key];
+                    }
+                }
+            }
+        }
+        
+        // Carga las firmas, ratios y ajusta la visibilidad de los botones
+        const signaturesCaptured = localStorage.getItem('signaturesCaptured');
+        if (signaturesCaptured === 'true') {
+             delivererSignatureData = localStorage.getItem('delivererSignature');
+             receiverSignatureData = localStorage.getItem('receiverSignature');
+             delivererAspectRatio = parseFloat(localStorage.getItem('delivererAspectRatio'));
+             receiverAspectRatio = parseFloat(localStorage.getItem('receiverAspectRatio'));
+             
+             startSignatureBtn.style.display = 'none'; 
+             generatePdfBtn.style.display = 'block'; 
+        } else {
+             startSignatureBtn.style.display = 'block'; 
+             generatePdfBtn.style.display = 'none'; 
+        }
+    }
+
+    // FUNCIÓN: Resetea el formulario y el Local Storage
+    function resetForm() {
+        const form = document.getElementById('deliveryForm');
+        form.reset(); 
+        
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem('signaturesCaptured');
+        localStorage.removeItem('delivererSignature');
+        localStorage.removeItem('receiverSignature');
+        localStorage.removeItem('delivererAspectRatio');
+        localStorage.removeItem('receiverAspectRatio');
+
+        delivererSignatureData = null;
+        receiverSignatureData = null;
+        delivererAspectRatio = null; 
+        receiverAspectRatio = null;  
+
+        currentSigner = 'deliverer';
+        startSignatureBtn.style.display = 'block'; 
+        generatePdfBtn.style.display = 'none';
+
+        const softwareCheckboxes = document.querySelectorAll('#software-checkboxes input[type="checkbox"]');
+        softwareCheckboxes.forEach(cb => {
+            if (cb.parentElement.innerHTML.includes('checked')) { 
+                cb.checked = true;
+            }
+        });
+        
+        alert("El formulario ha sido limpiado y la información guardada ha sido borrada.");
+    }
+
+    // FUNCIÓN: Ajusta el tamaño del lienzo de firma
     function resizeAndCalibrateCanvas() {
         const ratio = Math.max(window.devicePixelRatio || 1, 1);
         
@@ -435,10 +549,11 @@
         signaturePad.clear();
     }
 
+    // FUNCIÓN: Muestra el modal de firma
     function showSignatureModal() {
-        const nombreEmpleado = document.getElementById('nombre').value;
-        const nombreEntregador = document.getElementById('nombreEntregador').value;
-        const cargoEntregador = document.getElementById('cargoEntregador').value;
+        const nombreEmpleado = document.getElementById('nombre').value || document.getElementById('nombre').placeholder || "Receptor";
+        const nombreEntregador = document.getElementById('nombreEntregador').value || document.getElementById('nombreEntregador').placeholder || "Personal de Entrega";
+        const cargoEntregador = document.getElementById('cargoEntregador').value || document.getElementById('cargoEntregador').placeholder || "Soporte";
 
         if (currentSigner === 'deliverer') {
             signerNameElement.textContent = `Firma del personal de Entrega (${nombreEntregador} - ${cargoEntregador})`;
@@ -453,71 +568,81 @@
         setTimeout(resizeAndCalibrateCanvas, 100); 
     }
 
+    // FUNCIÓN: Cancela el proceso de firma y borra los datos temporales (usada también para resetear post-generación)
     function cancelSignatureProcess() {
-        // Restablece las variables de firma
         delivererSignatureData = null;
         receiverSignatureData = null;
+        delivererAspectRatio = null; 
+        receiverAspectRatio = null; 
         currentSigner = 'deliverer';
         
-        // Oculta el modal
         signatureModal.style.display = 'none';
         
-        // Asegura que solo se muestren los botones de inicio de firma
         startSignatureBtn.style.display = 'block'; 
-        generatePdfBtn.style.display = 'none'; 
+        generatePdfBtn.style.display = 'none';
+        
+        localStorage.removeItem('signaturesCaptured');
+        localStorage.removeItem('delivererSignature');
+        localStorage.removeItem('receiverSignature');
+        localStorage.removeItem('delivererAspectRatio');
+        localStorage.removeItem('receiverAspectRatio');
     }
 
+    // FUNCIÓN: Confirma la firma en el modal
     function confirmSignature() {
         if (!signaturePad || signaturePad.isEmpty()) {
             alert("Por favor, escriba su firma antes de confirmar.");
             return;
         }
         
+        // CAMBIO CLAVE: Revertido a JPEG (para fondo blanco)
         const signatureData = signaturePad.toDataURL('image/jpeg', 0.8); 
+        const aspectRatio = signatureCanvas.width / signatureCanvas.height; 
+        
         signatureModal.style.display = 'none'; 
 
         if (currentSigner === 'deliverer') {
             delivererSignatureData = signatureData;
+            delivererAspectRatio = aspectRatio; 
             currentSigner = 'receiver';
             showSignatureModal(); 
         } else if (currentSigner === 'receiver') {
             receiverSignatureData = signatureData;
+            receiverAspectRatio = aspectRatio; 
             
             startSignatureBtn.style.display = 'none'; 
             generatePdfBtn.style.display = 'block'; 
-            alert("¡Firmas capturadas con éxito! Ahora puede generar el PDF.");
+            
+            saveFormData(); 
         }
     }
 
-    // --- EVENT LISTENERS ---
-    
     startSignatureBtn.addEventListener('click', function() {
         currentSigner = 'deliverer';
-        delivererSignatureData = null; // Limpiar datos de intentos anteriores
+        delivererSignatureData = null; 
         receiverSignatureData = null;
+        delivererAspectRatio = null; 
+        receiverAspectRatio = null;  
         showSignatureModal();
     });
 
     generatePdfBtn.addEventListener('click', function() {
         if (delivererSignatureData && receiverSignatureData) {
-            urlToBase64(LOGO_URL, function(logoData) {
-                generatePDF(logoData, true); // Incluye firmas
-            });
+            urlToBase64(LOGO_URL, generatePDF, true); 
         } else {
             alert("Debe capturar ambas firmas digitales antes de usar este botón.");
         }
     });
 
     generatePdfNoSigBtn.addEventListener('click', function() {
-        urlToBase64(LOGO_URL, function(logoData) {
-            generatePDF(logoData, false); // NO incluye firmas
-        });
+        urlToBase64(LOGO_URL, generatePDF, false); 
     });
 
+    resetFormBtn.addEventListener('click', resetForm);
+    
     homeBtn.addEventListener('click', function() {
         window.location.href = 'https://invs99.github.io/FF/index.html';
     });
-
 
     clearSignatureBtn.addEventListener('click', () => {
         if (signaturePad) {
@@ -526,218 +651,232 @@
     });
 
     confirmSignatureBtn.addEventListener('click', confirmSignature);
-    
-    // NUEVO EVENTO PARA CANCELAR
     cancelSignatureBtn.addEventListener('click', cancelSignatureProcess);
 
 
-    // --- FUNCIÓN PRINCIPAL DE GENERACIÓN DE PDF (Acepta 'includeSignatures') ---
     function generatePDF(logoData, includeSignatures = true) {
-        const doc = new jsPDF('p', 'mm', 'letter'); 
-        const form = document.getElementById('deliveryForm');
+        try {
+            const doc = new jsPDF('p', 'mm', 'letter'); 
+            const form = document.getElementById('deliveryForm');
 
-        // --- 1. CAPTURA DE DATOS DEL FORMULARIO ---
-        const nombre = form.elements['nombre'].value;
-        const usuario = form.elements['usuario'].value;
-        const depto = form.elements['depto'].value;
-        const estado = form.elements['estado'].value;
-        const marcaModeloHW = form.elements['marcaModeloHW'].value; 
-        const caracteristicas = form.elements['caracteristicas'].value.replace(/\n/g, ', ');
-        const serie = form.elements['serie'].value;
-        const cargador = form.elements['cargador'].value;
-        const cableSeguridad = form.elements['cableSeguridad'].value;
-        
-        const nombreEntregador = form.elements['nombreEntregador'].value;
-        const cargoEntregador = form.elements['cargoEntregador'].value;
+            // Intenta obtener los valores del formulario o usa placeholders/valores predeterminados
+            const nombre = form.elements['nombre'].value || form.elements['nombre'].placeholder || "Campo Vacío";
+            const usuario = form.elements['usuario'].value || form.elements['usuario'].placeholder || "Campo Vacío";
+            const depto = form.elements['depto'].value || form.elements['depto'].placeholder || "Campo Vacío";
+            const estadoElement = form.querySelector('input[name="estado"]:checked');
+            const estado = estadoElement ? estadoElement.value : "No especificado";
+            const marcaModeloHW = form.elements['marcaModeloHW'].value || form.elements['marcaModeloHW'].placeholder || "Campo Vacío"; 
+            const caracteristicas = (form.elements['caracteristicas'].value || form.elements['caracteristicas'].placeholder || "Campo Vacío").replace(/\n/g, ', ');
+            const serie = form.elements['serie'].value || form.elements['serie'].placeholder || "Campo Vacío";
+            const cargador = form.elements['cargador'].value || form.elements['cargador'].placeholder || "Campo Vacío";
+            const cableSeguridad = form.elements['cableSeguridad'].value || form.elements['cableSeguridad'].placeholder || "Campo Vacío";
+            
+            const nombreEntregador = form.elements['nombreEntregador'].value || form.elements['nombreEntregador'].placeholder || "Campo Vacío";
+            const cargoEntregador = form.elements['cargoEntregador'].value || form.elements['cargoEntregador'].placeholder || "Campo Vacío";
 
-        const today = new Date();
-        const fechaEntrega = today.toLocaleDateString('es-SV', { day: 'numeric', month: 'long', year: 'numeric' });
-        const todayShort = today.toLocaleDateString('es-SV', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            const today = new Date();
+            const fechaEntrega = today.toLocaleDateString('es-SV', { day: 'numeric', month: 'long', year: 'numeric' });
+            const todayShort = today.toLocaleDateString('es-SV', { year: 'numeric', month: '2-digit', day: '2-digit' });
 
-        const softwareList = Array.from(form.querySelectorAll('input[name="software"]:checked'))
-                                       .map(cb => cb.value);
-        
-        const half = Math.ceil(softwareList.length / 2);
-        const softwareCol1 = softwareList.slice(0, half);
-        const softwareCol2 = softwareList.slice(half);
+            const softwareList = Array.from(form.querySelectorAll('input[name="software"]:checked'))
+                                           .map(cb => cb.value);
+            
+            const half = Math.ceil(softwareList.length / 2);
+            const softwareCol1 = softwareList.slice(0, half);
+            const softwareCol2 = softwareList.slice(half);
 
-        const softwareTableData = [];
-        for (let i = 0; i < half; i++) {
-            softwareTableData.push([
-                softwareCol1[i] || '',
-                softwareCol2[i] || ''
-            ]);
-        }
-        
-        // --- 2. ENCABEZADO, LOGO Y TÍTULOS ---
-        
-        if (logoData) {
-            doc.addImage(logoData, 'PNG', 14, 10, LOGO_WIDTH, LOGO_HEIGHT); 
-        }
-        
-        // Encabezado Superior Derecho (Ajustado en v23.0)
-        const newFontSize = 8 * 0.85; 
-        const startYOffset = 3.5; 
-        const rightMargin = 205; 
-        let headerY = 10 + startYOffset;
-        
-        doc.setFontSize(newFontSize); 
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(0, 0, 0); 
-        
-        doc.text('Tiendas 01.001.0001.0001', rightMargin, headerY, { align: 'right' });
-        headerY += 3;
-        doc.text('Redes Soporte y', rightMargin, headerY, { align: 'right' });
-        headerY += 3;
-        doc.text('Telecomunicaciones', rightMargin, headerY, { align: 'right' });
-        headerY += 4; 
-        doc.text(`Fecha de Reporte: ${todayShort}`, rightMargin, headerY, { align: 'right' }); 
-
-        // Título Central
-        const titleX = 107.95; 
-        const titleY = 20; 
-        
-        doc.setFontSize(12); 
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(26, 77, 140); 
-        doc.text('REGISTRO DE ENTREGA DE EQUIPO DE OFICINA', titleX, titleY, { align: 'center' }); 
-        
-        doc.text('HARDWARE Y SOFTWARE', titleX, titleY + 4, { align: 'center' }); 
-        
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(10);
-        
-        let currentY = titleY + 8; // Posición de la tabla después del espacio en blanco
-
-        // --- 3. TABLA DE INFORMACIÓN DEL USUARIO ---
-        doc.autoTable({
-            startY: currentY + 3, 
-            head: [['Campo', 'Detalle']],
-            body: [
-                ['Nombre Completo (Receptor):', nombre],
-                ['Nombre de Usuario (Login):', usuario],
-                ['Departamento / Sucursal (Receptor):', depto],
-                ['Nombre Completo (Entrega):', nombreEntregador], 
-                ['Cargo (Entrega):', cargoEntregador], 
-                ['Fecha de Entrega:', fechaEntrega], 
-                ['Estado del Equipo:', estado],
-                ['Asunto:', 'Entrega de Hardware y Software AUTORIZADO.'],
-            ],
-            theme: 'striped',
-            headStyles: { fillColor: [242, 156, 31], textColor: 255 }, 
-            styles: { fontSize: 9, cellPadding: 1.5, lineColor: 150, lineWidth: 0.1 }
-        });
-
-        let finalY = doc.autoTable.previous.finalY + 4; 
-
-        // --- 4. REGISTRO DE HARDWARE ---
-        doc.setFontSize(12); 
-        doc.setFont(undefined, 'bold');
-        doc.text('Registro de Hardware Entregado', 14, finalY);
-        finalY += 3;
-
-        const hardwareData = [
-            ['Tipo de Hardware', 'Laptop'], 
-            ['Marca y Modelo', marcaModeloHW], 
-            ['Características', caracteristicas],
-            ['No. de Serie / IMEI', serie],
-            ['Cargador', cargador],
-            ['Cable de Seguridad', cableSeguridad]
-        ];
-        
-        doc.autoTable({
-            startY: finalY + 3,
-            head: [['Unidad', 'Detalle']],
-            body: hardwareData,
-            theme: 'grid',
-            headStyles: { fillColor: [26, 77, 140], textColor: 255 }, 
-            styles: { fontSize: 9, cellPadding: 1.5, lineColor: 150, lineWidth: 0.1 }
-        });
-
-        finalY = doc.autoTable.previous.finalY + 4;
-
-        // --- 5. REGISTRO DE SOFTWARE (EN TABLA) ---
-        doc.setFontSize(12);
-        doc.setFont(undefined, 'bold');
-        doc.text('Registro de Software Instalado', 14, finalY);
-        finalY += 3;
-
-        doc.autoTable({
-            startY: finalY + 3,
-            head: [['Programas Autorizados', '']],
-            body: softwareTableData,
-            theme: 'grid',
-            headStyles: { fillColor: [150, 150, 150], textColor: 255 }, 
-            styles: { fontSize: 8, cellPadding: 1.5, lineColor: 150, lineWidth: 0.1 },
-            // *** CAMBIO REALIZADO: SE ELIMINARON LOS ESTILOS DE ANCHO DE COLUMNA ***
-            // La tabla ahora se expandirá al ancho completo del documento, igual que las otras.
-        });
-
-        finalY = doc.autoTable.previous.finalY + 4;
-
-
-        // --- 6. DECLARACIÓN DE RESPONSABILIDAD ---
-        const policyText = "Por medio del presente le estamos entregando una computadora con su software previamente instalado, y que cumple con las regulaciones de protección Intelectual. El uso o instalación de otro software que no sea el autorizado por la Gerencia General, corren bajo su propio riesgo, por lo tanto la instalación de software no autorizado queda terminantemente prohibido y en el caso de haber una revisión de parte de la fiscalía será su responsabilidad responder ante cualquier acción legal. Además la Gerencia General deducirá responsabilidades por la instalación de software no autorizado por la empresa y pérdida o daño que resulten por el uso inadecuado del equipo que se le está entregando.";
-        
-        doc.setFontSize(8); 
-        doc.setFont(undefined, 'bold');
-        doc.text("DECLARACIÓN DE POLÍTICA DE USO:", 14, finalY);
-        finalY += 1;
-        
-        doc.setFont(undefined, 'normal');
-        const policyLines = doc.splitTextToSize(policyText, 185); 
-        doc.text(policyLines, 14, finalY + 4);
-        
-        finalY += (policyLines.length * 3.5) + 10; 
-
-
-        // --- 7. ESPACIOS DE FIRMA (POSICIONADO AL PIE DE PÁGINA) ---
-        const fixedSignatureY = 245; 
-        const signatureImageY = 248; 
-        const signatureImageW = 85; 
-        const signatureImageH = 12; 
-        const lineY = 260; 
-
-        doc.setFontSize(10);
-        doc.setFont(undefined, 'bold');
-        doc.text('Atentamente,', 25, fixedSignatureY);
-        doc.text('Recibí Conforme,', 125, fixedSignatureY);
-        
-        // CONDICIONAL PARA INSERTAR FIRMAS DIGITALES
-        if (includeSignatures) { 
-            if (delivererSignatureData) {
-                doc.addImage(delivererSignatureData, 'JPEG', 14, signatureImageY, signatureImageW, signatureImageH);
+            const softwareTableData = [];
+            for (let i = 0; i < half; i++) {
+                softwareTableData.push([
+                    softwareCol1[i] || '',
+                    softwareCol2[i] || ''
+                ]);
             }
             
-            if (receiverSignatureData) {
-                doc.addImage(receiverSignatureData, 'JPEG', 114, signatureImageY, signatureImageW, signatureImageH);
+            if (logoData) {
+                doc.addImage(logoData, 'PNG', 14, 10, LOGO_WIDTH, LOGO_HEIGHT); 
             }
+            
+            const newFontSize = 8 * 0.85; 
+            const startYOffset = 3.5; 
+            const rightMargin = 205; 
+            let headerY = 10 + startYOffset;
+            
+            doc.setFontSize(newFontSize); 
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(0, 0, 0); 
+            
+            doc.text('Tiendas 01.001.0001.0001', rightMargin, headerY, { align: 'right' });
+            headerY += 3;
+            doc.text('Redes Soporte y', rightMargin, headerY, { align: 'right' });
+            headerY += 3;
+            doc.text('Telecomunicaciones', rightMargin, headerY, { align: 'right' });
+            headerY += 4; 
+            doc.text(`Fecha de Reporte: ${todayShort}`, rightMargin, headerY, { align: 'right' }); 
+
+            const titleX = 107.95; 
+            const titleY = 20; 
+            
+            doc.setFontSize(12); 
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(26, 77, 140); 
+            doc.text('REGISTRO DE ENTREGA DE EQUIPO DE OFICINA', titleX, titleY, { align: 'center' }); 
+            
+            doc.text('HARDWARE Y SOFTWARE', titleX, titleY + 4, { align: 'center' }); 
+            
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(10);
+            
+            let currentY = titleY + 8; 
+
+            doc.autoTable({
+                startY: currentY + 3, 
+                head: [['Campo', 'Detalle']],
+                body: [
+                    ['Nombre Completo (Receptor):', nombre],
+                    ['Nombre de Usuario (Login):', usuario],
+                    ['Departamento / Sucursal (Receptor):', depto],
+                    ['Nombre Completo (Entrega):', nombreEntregador], 
+                    ['Cargo (Entrega):', cargoEntregador], 
+                    ['Fecha de Entrega:', fechaEntrega], 
+                    ['Estado del Equipo:', estado],
+                    ['Asunto:', 'Entrega de Hardware y Software AUTORIZADO.'],
+                ],
+                theme: 'striped',
+                headStyles: { fillColor: [242, 156, 31], textColor: 255 }, 
+                styles: { fontSize: 9, cellPadding: 1.5, lineColor: 150, lineWidth: 0.1 }
+            });
+
+            let finalY = doc.autoTable.previous.finalY + 4; 
+
+            doc.setFontSize(12); 
+            doc.setFont(undefined, 'bold');
+            doc.text('Registro de Hardware Entregado', 14, finalY);
+            finalY += 3;
+
+            const hardwareData = [
+                ['Tipo de Hardware', 'Laptop'], 
+                ['Marca y Modelo', marcaModeloHW], 
+                ['Características', caracteristicas],
+                ['No. de Serie / IMEI', serie],
+                ['Cargador', cargador],
+                ['Cable de Seguridad', cableSeguridad]
+            ];
+            
+            doc.autoTable({
+                startY: finalY + 3,
+                head: [['Unidad', 'Detalle']],
+                body: hardwareData,
+                theme: 'grid',
+                headStyles: { fillColor: [26, 77, 140], textColor: 255 }, 
+                styles: { fontSize: 9, cellPadding: 1.5, lineColor: 150, lineWidth: 0.1 }
+            });
+
+            finalY = doc.autoTable.previous.finalY + 4;
+
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text('Registro de Software Instalado', 14, finalY);
+            finalY += 3;
+
+            doc.autoTable({
+                startY: finalY + 3,
+                head: [['Programas Autorizados', '']],
+                body: softwareTableData,
+                theme: 'grid',
+                headStyles: { fillColor: [150, 150, 150], textColor: 255 }, 
+                styles: { fontSize: 8, cellPadding: 1.5, lineColor: 150, lineWidth: 0.1 },
+            });
+
+            finalY = doc.autoTable.previous.finalY + 4;
+
+            const policyText = "Por medio del presente le estamos entregando una computadora con su software previamente instalado, y que cumple con las regulaciones de protección Intelectual. El uso o instalación de otro software que no sea el autorizado por la Gerencia General, corren bajo su propio riesgo, por lo tanto la instalación de software no autorizado queda terminantemente prohibido y en el caso de haber una revisión de parte de la fiscalía será su responsabilidad responder ante cualquier acción legal. Además la Gerencia General deducirá responsabilidades por la instalación de software no autorizado por la empresa y pérdida o daño que resulten por el uso inadecuado del equipo que se le está entregando.";
+            
+            doc.setFontSize(8); 
+            doc.setFont(undefined, 'bold');
+            doc.text("DECLARACIÓN DE POLÍTICA DE USO:", 14, finalY);
+            finalY += 1;
+            
+            doc.setFont(undefined, 'normal');
+            const policyLines = doc.splitTextToSize(policyText, 185); 
+            doc.text(policyLines, 14, finalY + 4);
+            
+            finalY += (policyLines.length * 3.5) + 10; 
+
+            // CAMBIO CLAVE: Texto "Atentamente/Recibí Conforme" sube de 245 a 242
+            const fixedSignatureY = 242; 
+            const lineY = 260; 
+            
+            // CAMBIO CLAVE: Reducir la altura máxima de 16mm a 15mm
+            const signatureImageH_MAX = 15; 
+            const maxW = 85; 
+
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'bold');
+            doc.text('Atentamente,', 25, fixedSignatureY);
+            doc.text('Recibí Conforme,', 125, fixedSignatureY);
+            
+            if (includeSignatures) { 
+                // Firma del Entregador
+                if (delivererSignatureData && delivererAspectRatio) {
+                    const proportionalW = signatureImageH_MAX * delivererAspectRatio;
+                    const finalW = Math.min(proportionalW, maxW);
+                    const xOffset = (maxW - finalW) / 2;
+                    
+                    // CAMBIO CLAVE: Usar 'JPEG'
+                    doc.addImage(
+                        delivererSignatureData, 
+                        'JPEG', 
+                        14 + xOffset, 
+                        lineY - signatureImageH_MAX,
+                        finalW, 
+                        signatureImageH_MAX
+                    ); 
+                }
+                
+                // Firma del Receptor
+                if (receiverSignatureData && receiverAspectRatio) {
+                    const proportionalW = signatureImageH_MAX * receiverAspectRatio;
+                    const finalW = Math.min(proportionalW, maxW);
+                    const xOffset = (maxW - finalW) / 2;
+
+                    // CAMBIO CLAVE: Usar 'JPEG'
+                    doc.addImage(
+                        receiverSignatureData, 
+                        'JPEG', 
+                        114 + xOffset, 
+                        lineY - signatureImageH_MAX,
+                        finalW, 
+                        signatureImageH_MAX
+                    );
+                }
+            }
+
+            doc.setLineWidth(0.5);
+            doc.line(14, lineY, 99, lineY); 
+            doc.line(114, lineY, 199, lineY);
+
+            let nameY = lineY + 5;
+
+            doc.setFont(undefined, 'normal');
+            doc.text(nombreEntregador, 20, nameY); 
+            doc.text(nombre, 120, nameY); 
+            nameY += 5;
+
+            doc.text(`Departamento: ${cargoEntregador}`, 20, nameY); 
+            doc.text(`Departamento: ${depto}`, 120, nameY); 
+
+            doc.save(`Registro_Entrega_${usuario}_${todayShort}${includeSignatures ? '' : '_SinFirma'}.pdf`);
+            
+            // Se ejecuta la limpieza y el reinicio de botones sin mostrar ninguna alerta.
+            cancelSignatureProcess();
+            
+
+        } catch (error) {
+            console.error("Error al generar el PDF:", error);
+            // Mensaje de error solo si la generación falla
+            alert("¡ERROR al generar el PDF! Posiblemente un problema interno. Por favor, asegúrate de que todos los campos requeridos estén llenos y de haber capturado ambas firmas.");
         }
-
-        // 2. Dibujar líneas de separación 
-        doc.setLineWidth(0.5);
-        doc.line(14, lineY, 99, lineY); 
-        doc.line(114, lineY, 199, lineY);
-
-        // 3. Colocar Nombres y Títulos (Usando las variables de input)
-        let nameY = lineY + 5;
-
-        // Nombre personal de Entrega
-        doc.setFont(undefined, 'normal');
-        doc.text(nombreEntregador, 20, nameY); 
-        // Nombre Receptor
-        doc.text(nombre, 120, nameY); 
-        nameY += 5;
-
-        // Entregador: "Departamento: [Cargo]"
-        doc.text(`Departamento: ${cargoEntregador}`, 20, nameY); 
-        
-        // Receptor: "Departamento: [Depto]"
-        doc.text(`Departamento: ${depto}`, 120, nameY); 
-
-
-        // --- 8. GUARDAR PDF ---
-        doc.save(`Registro_Entrega_${usuario}_${todayShort}${includeSignatures ? '' : '_SinFirma'}.pdf`);
     }
 </script>
 
