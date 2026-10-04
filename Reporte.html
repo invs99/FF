@@ -45,6 +45,7 @@
             width: 100%;
             border-radius: 5px;
             display: none;
+            background: #000;
         }
 
         .camera-controls {
@@ -165,7 +166,8 @@
                 Tomar Foto para Evidencia
             </h3>
 
-            <div class="relative">
+            <div class="relative bg-black rounded-md overflow-hidden">
+
                 <video id="cameraVideo"
                     class="camera-video"
                     autoplay
@@ -173,6 +175,12 @@
                 </video>
 
                 <canvas id="cameraCanvas" class="hidden"></canvas>
+
+                <!-- PREVIA DE FOTO -->
+                <img id="cameraPreview"
+                    class="hidden w-full rounded-md"
+                    alt="Vista previa de la foto">
+
             </div>
 
             <div class="camera-controls">
@@ -442,7 +450,8 @@
 
                             const tiffStart = offset + 12;
 
-                            const little = view.getUint16(tiffStart, false) === 0x4949;
+                            const little =
+                                view.getUint16(tiffStart, false) === 0x4949;
 
                             const firstIFDOffset =
                                 view.getUint32(tiffStart + 4, little);
@@ -462,7 +471,12 @@
 
                                 if (entryOffset + 12 > length) break;
 
-                                if (view.getUint16(entryOffset, little) === 0x0112) {
+                                if (
+                                    view.getUint16(
+                                        entryOffset,
+                                        little
+                                    ) === 0x0112
+                                ) {
 
                                     resolve(
                                         view.getUint16(
@@ -496,7 +510,10 @@
     }
 
 
-    function fixOrientationResizeAndCompress(imageURL, orientation = 1) {
+    function fixOrientationResizeAndCompress(
+        imageURL,
+        orientation = 1
+    ) {
 
         return new Promise(resolve => {
 
@@ -509,13 +526,20 @@
                 let width = img.width;
                 let height = img.height;
 
-                if (width > MAX_WIDTH || height > MAX_WIDTH) {
+                if (
+                    width > MAX_WIDTH ||
+                    height > MAX_WIDTH
+                ) {
 
                     const scale =
-                        MAX_WIDTH / Math.max(width, height);
+                        MAX_WIDTH /
+                        Math.max(width, height);
 
-                    width = Math.round(width * scale);
-                    height = Math.round(height * scale);
+                    width =
+                        Math.round(width * scale);
+
+                    height =
+                        Math.round(height * scale);
                 }
 
                 const canvas =
@@ -524,7 +548,10 @@
                 const ctx =
                     canvas.getContext('2d');
 
-                if (orientation >= 5 && orientation <= 8) {
+                if (
+                    orientation >= 5 &&
+                    orientation <= 8
+                ) {
 
                     canvas.width = height;
                     canvas.height = width;
@@ -590,24 +617,33 @@
                 );
             };
 
+            img.onerror = () => resolve(imageURL);
+
             img.src = imageURL;
 
         });
     }
 
 
-    async function processUploadedFile(file, elementId) {
+    async function processUploadedFile(
+        file,
+        elementId
+    ) {
 
         if (!file.type.startsWith('image/')) {
+
             showMessage(
                 'Selecciona un archivo de imagen.',
                 'error'
             );
+
             return;
         }
 
         const element =
-            reportElements.find(e => e.id === elementId);
+            reportElements.find(
+                e => e.id === elementId
+            );
 
         if (!element) return;
 
@@ -623,28 +659,41 @@
                 orientation
             );
 
-        element.image = processedURL;
+        element.image =
+            processedURL;
 
         const elementDiv =
             document.getElementById(elementId);
 
-        const previewDiv =
-            elementDiv.querySelector(
-                `[data-preview-id="${elementId}"]`
-            );
+        if (elementDiv) {
 
-        previewDiv.classList.remove('hidden');
+            const previewDiv =
+                elementDiv.querySelector(
+                    `[data-preview-id="${elementId}"]`
+                );
 
-        previewDiv.querySelector('img').src =
-            processedURL;
+            if (previewDiv) {
 
-        const fileInput =
-            elementDiv.querySelector(
-                'input[data-type="image"]'
-            );
+                previewDiv.classList.remove(
+                    'hidden'
+                );
 
-        if (fileInput) {
-            fileInput.value = '';
+                const img =
+                    previewDiv.querySelector('img');
+
+                if (img) {
+                    img.src = processedURL;
+                }
+            }
+
+            const fileInput =
+                elementDiv.querySelector(
+                    'input[data-type="image"]'
+                );
+
+            if (fileInput) {
+                fileInput.value = '';
+            }
         }
 
         URL.revokeObjectURL(url);
@@ -658,26 +707,38 @@
     ========================================================= */
 
     const extraNotesInput =
-        document.getElementById('extraNotesInput');
+        document.getElementById(
+            'extraNotesInput'
+        );
 
     const openExtraNotesButton =
-        document.getElementById('openExtraNotesButton');
+        document.getElementById(
+            'openExtraNotesButton'
+        );
 
     const closeExtraNotesButton =
-        document.getElementById('closeExtraNotesButton');
+        document.getElementById(
+            'closeExtraNotesButton'
+        );
 
     const extraNotesModal =
-        document.getElementById('extraNotesModal');
+        document.getElementById(
+            'extraNotesModal'
+        );
 
 
     openExtraNotesButton.addEventListener(
         'click',
         () => {
 
-            extraNotesModal.classList.remove('hidden');
+            extraNotesModal.classList.remove(
+                'hidden'
+            );
 
             extraNotesInput.value =
-                localStorage.getItem(NOTES_KEY) || '';
+                localStorage.getItem(
+                    NOTES_KEY
+                ) || '';
 
         }
     );
@@ -692,7 +753,9 @@
                 extraNotesInput.value
             );
 
-            extraNotesModal.classList.add('hidden');
+            extraNotesModal.classList.add(
+                'hidden'
+            );
 
             saveFormData();
         }
@@ -704,22 +767,39 @@
     ========================================================= */
 
     const cameraModal =
-        document.getElementById('cameraModal');
+        document.getElementById(
+            'cameraModal'
+        );
 
     const cameraVideo =
-        document.getElementById('cameraVideo');
+        document.getElementById(
+            'cameraVideo'
+        );
 
     const cameraCanvas =
-        document.getElementById('cameraCanvas');
+        document.getElementById(
+            'cameraCanvas'
+        );
+
+    const cameraPreview =
+        document.getElementById(
+            'cameraPreview'
+        );
 
     const takePhotoButton =
-        document.getElementById('takePhotoButton');
+        document.getElementById(
+            'takePhotoButton'
+        );
 
     const confirmImageButton =
-        document.getElementById('confirmImageButton');
+        document.getElementById(
+            'confirmImageButton'
+        );
 
     const cancelCameraButton =
-        document.getElementById('cancelCameraButton');
+        document.getElementById(
+            'cancelCameraButton'
+        );
 
     let stream = null;
     let capturedImage = null;
@@ -734,10 +814,21 @@
 
         confirmImageButton.disabled = true;
 
+        cameraPreview.classList.add(
+            'hidden'
+        );
+
+        cameraPreview.src = '';
+
+        cameraVideo.style.display =
+            'none';
+
         try {
 
-            if (!navigator.mediaDevices ||
-                !navigator.mediaDevices.getUserMedia) {
+            if (
+                !navigator.mediaDevices ||
+                !navigator.mediaDevices.getUserMedia
+            ) {
 
                 throw new Error(
                     'La cámara no está disponible.'
@@ -754,13 +845,17 @@
                     audio: false
                 });
 
-            cameraVideo.srcObject = stream;
+            cameraVideo.srcObject =
+                stream;
 
-            cameraVideo.style.display = 'block';
-
-            cameraModal.classList.remove('hidden');
+            cameraModal.classList.remove(
+                'hidden'
+            );
 
             await cameraVideo.play();
+
+            cameraVideo.style.display =
+                'block';
 
         } catch (error) {
 
@@ -778,7 +873,9 @@
 
     function closeCameraModal() {
 
-        cameraModal.classList.add('hidden');
+        cameraModal.classList.add(
+            'hidden'
+        );
 
         if (stream) {
 
@@ -791,15 +888,25 @@
 
         cameraVideo.pause();
 
-        cameraVideo.srcObject = null;
+        cameraVideo.srcObject =
+            null;
 
-        cameraVideo.style.display = 'none';
+        cameraVideo.style.display =
+            'none';
 
-        currentElementIdForCamera = null;
+        cameraPreview.classList.add(
+            'hidden'
+        );
+
+        cameraPreview.src = '';
+
+        currentElementIdForCamera =
+            null;
 
         capturedImage = null;
 
-        confirmImageButton.disabled = true;
+        confirmImageButton.disabled =
+            true;
     }
 
 
@@ -815,7 +922,10 @@
             const videoHeight =
                 cameraVideo.videoHeight;
 
-            if (!videoWidth || !videoHeight) {
+            if (
+                !videoWidth ||
+                !videoHeight
+            ) {
                 return;
             }
 
@@ -842,8 +952,18 @@
                     0.82
                 );
 
+            /*
+             * Mostrar la previa inmediatamente.
+             */
+            cameraPreview.src =
+                capturedImage;
+
             cameraVideo.style.display =
                 'none';
+
+            cameraPreview.classList.remove(
+                'hidden'
+            );
 
             confirmImageButton.disabled =
                 false;
@@ -861,19 +981,21 @@
         'click',
         async () => {
 
-            if (!capturedImage ||
-                !currentElementIdForCamera) {
+            if (
+                !capturedImage ||
+                !currentElementIdForCamera
+            ) {
                 return;
             }
+
+            const elementId =
+                currentElementIdForCamera;
 
             const processedURL =
                 await fixOrientationResizeAndCompress(
                     capturedImage,
                     1
                 );
-
-            const elementId =
-                currentElementIdForCamera;
 
             const element =
                 reportElements.find(
@@ -897,13 +1019,22 @@
                             `[data-preview-id="${elementId}"]`
                         );
 
-                    previewDiv.classList.remove(
-                        'hidden'
-                    );
+                    if (previewDiv) {
 
-                    previewDiv.querySelector(
-                        'img'
-                    ).src = processedURL;
+                        previewDiv.classList.remove(
+                            'hidden'
+                        );
+
+                        const img =
+                            previewDiv.querySelector(
+                                'img'
+                            );
+
+                        if (img) {
+                            img.src =
+                                processedURL;
+                        }
+                    }
 
                     const fileInput =
                         elementDiv.querySelector(
@@ -930,15 +1061,32 @@
     function escapeHTML(value) {
 
         return String(value ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
+            .replace(
+                /&/g,
+                '&amp;'
+            )
+            .replace(
+                /</g,
+                '&lt;'
+            )
+            .replace(
+                />/g,
+                '&gt;'
+            )
+            .replace(
+                /"/g,
+                '&quot;'
+            )
+            .replace(
+                /'/g,
+                '&#039;'
+            );
     }
 
 
-    function addReportElement(elementData = {}) {
+    function addReportElement(
+        elementData = {}
+    ) {
 
         elementCounter++;
 
@@ -953,7 +1101,8 @@
         const newElement =
             document.createElement('div');
 
-        newElement.id = id;
+        newElement.id =
+            id;
 
         newElement.classList.add(
             'p-3',
@@ -987,7 +1136,9 @@
 
                 <input type="text"
                     data-type="description"
-                    value="${escapeHTML(elementData.description || '')}"
+                    value="${escapeHTML(
+                        elementData.description || ''
+                    )}"
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                     placeholder="Ej: Estado del Rack Principal">
 
@@ -1023,9 +1174,15 @@
                 </div>
 
                 <div data-preview-id="${id}"
-                    class="mt-2 ${elementData.image ? '' : 'hidden'}">
+                    class="mt-2 ${
+                        elementData.image
+                            ? ''
+                            : 'hidden'
+                    }">
 
-                    <img src="${elementData.image || ''}"
+                    <img src="${
+                        elementData.image || ''
+                    }"
                         class="w-32 h-32 object-cover rounded-md border p-1"
                         alt="Preview">
 
@@ -1042,7 +1199,9 @@
                 <textarea data-type="details"
                     rows="2"
                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                    placeholder="Observaciones, valores o comentarios específicos sobre la imagen subida.">${escapeHTML(elementData.details || '')}</textarea>
+                    placeholder="Observaciones, valores o comentarios específicos sobre la imagen subida.">${escapeHTML(
+                        elementData.details || ''
+                    )}</textarea>
 
             </div>
 
@@ -1059,7 +1218,9 @@
             </div>
         `;
 
-        container.appendChild(newElement);
+        container.appendChild(
+            newElement
+        );
 
         const newElementObject = {
 
@@ -1144,8 +1305,12 @@
                 const files =
                     event.dataTransfer.files;
 
-                if (files.length &&
-                    files[0].type.startsWith('image/')) {
+                if (
+                    files.length &&
+                    files[0].type.startsWith(
+                        'image/'
+                    )
+                ) {
 
                     processUploadedFile(
                         files[0],
@@ -1287,7 +1452,10 @@
         );
 
         setTimeout(
-            () => messageBox.classList.add('hidden'),
+            () =>
+                messageBox.classList.add(
+                    'hidden'
+                ),
             3000
         );
     }
@@ -1359,8 +1527,11 @@
                 ? canvas.toDataURL('image/png')
                 : null;
 
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width =
+            width;
+
+        canvas.height =
+            height;
 
         ctx.fillStyle =
             'white';
@@ -1417,10 +1588,12 @@
         return {
 
             x:
-                source.clientX - rect.left,
+                source.clientX -
+                rect.left,
 
             y:
-                source.clientY - rect.top
+                source.clientY -
+                rect.top
         };
     }
 
@@ -1432,10 +1605,14 @@
         const point =
             getPointerPosition(e);
 
-        isDrawing = true;
+        isDrawing =
+            true;
 
-        lastX = point.x;
-        lastY = point.y;
+        lastX =
+            point.x;
+
+        lastY =
+            point.y;
 
         if (!hasSigned) {
 
@@ -1456,7 +1633,8 @@
                 canvas.height
             );
 
-            hasSigned = true;
+            hasSigned =
+                true;
         }
     }
 
@@ -1575,7 +1753,9 @@
 
             signature:
                 hasSigned
-                    ? canvas.toDataURL('image/png')
+                    ? canvas.toDataURL(
+                        'image/png'
+                    )
                     : null,
 
             reportElements:
@@ -1610,6 +1790,7 @@
             );
 
         if (savedNotes !== null) {
+
             extraNotesInput.value =
                 savedNotes;
         }
@@ -1668,7 +1849,8 @@
             ) {
 
                 data.reportElements.forEach(
-                    el => addReportElement(el)
+                    el =>
+                        addReportElement(el)
                 );
 
             } else {
@@ -1680,7 +1862,8 @@
 
             if (data.signature) {
 
-                hasSigned = true;
+                hasSigned =
+                    true;
 
                 const img =
                     new Image();
@@ -1701,7 +1884,8 @@
 
             } else {
 
-                hasSigned = false;
+                hasSigned =
+                    false;
 
                 ctx.clearRect(
                     0,
@@ -1750,9 +1934,6 @@
 
     /* =========================================================
        PDF
-       TAMAÑO CARTA
-       8.5 x 11 pulgadas
-       jsPDF: [216, 279] mm
     ========================================================= */
 
     const logoUrl =
@@ -1782,9 +1963,10 @@
                         new FileReader();
 
                     reader.onloadend =
-                        () => resolve(
-                            reader.result
-                        );
+                        () =>
+                            resolve(
+                                reader.result
+                            );
 
                     reader.onerror =
                         reject;
@@ -1810,15 +1992,24 @@
     /*
      * ENCABEZADO
      *
-     * Devuelve la posición Y donde puede
-     * comenzar el contenido.
+     * El encabezado normal se mantiene.
+     *
+     * Los datos:
+     * - Nombre de quien reporta
+     * - Fecha de reporte
+     *
+     * aparecen solamente en la primera página,
+     * debajo de la línea del encabezado.
+     *
+     * El cargo NO aparece aquí.
      */
     async function addHeader(
         doc,
         pageNum,
         totalPages,
         logoBase64,
-        reportName
+        reportName,
+        data
     ) {
 
         const margin = 15;
@@ -1843,9 +2034,9 @@
             );
         }
 
-        /*
-         * INFORMACIÓN DERECHA
-         */
+
+        /* INFORMACIÓN DERECHA */
+
         const rightX =
             pageWidth - margin;
 
@@ -1884,7 +2075,11 @@
         );
 
         doc.text(
-            `Fecha de Reporte: ${new Date().toLocaleDateString('es-SV')}`,
+            `Fecha de Reporte: ${
+                new Date().toLocaleDateString(
+                    'es-SV'
+                )
+            }`,
             rightX,
             headerY + 16,
             null,
@@ -1893,9 +2088,8 @@
         );
 
 
-        /*
-         * TÍTULO
-         */
+        /* TÍTULO */
+
         doc.setFont(
             'helvetica',
             'bold'
@@ -1912,13 +2106,17 @@
             .toUpperCase();
 
         const titleLeft =
-            margin + logoWidth + 7;
+            margin +
+            logoWidth +
+            7;
 
         const titleRight =
-            pageWidth - 72;
+            pageWidth -
+            72;
 
         const titleWidth =
-            titleRight - titleLeft;
+            titleRight -
+            titleLeft;
 
         const titleLines =
             doc.splitTextToSize(
@@ -1950,7 +2148,9 @@
             Math.max(
                 headerY + logoHeight,
                 headerY + 18,
-                headerY + 7 + titleHeight
+                headerY +
+                7 +
+                titleHeight
             ) + 5;
 
         doc.setDrawColor(
@@ -1970,6 +2170,58 @@
             lineY
         );
 
+
+        /*
+         * DATOS IMPORTANTES
+         *
+         * SOLAMENTE PRIMERA PÁGINA.
+         *
+         * Se colocan DEBAJO de la línea.
+         *
+         * El cargo no se coloca aquí.
+         */
+        if (pageNum === 1) {
+
+            const infoY =
+                lineY + 6;
+
+            const nombre =
+                (
+                    data &&
+                    data.nombre_tecnico
+                        ? data.nombre_tecnico
+                        : ''
+                ).trim();
+
+            const fecha =
+                new Date().toLocaleDateString(
+                    'es-SV'
+                );
+
+            doc.setFont(
+                'helvetica',
+                'normal'
+            );
+
+            doc.setFontSize(9);
+
+            doc.text(
+                `Reporta: ${
+                    nombre || 'No especificado'
+                }`,
+                margin,
+                infoY
+            );
+
+            doc.text(
+                `Fecha: ${fecha}`,
+                margin,
+                infoY + 5
+            );
+
+            return infoY + 12;
+        }
+
         return lineY + 9;
     }
 
@@ -1977,11 +2229,8 @@
     /*
      * PIE DE PÁGINA
      *
-     * TODO queda en la misma línea:
-     *
-     * Firma --------------------- Página X de Y
-     *
-     * Solo se muestra la firma en la última página.
+     * Firma solamente en última página.
+     * Cargo solamente debajo de la firma.
      */
     function addFooter(
         doc,
@@ -2000,11 +2249,6 @@
         const pageHeight =
             doc.internal.pageSize.getHeight();
 
-        /*
-         * Esta es la línea base común.
-         * Ambos elementos parten exactamente
-         * desde la misma altura.
-         */
         const baselineY =
             pageHeight - 14;
 
@@ -2022,10 +2266,6 @@
             const signatureWidth =
                 52;
 
-            /*
-             * La firma se dibuja por encima
-             * de la misma línea base.
-             */
             if (signed) {
 
                 const maxSignatureHeight =
@@ -2036,7 +2276,8 @@
                     signatureCanvas.width;
 
                 let signatureHeight =
-                    signatureWidth * ratio;
+                    signatureWidth *
+                    ratio;
 
                 signatureHeight =
                     Math.min(
@@ -2050,18 +2291,15 @@
                     ),
                     'PNG',
                     signatureX,
-                    baselineY - signatureHeight - 4,
+                    baselineY -
+                        signatureHeight -
+                        4,
                     signatureWidth,
                     signatureHeight
                 );
             }
 
-            /*
-             * Línea para firmar.
-             *
-             * La línea termina exactamente
-             * antes del conteo de páginas.
-             */
+
             const signatureLineY =
                 baselineY - 2;
 
@@ -2072,13 +2310,12 @@
             doc.line(
                 signatureX,
                 signatureLineY,
-                signatureX + signatureWidth,
+                signatureX +
+                    signatureWidth,
                 signatureLineY
             );
 
-            /*
-             * Nombre
-             */
+
             doc.setFont(
                 'helvetica',
                 'normal'
@@ -2092,25 +2329,18 @@
                     ''
                 ).trim();
 
-            if (tecnico) {
+            doc.text(
+                tecnico || 'Firma',
+                signatureX,
+                baselineY + 2.5
+            );
 
-                doc.text(
-                    tecnico,
-                    signatureX,
-                    baselineY + 2.5
-                );
-
-            } else {
-
-                doc.text(
-                    'Firma',
-                    signatureX,
-                    baselineY + 2.5
-                );
-            }
 
             /*
-             * Cargo
+             * CARGO:
+             *
+             * Se mantiene aquí,
+             * debajo de la firma.
              */
             const cargo =
                 (
@@ -2131,12 +2361,6 @@
         }
 
 
-        /*
-         * CONTEO DE PÁGINAS
-         *
-         * Siempre en el mismo nivel horizontal
-         * de la zona de firma.
-         */
         doc.setFont(
             'helvetica',
             'normal'
@@ -2156,8 +2380,39 @@
 
 
     /*
-     * NOTAS
+     * NOTAS GENERALES
      */
+    function getExtraNotesHeight(
+        doc,
+        notes,
+        margin
+    ) {
+
+        if (!notes) {
+            return 0;
+        }
+
+        const pageWidth =
+            doc.internal.pageSize.getWidth();
+
+        const boxWidth =
+            pageWidth -
+            (margin * 2);
+
+        const lines =
+            doc.splitTextToSize(
+                notes,
+                boxWidth - 6
+            );
+
+        return Math.max(
+            20,
+            13 +
+            (lines.length * 5)
+        ) + 5;
+    }
+
+
     function addExtraNotesToPage(
         doc,
         notes,
@@ -2173,9 +2428,8 @@
             doc.internal.pageSize.getWidth();
 
         const boxWidth =
-            pageWidth - (
-                margin * 2
-            );
+            pageWidth -
+            (margin * 2);
 
         const lines =
             doc.splitTextToSize(
@@ -2222,9 +2476,7 @@
             'bold'
         );
 
-        doc.setFontSize(
-            9
-        );
+        doc.setFontSize(9);
 
         doc.text(
             'NOTAS GENERALES DEL REPORTE:',
@@ -2237,9 +2489,7 @@
             'normal'
         );
 
-        doc.setFontSize(
-            8
-        );
+        doc.setFontSize(8);
 
         doc.text(
             lines,
@@ -2254,7 +2504,7 @@
 
 
     /* =========================================================
-       GENERACIÓN DEL PDF
+       GENERAR PDF
     ========================================================= */
 
     form.addEventListener(
@@ -2278,14 +2528,6 @@
                     jsPDF
                 } = window.jspdf;
 
-
-                /*
-                 * IMPORTANTE:
-                 *
-                 * format: 'letter'
-                 *
-                 * orientación vertical.
-                 */
                 const doc =
                     new jsPDF({
                         orientation: 'portrait',
@@ -2293,7 +2535,6 @@
                         format: 'letter',
                         compress: true
                     });
-
 
                 const formData =
                     new FormData(
@@ -2305,15 +2546,12 @@
                         formData.entries()
                     );
 
-
                 const reportName =
                     data.nombre_reporte ||
                     'REPORTE DE EVIDENCIA';
 
-
                 const extraNotes =
                     extraNotesInput.value.trim();
-
 
                 const elements =
                     reportElements.filter(
@@ -2323,30 +2561,8 @@
                             el.details
                     );
 
-
                 const logoBase64 =
                     await getLogoBase64();
-
-
-                /*
-                 * Preparar páginas.
-                 *
-                 * Cada elemento representa
-                 * una página del reporte.
-                 */
-                const totalElements =
-                    elements.length;
-
-
-                /*
-                 * Mínimo una página.
-                 */
-                let totalPages =
-                    Math.max(
-                        1,
-                        totalElements
-                    );
-
 
                 const margin = 15;
 
@@ -2356,20 +2572,32 @@
                 const pageHeight =
                     doc.internal.pageSize.getHeight();
 
-
-                /*
-                 * Espacio reservado para el pie.
-                 */
                 const footerTop =
-                    pageHeight - 28;
+                    pageHeight - 30;
 
 
                 /*
                  * =================================================
-                 * SI NO HAY ELEMENTOS
+                 * NÚMERO REAL DE PÁGINAS
+                 *
+                 * Una página por elemento.
+                 *
+                 * Las notas NO crean una página nueva.
                  * =================================================
                  */
-                if (totalElements === 0) {
+                const totalPages =
+                    Math.max(
+                        1,
+                        elements.length
+                    );
+
+
+                /*
+                 * =================================================
+                 * SIN ELEMENTOS
+                 * =================================================
+                 */
+                if (elements.length === 0) {
 
                     let y =
                         await addHeader(
@@ -2377,18 +2605,16 @@
                             1,
                             totalPages,
                             logoBase64,
-                            reportName
+                            reportName,
+                            data
                         );
-
 
                     doc.setFont(
                         'helvetica',
                         'bold'
                     );
 
-                    doc.setFontSize(
-                        12
-                    );
+                    doc.setFontSize(12);
 
                     doc.text(
                         'INFORMACIÓN Y RESUMEN',
@@ -2398,114 +2624,137 @@
 
                     y += 7;
 
-
                     doc.setFont(
                         'helvetica',
                         'normal'
                     );
 
-                    doc.setFontSize(
-                        9
-                    );
+                    doc.setFontSize(9);
 
                     doc.text(
-                        `Generado por: ${data.nombre_tecnico || 'No especificado'}`,
+                        `Generado por: ${
+                            data.nombre_tecnico ||
+                            'No especificado'
+                        }`,
                         margin,
                         y
                     );
 
-                    y += 5;
-
-                    doc.text(
-                        `Fecha de Generación: ${new Date().toLocaleDateString('es-SV')}`,
-                        margin,
-                        y
-                    );
-
-                    y += 9;
-
-
-                    if (extraNotes) {
-
-                        const notesLines =
-                            doc.splitTextToSize(
-                                extraNotes,
-                                pageWidth -
-                                (margin * 2) -
-                                6
-                            );
-
-                        const notesHeight =
-                            13 +
-                            (
-                                notesLines.length *
-                                5
-                            );
-
-                        /*
-                         * Si las notas no caben
-                         * antes del pie, se crea
-                         * otra página.
-                         */
-                        if (
-                            y +
-                            notesHeight +
-                            5 >
-                            footerTop
-                        ) {
-
-                            doc.addPage();
-
-                            totalPages++;
-
-                            /*
-                             * Rehacer encabezado
-                             * de página 1 con total
-                             * actualizado.
-                             */
-                            doc.setPage(1);
-
-                            await addHeader(
-                                doc,
-                                1,
-                                totalPages,
-                                logoBase64,
-                                reportName
-                            );
-
-                            doc.setPage(
-                                totalPages
-                            );
-
-                            y =
-                                await addHeader(
-                                    doc,
-                                    totalPages,
-                                    totalPages,
-                                    logoBase64,
-                                    reportName
-                                );
-                        }
-
-                        y =
-                            addExtraNotesToPage(
-                                doc,
-                                extraNotes,
-                                y,
-                                margin
-                            );
-                    }
-
+                    y += 6;
 
                     /*
-                     * Pie final.
+                     * Las notas se intentan colocar
+                     * en ESTA MISMA página.
+                     *
+                     * Si son muy largas,
+                     * se recortan visualmente para
+                     * no crear una página adicional.
                      */
+                    if (extraNotes) {
+
+                        const available =
+                            footerTop -
+                            y -
+                            3;
+
+                        if (available > 15) {
+
+                            const boxWidth =
+                                pageWidth -
+                                (margin * 2);
+
+                            const maxLines =
+                                Math.max(
+                                    1,
+                                    Math.floor(
+                                        (
+                                            available -
+                                            13
+                                        ) / 5
+                                    )
+                                );
+
+                            const allLines =
+                                doc.splitTextToSize(
+                                    extraNotes,
+                                    boxWidth - 6
+                                );
+
+                            const visibleLines =
+                                allLines.slice(
+                                    0,
+                                    maxLines
+                                );
+
+                            const boxHeight =
+                                Math.max(
+                                    20,
+                                    13 +
+                                    (
+                                        visibleLines.length *
+                                        5
+                                    )
+                                );
+
+                            doc.setFillColor(
+                                240,
+                                240,
+                                240
+                            );
+
+                            doc.rect(
+                                margin,
+                                y,
+                                boxWidth,
+                                boxHeight,
+                                'F'
+                            );
+
+                            doc.setDrawColor(
+                                0,
+                                0,
+                                0
+                            );
+
+                            doc.rect(
+                                margin,
+                                y,
+                                boxWidth,
+                                boxHeight
+                            );
+
+                            doc.setFont(
+                                'helvetica',
+                                'bold'
+                            );
+
+                            doc.setFontSize(9);
+
+                            doc.text(
+                                'NOTAS GENERALES DEL REPORTE:',
+                                margin + 3,
+                                y + 5
+                            );
+
+                            doc.setFont(
+                                'helvetica',
+                                'normal'
+                            );
+
+                            doc.setFontSize(8);
+
+                            doc.text(
+                                visibleLines,
+                                margin + 3,
+                                y + 11
+                            );
+                        }
+                    }
+
                     addFooter(
                         doc,
                         data,
-                        totalPages === 1
-                            ? 1
-                            : totalPages,
+                        1,
                         totalPages,
                         canvas,
                         hasSigned
@@ -2515,10 +2764,9 @@
 
                 /*
                  * =================================================
-                 * CON ELEMENTOS
+                 * PÁGINAS DE EVIDENCIA
                  * =================================================
                  */
-
                 for (
                     let i = 0;
                     i < elements.length;
@@ -2539,14 +2787,14 @@
                         pageNum
                     );
 
-
                     let y =
                         await addHeader(
                             doc,
                             pageNum,
                             totalPages,
                             logoBase64,
-                            reportName
+                            reportName,
+                            data
                         );
 
 
@@ -2563,9 +2811,7 @@
                             'bold'
                         );
 
-                        doc.setFontSize(
-                            11
-                        );
+                        doc.setFontSize(11);
 
                         const descriptionLines =
                             doc.splitTextToSize(
@@ -2609,105 +2855,78 @@
                             }
                         );
 
+                        if (
+                            img.width &&
+                            img.height
+                        ) {
 
-                        let imgWidth =
-                            img.width;
+                            let imgWidth =
+                                img.width;
 
-                        let imgHeight =
-                            img.height;
+                            let imgHeight =
+                                img.height;
 
-
-                        const maxWidth =
-                            pageWidth -
-                            (margin * 2);
-
-
-                        /*
-                         * El pie siempre queda
-                         * reservado.
-                         */
-                        const isLast =
-                            pageNum ===
-                            totalPages;
-
-
-                        /*
-                         * Reservar espacio
-                         * para detalles.
-                         */
-                        const detailsLines =
-                            doc.splitTextToSize(
-                                element.details ||
-                                'Sin detalles.',
-                                maxWidth - 6
-                            );
-
-
-                        const detailsHeight =
-                            17 +
-                            (
-                                detailsLines.length *
-                                5
-                            );
-
-
-                        /*
-                         * Si es última página,
-                         * reservar además el pie.
-                         */
-                        const bottomReserve =
-                            isLast
-                                ? 30
-                                : 15;
-
-
-                        const maxHeight =
-                            Math.max(
-                                40,
-                                footerTop -
-                                y -
-                                detailsHeight -
-                                7
-                            );
-
-
-                        const ratio =
-                            Math.min(
-                                1,
-                                maxWidth /
-                                    imgWidth,
-                                maxHeight /
-                                    imgHeight
-                            );
-
-
-                        imgWidth *=
-                            ratio;
-
-                        imgHeight *=
-                            ratio;
-
-
-                        const imgX =
-                            (
+                            const maxWidth =
                                 pageWidth -
-                                imgWidth
-                            ) / 2;
+                                (margin * 2);
 
+                            const detailsLines =
+                                doc.splitTextToSize(
+                                    element.details ||
+                                    'Sin detalles.',
+                                    maxWidth - 6
+                                );
 
-                        doc.addImage(
-                            element.image,
-                            'JPEG',
-                            imgX,
-                            y,
-                            imgWidth,
-                            imgHeight
-                        );
+                            const detailsHeight =
+                                17 +
+                                (
+                                    detailsLines.length *
+                                    5
+                                );
 
+                            const maxHeight =
+                                Math.max(
+                                    40,
+                                    footerTop -
+                                    y -
+                                    detailsHeight -
+                                    7
+                                );
 
-                        y +=
-                            imgHeight +
-                            5;
+                            const ratio =
+                                Math.min(
+                                    1,
+                                    maxWidth /
+                                        imgWidth,
+                                    maxHeight /
+                                        imgHeight
+                                );
+
+                            imgWidth *=
+                                ratio;
+
+                            imgHeight *=
+                                ratio;
+
+                            const imgX =
+                                (
+                                    pageWidth -
+                                    imgWidth
+                                ) / 2;
+
+                            doc.addImage(
+                                element.image,
+                                'JPEG',
+                                imgX,
+                                y,
+                                imgWidth,
+                                imgHeight
+                            );
+
+                            y +=
+                                imgHeight +
+                                5;
+                        }
                     }
 
 
@@ -2721,15 +2940,12 @@
                         pageWidth -
                         (margin * 2);
 
-
                     doc.setFont(
                         'helvetica',
                         'bold'
                     );
 
-                    doc.setFontSize(
-                        9
-                    );
+                    doc.setFontSize(9);
 
                     doc.text(
                         'Detalles Adicionales:',
@@ -2737,19 +2953,14 @@
                         y + 5
                     );
 
-
                     y += 10;
-
 
                     doc.setFont(
                         'helvetica',
                         'normal'
                     );
 
-                    doc.setFontSize(
-                        8
-                    );
-
+                    doc.setFontSize(8);
 
                     const detailsLines =
                         doc.splitTextToSize(
@@ -2758,24 +2969,42 @@
                             detailsBoxWidth - 6
                         );
 
+                    /*
+                     * Evitar que los detalles
+                     * invadan el pie.
+                     */
+                    const maxDetailLines =
+                        Math.max(
+                            1,
+                            Math.floor(
+                                (
+                                    footerTop -
+                                    y -
+                                    5
+                                ) / 5
+                            )
+                        );
+
+                    const visibleDetailsLines =
+                        detailsLines.slice(
+                            0,
+                            maxDetailLines
+                        );
 
                     doc.text(
-                        detailsLines,
+                        visibleDetailsLines,
                         margin + 3,
                         y
                     );
 
-
                     y +=
-                        detailsLines.length *
+                        visibleDetailsLines.length *
                         5 +
                         3;
-
 
                     const detailsBoxHeight =
                         y -
                         detailsBoxY;
-
 
                     doc.rect(
                         margin,
@@ -2785,97 +3014,113 @@
                     );
 
 
-                    y += 5;
-
-
                     /*
                      * =================================================
-                     * ÚLTIMA PÁGINA
-                     * NOTAS + FIRMA
+                     * NOTAS:
+                     *
+                     * SOLO EN LA ÚLTIMA PÁGINA EXISTENTE.
+                     *
+                     * NO SE CREA OTRA PÁGINA.
                      * =================================================
                      */
                     if (
-                        pageNum ===
-                        totalPages
+                        pageNum === totalPages &&
+                        extraNotes
                     ) {
 
-                        if (extraNotes) {
+                        y += 5;
 
-                            const notesLines =
+                        const available =
+                            footerTop -
+                            y;
+
+                        if (available > 15) {
+
+                            const allLines =
                                 doc.splitTextToSize(
                                     extraNotes,
                                     detailsBoxWidth - 6
                                 );
 
-                            const notesHeight =
-                                13 +
-                                (
-                                    notesLines.length *
-                                    5
+                            const maxLines =
+                                Math.max(
+                                    1,
+                                    Math.floor(
+                                        (
+                                            available -
+                                            13
+                                        ) / 5
+                                    )
                                 );
 
-
-                            /*
-                             * Si las notas no caben
-                             * antes del pie, se agrega
-                             * una nueva página.
-                             */
-                            if (
-                                y +
-                                notesHeight +
-                                5 >
-                                footerTop
-                            ) {
-
-                                doc.addPage();
-
-                                totalPages++;
-
-                                /*
-                                 * Actualizar encabezados
-                                 * de todas las páginas.
-                                 */
-                                for (
-                                    let p = 1;
-                                    p <= totalPages;
-                                    p++
-                                ) {
-
-                                    doc.setPage(p);
-
-                                    await addHeader(
-                                        doc,
-                                        p,
-                                        totalPages,
-                                        logoBase64,
-                                        reportName
-                                    );
-                                }
-
-
-                                doc.setPage(
-                                    totalPages
+                            const visibleLines =
+                                allLines.slice(
+                                    0,
+                                    maxLines
                                 );
 
-
-                                y =
-                                    await addHeader(
-                                        doc,
-                                        totalPages,
-                                        totalPages,
-                                        logoBase64,
-                                        reportName
-                                    );
-                            }
-
-
-                            y =
-                                addExtraNotesToPage(
-                                    doc,
-                                    extraNotes,
-                                    y,
-                                    margin
+                            const notesBoxHeight =
+                                Math.max(
+                                    20,
+                                    13 +
+                                    (
+                                        visibleLines.length *
+                                        5
+                                    )
                                 );
+
+                            doc.setFillColor(
+                                240,
+                                240,
+                                240
+                            );
+
+                            doc.rect(
+                                margin,
+                                y,
+                                detailsBoxWidth,
+                                notesBoxHeight,
+                                'F'
+                            );
+
+                            doc.setDrawColor(
+                                0,
+                                0,
+                                0
+                            );
+
+                            doc.rect(
+                                margin,
+                                y,
+                                detailsBoxWidth,
+                                notesBoxHeight
+                            );
+
+                            doc.setFont(
+                                'helvetica',
+                                'bold'
+                            );
+
+                            doc.setFontSize(9);
+
+                            doc.text(
+                                'NOTAS GENERALES DEL REPORTE:',
+                                margin + 3,
+                                y + 5
+                            );
+
+                            doc.setFont(
+                                'helvetica',
+                                'normal'
+                            );
+
+                            doc.setFontSize(8);
+
+                            doc.text(
+                                visibleLines,
+                                margin + 3,
+                                y + 11
+                            );
                         }
                     }
                 }
@@ -2883,35 +3128,7 @@
 
                 /*
                  * =================================================
-                 * ACTUALIZAR TODOS LOS ENCABEZADOS
-                 * CON EL TOTAL REAL DE PÁGINAS
-                 * =================================================
-                 */
-                for (
-                    let p = 1;
-                    p <= totalPages;
-                    p++
-                ) {
-
-                    doc.setPage(p);
-
-                    await addHeader(
-                        doc,
-                        p,
-                        totalPages,
-                        logoBase64,
-                        reportName
-                    );
-                }
-
-
-                /*
-                 * =================================================
-                 * PIES DE PÁGINA
-                 *
-                 * Se dibujan DESPUÉS de todo el contenido.
-                 * Esto evita que se monten con imágenes,
-                 * notas o detalles.
+                 * PIES
                  * =================================================
                  */
                 for (
@@ -2934,7 +3151,9 @@
 
 
                 /*
+                 * =================================================
                  * NOMBRE DEL ARCHIVO
+                 * =================================================
                  */
                 const safeFileName =
                     (
@@ -2955,11 +3174,9 @@
                         40
                     );
 
-
                 doc.save(
                     `${safeFileName}_${Date.now()}.pdf`
                 );
-
 
                 loadingOverlay.classList.add(
                     'hidden'
@@ -3059,12 +3276,14 @@
                 canvas.height
             );
 
-            hasSigned = false;
+            hasSigned =
+                false;
 
             drawPlaceholder();
 
 
-            extraNotesInput.value = '';
+            extraNotesInput.value =
+                '';
 
             localStorage.removeItem(
                 STORAGE_KEY
@@ -3147,7 +3366,8 @@
                 canvas.height
             );
 
-            hasSigned = false;
+            hasSigned =
+                false;
 
             drawPlaceholder();
 
