@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Reporte de Evidencia con Cámara y Páginas</title>
+    <title>Reporte de Evidencia</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -17,8 +19,8 @@
             },
         };
     </script>
+
     <style>
-        /* Estilos generales */
         #signatureCanvas_reporte {
             border: 1px solid #d1d5db;
             border-radius: 0.375rem;
@@ -26,1141 +28,3162 @@
             cursor: crosshair;
             touch-action: none;
         }
+
         #signatureCanvasContainer_reporte {
             min-height: 150px;
         }
+
         .modal-overlay {
             z-index: 999;
         }
+
         .main-content {
             z-index: 10;
         }
+
         .camera-video {
             width: 100%;
             border-radius: 5px;
             display: none;
         }
+
         .camera-controls {
             display: flex;
             justify-content: center;
             padding-top: 10px;
         }
-        /* Estilos para Drag and Drop */
+
         .drag-drop-area {
             border: 2px dashed #9ca3af;
             border-radius: 0.375rem;
             transition: border-color 0.15s ease-in-out;
         }
+
         .drag-drop-area.drag-over {
             border-color: #3b82f6;
-            /* Blue 500 */
         }
     </style>
 </head>
+
 <body class="bg-gray-100 flex flex-col items-center justify-start min-h-screen p-4 font-sans">
-    <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-[998] hidden">
+
+    <!-- CARGANDO -->
+    <div id="loadingOverlay"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-[998] hidden">
+
         <div class="bg-white p-6 rounded-lg shadow-xl flex items-center space-x-3">
-            <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <svg class="animate-spin h-5 w-5 text-blue-600"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24">
+
+                <circle class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4">
+                </circle>
+
+                <path class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
             </svg>
+
             <p class="text-gray-700">Generando PDF...</p>
         </div>
     </div>
 
-    <div id="confirmationModal_reporte" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
+    <!-- MODAL LIMPIAR -->
+    <div id="confirmationModal_reporte"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
+
         <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Confirmar</h3>
-            <p class="text-gray-700 text-center mb-6">¿Estás seguro que quieres limpiar el formulario? Los datos actuales se perderán.</p>
+
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">
+                Confirmar
+            </h3>
+
+            <p class="text-gray-700 text-center mb-6">
+                ¿Estás seguro que quieres limpiar el formulario? Los datos actuales se perderán.
+            </p>
+
             <div class="flex space-x-4">
-                <button id="cancelClearButton_reporte" class="flex-1 justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+
+                <button id="cancelClearButton_reporte"
+                    class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                     Cancelar
                 </button>
-                <button id="confirmClearButton_reporte" class="flex-1 justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+
+                <button id="confirmClearButton_reporte"
+                    class="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
                     Confirmar
                 </button>
+
             </div>
         </div>
     </div>
-    <div id="clearSignatureConfirmationModal_reporte" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
+
+    <!-- MODAL BORRAR FIRMA -->
+    <div id="clearSignatureConfirmationModal_reporte"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
+
         <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Confirmar</h3>
-            <p class="text-gray-700 text-center mb-6">¿Estás seguro que quieres borrar la firma?</p>
+
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">
+                Confirmar
+            </h3>
+
+            <p class="text-gray-700 text-center mb-6">
+                ¿Estás seguro que quieres borrar la firma?
+            </p>
+
             <div class="flex space-x-4">
-                <button id="cancelClearSignatureButton_reporte" class="flex-1 justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+
+                <button id="cancelClearSignatureButton_reporte"
+                    class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                     Cancelar
                 </button>
-                <button id="confirmClearSignatureButton_reporte" class="flex-1 justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+
+                <button id="confirmClearSignatureButton_reporte"
+                    class="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
                     Confirmar
                 </button>
+
             </div>
         </div>
     </div>
-    <div id="cameraModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
+
+    <!-- MODAL CÁMARA -->
+    <div id="cameraModal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
+
         <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-xl">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Tomar Foto para Evidencia</h3>
+
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">
+                Tomar Foto para Evidencia
+            </h3>
+
             <div class="relative">
-                <video id="cameraVideo" class="camera-video" autoplay playsinline></video>
+                <video id="cameraVideo"
+                    class="camera-video"
+                    autoplay
+                    playsinline>
+                </video>
+
                 <canvas id="cameraCanvas" class="hidden"></canvas>
             </div>
-            <div id="cameraControls" class="camera-controls">
-                <button type="button" id="takePhotoButton" class="bg-green-500 text-white font-medium py-2 px-4 rounded-full shadow-lg hover:bg-green-600 transition disabled:bg-gray-400">
+
+            <div class="camera-controls">
+
+                <button type="button"
+                    id="takePhotoButton"
+                    class="bg-green-500 text-white font-medium py-2 px-4 rounded-full shadow-lg hover:bg-green-600 transition disabled:bg-gray-400">
                     Capturar
                 </button>
+
             </div>
+
             <div class="flex justify-between mt-4">
-                <button type="button" id="cancelCameraButton" class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+
+                <button type="button"
+                    id="cancelCameraButton"
+                    class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                     Cancelar
                 </button>
-                <button type="button" id="confirmImageButton" class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400" disabled>
+
+                <button type="button"
+                    id="confirmImageButton"
+                    class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400"
+                    disabled>
                     Usar Imagen
                 </button>
+
             </div>
         </div>
     </div>
 
-    <div id="extraNotesModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
+    <!-- MODAL NOTAS -->
+    <div id="extraNotesModal"
+        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
+
         <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Notas Extra del Reporte</h3>
-            <textarea id="extraNotesInput" rows="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" placeholder="Escribe aquí cualquier nota general, conclusión o comentario importante del reporte."></textarea>
+
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">
+                Notas Extra del Reporte
+            </h3>
+
+            <textarea id="extraNotesInput"
+                rows="5"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                placeholder="Escribe aquí cualquier nota general, conclusión o comentario importante del reporte."></textarea>
+
             <div class="flex justify-end mt-4">
-                <button type="button" id="closeExtraNotesButton" class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+
+                <button type="button"
+                    id="closeExtraNotesButton"
+                    class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
                     Guardar y Cerrar
                 </button>
+
             </div>
         </div>
     </div>
+
+    <!-- FORMULARIO -->
     <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg mb-6 main-content">
+
         <div class="flex justify-center mb-6">
-            <img src="https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png" alt="Logo Freund" class="h-16 w-auto" />
+
+            <img src="https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png"
+                alt="Logo"
+                class="h-16 w-auto" />
+
         </div>
-        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Generador de Reporte de Evidencia</h1>
+
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">
+            Generador de Reporte de Evidencia
+        </h1>
+
         <form id="documentForm_reporte" class="space-y-4">
-            
+
+            <!-- INFORMACIÓN -->
             <div class="space-y-4 border p-4 rounded-md bg-gray-50">
-                <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Información del Reporte</h2>
+
+                <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">
+                    Información del Reporte
+                </h2>
+
                 <div>
-                    <label for="nombre_reporte" class="block text-sm font-medium text-gray-700">Nombre del Reporte (Asunto)</label>
-                    <input type="text" id="nombre_reporte" name="nombre_reporte" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" required/>
+
+                    <label for="nombre_reporte"
+                        class="block text-sm font-medium text-gray-700">
+                        Nombre del Reporte (Asunto)
+                    </label>
+
+                    <input type="text"
+                        id="nombre_reporte"
+                        name="nombre_reporte"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                        required />
+
                 </div>
+
                 <div>
-                    <label for="nombre_tecnico" class="block text-sm font-medium text-gray-700">Nombre de quien Reporta</label>
-                    <input type="text" id="nombre_tecnico" name="nombre_tecnico" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" required/>
+
+                    <label for="nombre_tecnico"
+                        class="block text-sm font-medium text-gray-700">
+                        Nombre de quien Reporta
+                    </label>
+
+                    <input type="text"
+                        id="nombre_tecnico"
+                        name="nombre_tecnico"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                        required />
+
                 </div>
+
                 <div>
-                    <label for="cargo_tecnico" class="block text-sm font-medium text-gray-700">Cargo</label>
-                    <input type="text" id="cargo_tecnico" name="cargo_tecnico" placeholder="Ej. Técnico de Soporte" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"/>
+
+                    <label for="cargo_tecnico"
+                        class="block text-sm font-medium text-gray-700">
+                        Cargo
+                    </label>
+
+                    <input type="text"
+                        id="cargo_tecnico"
+                        name="cargo_tecnico"
+                        placeholder="Ej. Técnico de Soporte"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+
                 </div>
+
             </div>
 
+            <!-- ELEMENTOS -->
             <div class="space-y-4 border p-4 rounded-md bg-gray-50">
-                <h2 class="text-lg font-semibold text-gray-700 border-b pb-2 flex justify-between items-center">
+
+                <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">
                     Detalle de Reporte
                 </h2>
-                <div id="reportElementsContainer" class="space-y-6">
+
+                <div id="reportElementsContainer"
+                    class="space-y-6">
                 </div>
+
             </div>
 
+            <!-- FIRMA -->
             <div class="space-y-4 border p-4 rounded-md bg-gray-50">
-                <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">Firma</h2>
+
+                <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">
+                    Firma
+                </h2>
+
                 <div class="mt-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Firma Digital</label>
-                    <div id="signatureCanvasContainer_reporte" class="border rounded-md p-1 relative w-full h-auto">
-                        <canvas id="signatureCanvas_reporte" class="w-full"></canvas>
+
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Firma Digital
+                    </label>
+
+                    <div id="signatureCanvasContainer_reporte"
+                        class="border rounded-md p-1 relative w-full h-auto">
+
+                        <canvas id="signatureCanvas_reporte"
+                            class="w-full">
+                        </canvas>
+
                     </div>
-                    <button type="button" id="clearSignatureButton_reporte" class="mt-2 w-1/2 mx-auto flex justify-center py-2 px-4 border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-800 bg-green-200 hover:bg-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-400">
+
+                    <button type="button"
+                        id="clearSignatureButton_reporte"
+                        class="mt-2 w-1/2 mx-auto flex justify-center py-2 px-4 border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-800 bg-green-200 hover:bg-green-300">
                         Borrar Firma
                     </button>
+
                 </div>
+
             </div>
-            
+
+            <!-- BOTONES -->
             <div class="flex flex-col space-y-2 mt-4">
-                <button type="button" id="openExtraNotesButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+
+                <button type="button"
+                    id="openExtraNotesButton"
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
                     Notas Extra
                 </button>
-                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+
+                <button type="submit"
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
                     Generar Reporte PDF
                 </button>
-                <button type="button" id="clearFormButton_reporte" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+
+                <button type="button"
+                    id="clearFormButton_reporte"
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
                     Nuevo Reporte
                 </button>
-                <a href="index.html" class="w-full flex justify-center py-1.5 px-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-400 no-underline">
+
+                <a href="index.html"
+                    class="w-full flex justify-center py-1.5 px-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-500 hover:bg-sky-600 no-underline">
                     Inicio
                 </a>
+
             </div>
+
         </form>
     </div>
-    <div id="messageBox" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 hidden">
+
+    <!-- MENSAJE -->
+    <div id="messageBox"
+        class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 hidden">
         Documento generado con éxito.
     </div>
 
-    <script>
-        // --- DATA MANAGEMENT & DYNAMIC ELEMENTS ---
-        let reportElements = [];
-        let elementCounter = 0;
-        let currentElementIdForCamera = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadFormData();
-        });
-        
-        // --- IMAGE PROCESSING UTILITIES (EXIF, RESIZE, COMPRESSION) ---
-        
-        function getExifOrientation(file) {
-            return new Promise(resolve => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
+<script>
+
+    let reportElements = [];
+    let elementCounter = 0;
+    let currentElementIdForCamera = null;
+
+    const STORAGE_KEY = 'documentFormData_reporte_simple';
+    const NOTES_KEY = 'extraNotes_reporte_simple';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadFormData();
+    });
+
+
+    /* =========================================================
+       IMÁGENES
+    ========================================================= */
+
+    function getExifOrientation(file) {
+
+        return new Promise(resolve => {
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+
+                try {
+
                     const view = new DataView(e.target.result);
+
                     if (view.getUint16(0, false) !== 0xFFD8) {
-                        return resolve(-2);
+                        resolve(1);
+                        return;
                     }
+
                     const length = view.byteLength;
                     let offset = 2;
+
                     while (offset < length) {
-                        if (view.getUint16(offset + 2, false) <= 8) break;
+
+                        if (offset + 4 > length) break;
+
                         const marker = view.getUint16(offset, false);
-                        offset += 2;
+                        const segmentLength = view.getUint16(offset + 2, false);
+
+                        if (segmentLength < 2) break;
+
                         if (marker === 0xFFE1) {
-                            if (view.getUint32(offset += 4, false) !== 0x45786966) {
-                                return resolve(-1);
+
+                            if (offset + 10 > length) break;
+
+                            if (view.getUint32(offset + 6, false) !== 0x45786966) {
+                                resolve(1);
+                                return;
                             }
-                            const little = view.getUint16(offset += 6, false) === 0x4949;
-                            offset += view.getUint32(offset + 4, little);
-                            const tags = view.getUint16(offset, little);
-                            offset += 2;
+
+                            const tiffStart = offset + 12;
+
+                            const little = view.getUint16(tiffStart, false) === 0x4949;
+
+                            const firstIFDOffset =
+                                view.getUint32(tiffStart + 4, little);
+
+                            const ifdOffset =
+                                tiffStart + firstIFDOffset;
+
+                            if (ifdOffset + 2 > length) break;
+
+                            const tags =
+                                view.getUint16(ifdOffset, little);
+
                             for (let i = 0; i < tags; i++) {
-                                if (view.getUint16(offset + (i * 12), little) === 0x0112) {
-                                    return resolve(view.getUint16(offset + (i * 12) + 8, little));
+
+                                const entryOffset =
+                                    ifdOffset + 2 + (i * 12);
+
+                                if (entryOffset + 12 > length) break;
+
+                                if (view.getUint16(entryOffset, little) === 0x0112) {
+
+                                    resolve(
+                                        view.getUint16(
+                                            entryOffset + 8,
+                                            little
+                                        )
+                                    );
+
+                                    return;
                                 }
                             }
-                        } else if ((marker & 0xFF00) !== 0xFF00) {
-                            break;
-                        } else {
-                            offset += view.getUint16(offset, false);
                         }
-                    }
-                    return resolve(1);
-                };
-                reader.onerror = () => resolve(1);
-                reader.readAsArrayBuffer(file.slice(0, 65536));
-            });
-        }
 
-        function fixOrientationResizeAndCompress(imageURL, orientation) {
-            return new Promise(resolve => {
-                const img = new Image();
-                img.onload = function() {
-                    const MAX_WIDTH = 1200; 
-                    
-                    let width = img.width;
-                    let height = img.height;
-                    
-                    if (width > MAX_WIDTH || height > MAX_WIDTH) {
-                        const scale = MAX_WIDTH / Math.max(width, height);
-                        width = Math.round(width * scale);
-                        height = Math.round(height * scale);
+                        offset += 2 + segmentLength;
                     }
 
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    
-                    if (orientation > 4 && orientation < 9) {
-                        canvas.width = height;
-                        canvas.height = width;
-                    } else {
-                        canvas.width = width;
-                        canvas.height = height;
-                    }
-                    
-                    switch (orientation) {
-                        case 2: ctx.translate(width, 0); ctx.scale(-1, 1); break;
-                        case 3: ctx.translate(width, height); ctx.rotate(Math.PI); break;
-                        case 4: ctx.translate(0, height); ctx.scale(1, -1); break;
-                        case 5: canvas.width = height; canvas.height = width; ctx.rotate(0.5 * Math.PI); ctx.scale(1, -1); break;
-                        case 6: ctx.translate(height, 0); ctx.rotate(0.5 * Math.PI); break;
-                        case 7: canvas.width = height; canvas.height = width; ctx.translate(height, width); ctx.rotate(0.5 * Math.PI); ctx.scale(-1, 1); break;
-                        case 8: ctx.translate(0, width); ctx.rotate(-0.5 * Math.PI); break;
-                    }
-                    
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    const newURL = canvas.toDataURL('image/jpeg', 0.7); 
-                    resolve(newURL);
-                };
-                img.src = imageURL;
-            });
-        }
-        
-        async function processUploadedFile(file, elementId) {
-            const element = reportElements.find(e => e.id === elementId);
-            if (!element) return;
+                } catch (error) {
+                    console.warn(error);
+                }
 
-            const url = URL.createObjectURL(file);
-            const orientation = await getExifOrientation(file);
-            
-            const processedURL = await fixOrientationResizeAndCompress(url, orientation);
-            
-            element.image = processedURL;
-            const elementDiv = document.getElementById(elementId);
-            const previewDiv = elementDiv.querySelector(`[data-preview-id="${elementId}"]`);
-            
-            previewDiv.classList.remove('hidden');
-            previewDiv.querySelector('img').src = processedURL;
-            
-            const fileInput = elementDiv.querySelector('input[data-type="image"]');
-            if (fileInput) fileInput.value = '';
-
-            URL.revokeObjectURL(url);
-            saveFormData();
-        }
-
-        // --- EXTRA NOTES LOGIC ---
-        const extraNotesInput = document.getElementById('extraNotesInput');
-        const openExtraNotesButton = document.getElementById('openExtraNotesButton');
-        const closeExtraNotesButton = document.getElementById('closeExtraNotesButton');
-        const extraNotesModal = document.getElementById('extraNotesModal');
-        openExtraNotesButton.addEventListener('click', () => {
-            extraNotesModal.classList.remove('hidden');
-            extraNotesInput.value = localStorage.getItem('extraNotes_reporte_simple') || '';
-        });
-        closeExtraNotesButton.addEventListener('click', () => {
-            localStorage.setItem('extraNotes_reporte_simple', extraNotesInput.value);
-            extraNotesModal.classList.add('hidden');
-            saveFormData(); 
-        });
-
-        // --- CAMERA LOGIC ---
-        const cameraModal = document.getElementById('cameraModal');
-        const cameraVideo = document.getElementById('cameraVideo');
-        const cameraCanvas = document.getElementById('cameraCanvas');
-        const takePhotoButton = document.getElementById('takePhotoButton');
-        const confirmImageButton = document.getElementById('confirmImageButton');
-        const cancelCameraButton = document.getElementById('cancelCameraButton');
-        let stream = null;
-        let capturedImage = null;
-
-        async function openCamera(elementId) {
-            currentElementIdForCamera = elementId;
-            capturedImage = null;
-            confirmImageButton.disabled = true;
-            cameraVideo.style.display = 'block';
-
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' }, 
-                    audio: false 
-                });
-                cameraVideo.srcObject = stream;
-                cameraVideo.play();
-                cameraModal.classList.remove('hidden');
-            } catch (err) {
-                console.error("Error al acceder a la cámara:", err);
-                alert("No se pudo acceder a la cámara. Asegúrate de tener permisos. Si estás en una PC, usa la opción 'Seleccionar Archivo'.");
-                closeCameraModal();
-            }
-        }
-
-        function closeCameraModal() {
-            cameraModal.classList.add('hidden');
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-            }
-            cameraVideo.pause();
-            cameraVideo.srcObject = null;
-            currentElementIdForCamera = null;
-            capturedImage = null;
-        }
-
-        takePhotoButton.addEventListener('click', () => {
-            if (!stream) return;
-
-            const videoWidth = cameraVideo.videoWidth;
-            const videoHeight = cameraVideo.videoHeight;
-
-            cameraCanvas.width = videoWidth;
-            cameraCanvas.height = videoHeight;
-           
-            const ctx = cameraCanvas.getContext('2d');
-            ctx.drawImage(cameraVideo, 0, 0, videoWidth, videoHeight);
-            
-            capturedImage = cameraCanvas.toDataURL('image/jpeg', 0.8); 
-            
-            cameraVideo.style.display = 'none';
-            
-            const img = new Image();
-            img.onload = function() {
-                ctx.clearRect(0, 0, videoWidth, videoHeight);
-                ctx.drawImage(img, 0, 0, cameraCanvas.width, cameraCanvas.height);
+                resolve(1);
             };
-            img.src = capturedImage;
 
-            confirmImageButton.disabled = false;
-        });
+            reader.onerror = () => resolve(1);
 
-        cancelCameraButton.addEventListener('click', closeCameraModal);
-        
-        confirmImageButton.addEventListener('click', async () => {
-            if (capturedImage && currentElementIdForCamera) {
-                const processedURL = await fixOrientationResizeAndCompress(capturedImage, 1);
-
-                const elementDiv = document.getElementById(currentElementIdForCamera);
-                if (elementDiv) {
-                    const element = reportElements.find(e => e.id === currentElementIdForCamera);
-                    if (element) {
-                        element.image = processedURL;
-                        
-                        const previewDiv = elementDiv.querySelector(`[data-preview-id="${currentElementIdForCamera}"]`);
-                        previewDiv.classList.remove('hidden');
-                        previewDiv.querySelector('img').src = processedURL;
-                        
-                        const fileInput = elementDiv.querySelector('input[data-type="image"]');
-                        if (fileInput) fileInput.value = '';
-
-                        saveFormData();
-                    }
-                }
-                closeCameraModal();
-            }
-        });
-
-
-        // --- DYNAMIC ELEMENTS (FORM) ---
-        function addReportElement(elementData = {}) {
-            elementCounter++;
-            const id = `el_${elementCounter}`;
-            
-            const container = document.getElementById('reportElementsContainer');
-            const newElement = document.createElement('div');
-            newElement.id = id;
-            newElement.classList.add('p-3', 'border', 'rounded-md', 'bg-white', 'shadow-sm');
-            newElement.innerHTML = `
-                <div class="flex justify-between items-center mb-2 border-b pb-2">
-                    <h3 class="font-medium text-gray-700">Página #${elementCounter}</h3> 
-                    <button type="button" onclick="removeReportElement('${id}')" class="text-red-500 hover:text-red-700 text-sm">
-                        Eliminar
-                    </button>
-                </div>
-                <div class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700">Sub-Tema o Breve Descripción</label>
-                    <input type="text" data-type="description" 
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" placeholder="Ej: Estado del Rack Principal" value="${elementData.description || ''}">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Foto (Arrastra o Selecciona)</label>
-                    <div data-dnd-id="${id}" class="drag-drop-area 
-                        flex flex-col items-center justify-center p-4 mt-1">
-                        <div class="flex space-x-2 w-full">
-                            <button type="button" data-action="capture" data-element-id="${id}" class="flex-1 flex items-center justify-center py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-yellow-50 hover:bg-yellow-100 transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A.5.5 0 0011 3H9a.5.5 0 00-.354.146L7.293 4.586a1 1 0 01-.707.293H4zm7 5a1 1 0 10-2 0 1 1 0 002 0zm-1 3a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
-                                Tomar Foto
-                            </button>
-                            <input type="file" data-type="image" accept="image/*" class="flex-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
-                        </div>
-                    </div>
-                    <div data-preview-id="${id}" class="mt-2 ${elementData.image ? '' : 'hidden'}">
-                        <img src="${elementData.image || ''}" class="w-32 h-32 object-cover rounded-md border p-1" alt="Preview"/>
-                    </div>
-                </div>
-                <div class="mt-3">
-                    <label class="block text-sm font-medium text-gray-700">Detalles Adicionales de la Foto</label>
-                    <textarea data-type="details" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" placeholder="Observaciones, valores o comentarios específicos sobre la imagen subida.">${elementData.details || ''}</textarea>
-                </div>
-                <div class="pt-3 border-t mt-3">
-                    <button type="button" onclick="addReportElement()" class="w-full bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-md hover:bg-blue-700 transition">
-                        + Añadir Otra Página
-                    </button>
-                </div>
-            `;
-            
-            container.appendChild(newElement);
-            
-            const newElementObject = { 
-                id: id, 
-                description: elementData.description || '', 
-                image: elementData.image || '',
-                details: elementData.details || '' 
-            };
-            reportElements.push(newElementObject);
-            
-            const descInput = newElement.querySelector('input[data-type="description"]');
-            const detailsInput = newElement.querySelector('textarea[data-type="details"]'); 
-            const imageInput = newElement.querySelector('input[data-type="image"]');
-            const captureButton = newElement.querySelector('button[data-action="capture"]');
-            const dndArea = newElement.querySelector(`[data-dnd-id="${id}"]`);
-            
-            const handleDrop = (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                dndArea.classList.remove('drag-over');
-
-                const files = event.dataTransfer.files;
-                if (files.length > 0 && files[0].type.startsWith('image/')) {
-                    processUploadedFile(files[0], id);
-                }
-            };
-            dndArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dndArea.classList.add('drag-over');
-            });
-            dndArea.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dndArea.classList.remove('drag-over');
-            });
-            dndArea.addEventListener('drop', handleDrop);
-
-            captureButton.addEventListener('click', (event) => {
-                const elementId = event.currentTarget.getAttribute('data-element-id');
-                openCamera(elementId);
-            });
-            
-            descInput.addEventListener('input', () => {
-                const element = reportElements.find(e => e.id === id);
-                if (element) {
-                    element.description = descInput.value;
-                    saveFormData();
-                }
-            });
-            
-            detailsInput.addEventListener('input', () => {
-                const element = reportElements.find(e => e.id === id);
-                if (element) {
-                    element.details = detailsInput.value;
-                    saveFormData();
-                }
-            });
-
-            imageInput.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    processUploadedFile(file, id);
-                } else {
-                    const element = reportElements.find(e => e.id === id);
-                    if (element) {
-                        element.image = '';
-                        const previewDiv = newElement.querySelector(`[data-preview-id="${id}"]`);
-                        previewDiv.classList.add('hidden');
-                        previewDiv.querySelector('img').src = '';
-                        saveFormData();
-                    }
-                }
-            });
-            saveFormData();
-        }
-
-        function removeReportElement(id) {
-            document.getElementById(id).remove();
-            reportElements = reportElements.filter(e => e.id !== id);
-            
-            const savedReportElements = [...reportElements];
-            reportElements = [];
-            elementCounter = 0;
-            document.getElementById('reportElementsContainer').innerHTML = '';
-            savedReportElements.forEach(el => addReportElement(el));
-
-            if (reportElements.length === 0) {
-                addReportElement();
-            }
-            saveFormData();
-        }
-
-        // --- COMMON FUNCTIONS ---
-        function showMessage(message, type = 'success') {
-            const messageBox = document.getElementById('messageBox');
-            messageBox.textContent = message;
-            if (type === 'success') {
-                messageBox.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-            } else if (type === 'error') {
-                messageBox.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-            }
-            messageBox.classList.remove('hidden');
-            setTimeout(() => {
-                messageBox.classList.add('hidden');
-            }, 3000);
-        }
-
-        // --- SIGNATURE CANVAS LOGIC ---
-        const canvas = document.getElementById('signatureCanvas_reporte');
-        const ctx = canvas.getContext('2d');
-        let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
-        let hasSigned = false;
-        function drawPlaceholder() {
-            if (!hasSigned) {
-                ctx.save();
-                ctx.fillStyle = '#E5E7EB';
-                ctx.font = '24px Inter, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                const x = canvas.width / 2;
-                const y = canvas.height / 2;
-                ctx.fillText('Firma del Reporteador', x, y);
-                ctx.restore();
-            }
-        }
-
-        function resizeCanvas() {
-            const container = document.getElementById('signatureCanvasContainer_reporte');
-            const newWidth = container.offsetWidth;
-            const newHeight = container.offsetHeight;
-            canvas.width = newWidth;
-            canvas.height = newHeight;
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, newWidth, newHeight);
-            
-            const savedData = localStorage.getItem('documentFormData_reporte_simple');
-            if (savedData) {
-                const data = JSON.parse(savedData);
-                if (data.signature) {
-                    hasSigned = true;
-                    const img = new Image();
-                    img.onload = function() {
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    };
-                    img.src = data.signature;
-                    return;
-                }
-            }
-            hasSigned = false;
-            drawPlaceholder();
-        }
-
-        document.addEventListener('DOMContentLoaded', resizeCanvas);
-        window.addEventListener('resize', resizeCanvas);
-        function draw(e) {
-            if (!isDrawing) return;
-            if (!hasSigned) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                hasSigned = true;
-            }
-            const rect = canvas.getBoundingClientRect();
-            const x = (e.clientX || e.touches[0].clientX) - rect.left;
-            const y = (e.clientY || e.touches[0].clientY) - rect.top;
-            ctx.beginPath();
-            ctx.moveTo(lastX, lastY);
-            ctx.lineTo(x, y);
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 2;
-            ctx.lineCap = 'round';
-            ctx.stroke();
-            [lastX, lastY] = [x, y];
-        }
-
-        canvas.addEventListener('mousedown', (e) => {
-            isDrawing = true;
-            const rect = canvas.getBoundingClientRect();
-            [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
-        });
-        canvas.addEventListener('touchstart', (e) => {
-            isDrawing = true;
-            const rect = canvas.getBoundingClientRect();
-            [lastX, lastY] = [e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top];
-            e.preventDefault();
-        });
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('touchmove', draw);
-        canvas.addEventListener('mouseup', () => isDrawing = false);
-        canvas.addEventListener('touchend', () => isDrawing = false);
-        canvas.addEventListener('mouseout', () => isDrawing = false);
-
-        // --- FORM AND STORAGE LOGIC ---
-        const form = document.getElementById('documentForm_reporte');
-        function saveFormData() {
-            const formData = new FormData(form);
-            const data = {};
-            for (const [key, value] of formData.entries()) {
-                data[key] = value;
-            }
-            if (hasSigned) {
-                data.signature = canvas.toDataURL('image/png');
-            } else {
-                data.signature = null;
-            }
-            
-            data.reportElements = reportElements;
-            data.extraNotes = extraNotesInput.value; 
-            localStorage.setItem('documentFormData_reporte_simple', JSON.stringify(data));
-            localStorage.setItem('extraNotes_reporte_simple', extraNotesInput.value); 
-        }
-
-        function loadFormData() {
-            const savedData = localStorage.getItem('documentFormData_reporte_simple');
-            const savedNotes = localStorage.getItem('extraNotes_reporte_simple');
-            if (savedNotes !== null) {
-                extraNotesInput.value = savedNotes; 
-            }
-            
-            if (savedData) {
-                const data = JSON.parse(savedData);
-                for (const key in data) {
-                    const input = document.getElementById(key);
-                    if (input) {
-                        input.value = data[key];
-                    }
-                }
-                
-                if (data.reportElements && Array.isArray(data.reportElements)) {
-                    reportElements = [];
-                    elementCounter = 0;
-                    document.getElementById('reportElementsContainer').innerHTML = '';
-                    data.reportElements.forEach(el => addReportElement(el));
-                }
-
-                if (data.signature) {
-                    hasSigned = true;
-                    const img = new Image();
-                    img.onload = function() {
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    };
-                    img.src = data.signature;
-                } else {
-                    hasSigned = false;
-                    drawPlaceholder();
-                }
-            } else {
-                hasSigned = false;
-                drawPlaceholder();
-                if (reportElements.length === 0) {
-                    addReportElement();
-                }
-            }
-        }
-        
-        form.addEventListener('input', saveFormData);
-        window.addEventListener('load', loadFormData);
-
-        // --- PDF GENERATION UTILITIES ---
-
-        // FUNCIÓN para dibujar la firma (compacta y fija al fondo)
-        async function addSignatureSection(doc, data, pageHeight, margin, canvas, hasSigned) {
-            const signatureBlockHeight = 24;
-            let currentY = pageHeight - margin - signatureBlockHeight;
-
-            const signatureWidth = 52;
-            const signatureImageHeight = signatureWidth * (canvas.height / canvas.width);
-            const signatureX = margin + 8;
-
-            if (hasSigned) {
-                const signatureData = canvas.toDataURL('image/png');
-                doc.addImage(signatureData, 'PNG', signatureX, currentY, signatureWidth, signatureImageHeight);
-            }
-
-            currentY += signatureImageHeight + 1.5;
-            doc.setLineWidth(0.3);
-            doc.line(signatureX, currentY, signatureX + signatureWidth, currentY);
-            currentY += 3.5;
-
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            const tecnicoName = data.nombre_tecnico || '____________________________';
-            doc.text(tecnicoName, signatureX, currentY);
-            doc.setFontSize(8);
-            const cargo = (data.cargo_tecnico || '').trim();
-            if (cargo) {
-                doc.text(cargo, signatureX, currentY + 3.5);
-            }
-        }
-
-        // FUNCIÓN para dibujar la sección de Notas Extra (ahora simplificada, no chequea el final de página)
-        function addExtraNotesToPage(doc, notes, yStart, margin, notesBoxHeight, notesLines) {
-            const notesBoxWidth = doc.internal.pageSize.getWidth() - (margin * 2);
-            
-            let finalYStart = yStart;
-
-            // Seguridad: Si se inicia en una página nueva, no empezar antes del encabezado
-            if (finalYStart < 50) { 
-                 finalYStart = 50;
-            }
-
-            const currentY = finalYStart;
-            
-            doc.setFillColor(240, 240, 240);
-            doc.rect(margin, currentY, notesBoxWidth, notesBoxHeight, 'F');
-            doc.setDrawColor(0, 0, 0);
-
-            doc.rect(margin, currentY, notesBoxWidth, notesBoxHeight);
-            doc.setFont('helvetica', 'bold');
-            doc.text('NOTAS GENERALES DEL REPORTE:', margin + 2, currentY + 4); 
-            
-            doc.setFont('helvetica', 'normal');
-            doc.text(notesLines, margin + 2, currentY + 12);
-
-            return finalYStart + notesBoxHeight + 5;
-        }
-
-        // FUNCIÓN para dibujar el encabezado (ahora acepta el total final de páginas)
-        const logoUrl = 'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
-        async function addHeader(doc, pageNum, finalTotalPages) {
-            const margin = 15;
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const headerY = 15;
-            const headerX = pageWidth - margin;
-            const logoHeight = 17;
-            const logoWidth = 34;
-
-            let base64Image = '';
-            try {
-                const response = await fetch(logoUrl);
-                if (response.ok) {
-                    const blob = await response.blob();
-                    base64Image = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => resolve(reader.result);
-                        reader.onerror = reject;
-                        reader.readAsDataURL(blob);
-                    });
-                    doc.addImage(base64Image, 'PNG', margin, headerY, logoWidth, logoHeight);
-                }
-            } catch (error) {
-                console.warn('No se pudo cargar el logo para el PDF:', error);
-            }
-
-            doc.setFontSize(8);
-            doc.setFont('helvetica', 'normal');
-            doc.text('Tiendas 01.001.0001.0001', headerX, headerY, null, null, 'right');
-            const headerTextCenterX = pageWidth - margin - 18;
-            doc.text('soporte redes', headerTextCenterX, headerY + 4, null, null, 'center');
-            doc.text('y telecomunicaciones', headerTextCenterX, headerY + 8, null, null, 'center');
-            doc.text(`Fecha de Reporte: ${new Date().toLocaleDateString()}`, headerX, headerY + 12, null, null, 'right');
-            
-            // --- TÍTULO DEL REPORTE ---
-            // Reservamos espacio a la izquierda para el logo y a la derecha para
-            // los datos de tienda/departamento/fecha. El título nunca invadirá esas zonas.
-            doc.setFontSize(16);
-            doc.setFont('helvetica', 'bold');
-
-            const reportTitle = (
-                doc.internal.data.reportName || 'REPORTE DE EVIDENCIA'
-            ).trim().toUpperCase();
-
-            // Zona exclusiva del título.
-            const titleLeft = margin + logoWidth + 8;
-            const rightInfoReservedWidth = 58;
-            const titleRight = pageWidth - margin - rightInfoReservedWidth;
-            const titleMaxWidth = Math.max(40, titleRight - titleLeft);
-            const titleCenterX = titleLeft + (titleMaxWidth / 2);
-
-            // Divide automáticamente los títulos largos en varias líneas.
-            const titleLines = doc.splitTextToSize(reportTitle, titleMaxWidth);
-            const titleLineHeight = 6.5;
-            const titleY = headerY + 6;
-
-            doc.text(titleLines, titleCenterX, titleY, {
-                align: 'center',
-                baseline: 'middle'
-            });
-
-            // El encabezado crece según las líneas que necesite el título.
-            const titleHeight = Math.max(titleLineHeight, titleLines.length * titleLineHeight);
-            const headerContentBottom = Math.max(
-                headerY + logoHeight,
-                headerY + 12,
-                titleY + titleHeight
+            reader.readAsArrayBuffer(
+                file.slice(0, 65536)
             );
 
-            let currentY = headerContentBottom + 8;
-            doc.line(margin, currentY, pageWidth - margin, currentY);
-            currentY += 8;
-            
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            // USA EL TOTAL DE PÁGINAS FINAL
-            doc.text(`Página ${pageNum} de ${finalTotalPages}`, pageWidth - margin, currentY - 2, null, null, 'right');
-            
-            return currentY;
-        }
+        });
+    }
 
-        // --- PDF GENERATION LOGIC ---
-        document.getElementById('documentForm_reporte').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            loadingOverlay.style.display = 'flex';
 
-            try {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                const formData = new FormData(e.target);
-                const data = Object.fromEntries(formData.entries());
-                
-                doc.internal.data = { reportName: data.nombre_reporte }; // Guardar nombre para el header
-                
-                const extraNotes = extraNotesInput.value.trim();
-                const reportElementsData = reportElements.filter(el => el.description || el.image || el.details); 
+    function fixOrientationResizeAndCompress(imageURL, orientation = 1) {
 
-                const totalElements = reportElementsData.length;
-                let totalPages = totalElements === 0 ? 1 : totalElements; 
-                
-                let y = 15;
-                const margin = 15;
-                const pageWidth = doc.internal.pageSize.getWidth();
-                const pageHeight = doc.internal.pageSize.getHeight(); 
-                // --- Page 1: Information and First Element (if exists) ---
-                y = await addHeader(doc, 1, totalPages);
-                doc.setFontSize(12);
-                doc.setFont('helvetica', 'bold');
-                doc.text('INFORMACIÓN Y RESUMEN', margin, y);
-                y += 6;
-                // Responsable del reporte
-                const generatedByLines = doc.splitTextToSize(
-                    `Generado por: ${data.nombre_tecnico || 'No especificado'}`,
-                    pageWidth - (margin * 2)
+        return new Promise(resolve => {
+
+            const img = new Image();
+
+            img.onload = function() {
+
+                const MAX_WIDTH = 1200;
+
+                let width = img.width;
+                let height = img.height;
+
+                if (width > MAX_WIDTH || height > MAX_WIDTH) {
+
+                    const scale =
+                        MAX_WIDTH / Math.max(width, height);
+
+                    width = Math.round(width * scale);
+                    height = Math.round(height * scale);
+                }
+
+                const canvas =
+                    document.createElement('canvas');
+
+                const ctx =
+                    canvas.getContext('2d');
+
+                if (orientation >= 5 && orientation <= 8) {
+
+                    canvas.width = height;
+                    canvas.height = width;
+
+                } else {
+
+                    canvas.width = width;
+                    canvas.height = height;
+                }
+
+                switch (orientation) {
+
+                    case 2:
+                        ctx.translate(width, 0);
+                        ctx.scale(-1, 1);
+                        break;
+
+                    case 3:
+                        ctx.translate(width, height);
+                        ctx.rotate(Math.PI);
+                        break;
+
+                    case 4:
+                        ctx.translate(0, height);
+                        ctx.scale(1, -1);
+                        break;
+
+                    case 5:
+                        ctx.rotate(Math.PI / 2);
+                        ctx.scale(1, -1);
+                        break;
+
+                    case 6:
+                        ctx.translate(height, 0);
+                        ctx.rotate(Math.PI / 2);
+                        break;
+
+                    case 7:
+                        ctx.translate(height, width);
+                        ctx.rotate(Math.PI / 2);
+                        ctx.scale(-1, 1);
+                        break;
+
+                    case 8:
+                        ctx.translate(0, width);
+                        ctx.rotate(-Math.PI / 2);
+                        break;
+                }
+
+                ctx.drawImage(
+                    img,
+                    0,
+                    0,
+                    width,
+                    height
                 );
 
-                doc.setFontSize(9);
-                doc.setFont('helvetica', 'normal');
-                doc.text(generatedByLines, margin, y);
-                y += generatedByLines.length * 4.5 + 4;
+                resolve(
+                    canvas.toDataURL(
+                        'image/jpeg',
+                        0.72
+                    )
+                );
+            };
 
-                // Fecha de generación, colocada debajo de "Generado por".
-                doc.text(`Fecha de Generación: ${new Date().toLocaleDateString()}`, margin, y);
-                y += 9;
-                
-                // --- Loop to generate pages for each element ---
-                for (let i = 0; i < totalElements; i++) {
-                    const element = reportElementsData[i];
-                    const isLastElement = (i === totalElements - 1);
+            img.src = imageURL;
+
+        });
+    }
+
+
+    async function processUploadedFile(file, elementId) {
+
+        if (!file.type.startsWith('image/')) {
+            showMessage(
+                'Selecciona un archivo de imagen.',
+                'error'
+            );
+            return;
+        }
+
+        const element =
+            reportElements.find(e => e.id === elementId);
+
+        if (!element) return;
+
+        const url =
+            URL.createObjectURL(file);
+
+        const orientation =
+            await getExifOrientation(file);
+
+        const processedURL =
+            await fixOrientationResizeAndCompress(
+                url,
+                orientation
+            );
+
+        element.image = processedURL;
+
+        const elementDiv =
+            document.getElementById(elementId);
+
+        const previewDiv =
+            elementDiv.querySelector(
+                `[data-preview-id="${elementId}"]`
+            );
+
+        previewDiv.classList.remove('hidden');
+
+        previewDiv.querySelector('img').src =
+            processedURL;
+
+        const fileInput =
+            elementDiv.querySelector(
+                'input[data-type="image"]'
+            );
+
+        if (fileInput) {
+            fileInput.value = '';
+        }
+
+        URL.revokeObjectURL(url);
+
+        saveFormData();
+    }
+
+
+    /* =========================================================
+       NOTAS
+    ========================================================= */
+
+    const extraNotesInput =
+        document.getElementById('extraNotesInput');
+
+    const openExtraNotesButton =
+        document.getElementById('openExtraNotesButton');
+
+    const closeExtraNotesButton =
+        document.getElementById('closeExtraNotesButton');
+
+    const extraNotesModal =
+        document.getElementById('extraNotesModal');
+
+
+    openExtraNotesButton.addEventListener(
+        'click',
+        () => {
+
+            extraNotesModal.classList.remove('hidden');
+
+            extraNotesInput.value =
+                localStorage.getItem(NOTES_KEY) || '';
+
+        }
+    );
+
+
+    closeExtraNotesButton.addEventListener(
+        'click',
+        () => {
+
+            localStorage.setItem(
+                NOTES_KEY,
+                extraNotesInput.value
+            );
+
+            extraNotesModal.classList.add('hidden');
+
+            saveFormData();
+        }
+    );
+
+
+    /* =========================================================
+       CÁMARA
+    ========================================================= */
+
+    const cameraModal =
+        document.getElementById('cameraModal');
+
+    const cameraVideo =
+        document.getElementById('cameraVideo');
+
+    const cameraCanvas =
+        document.getElementById('cameraCanvas');
+
+    const takePhotoButton =
+        document.getElementById('takePhotoButton');
+
+    const confirmImageButton =
+        document.getElementById('confirmImageButton');
+
+    const cancelCameraButton =
+        document.getElementById('cancelCameraButton');
+
+    let stream = null;
+    let capturedImage = null;
+
+
+    async function openCamera(elementId) {
+
+        currentElementIdForCamera =
+            elementId;
+
+        capturedImage = null;
+
+        confirmImageButton.disabled = true;
+
+        try {
+
+            if (!navigator.mediaDevices ||
+                !navigator.mediaDevices.getUserMedia) {
+
+                throw new Error(
+                    'La cámara no está disponible.'
+                );
+            }
+
+            stream =
+                await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: {
+                            ideal: 'environment'
+                        }
+                    },
+                    audio: false
+                });
+
+            cameraVideo.srcObject = stream;
+
+            cameraVideo.style.display = 'block';
+
+            cameraModal.classList.remove('hidden');
+
+            await cameraVideo.play();
+
+        } catch (error) {
+
+            console.error(error);
+
+            alert(
+                'No se pudo acceder a la cámara. ' +
+                'Asegúrate de tener permisos.'
+            );
+
+            closeCameraModal();
+        }
+    }
+
+
+    function closeCameraModal() {
+
+        cameraModal.classList.add('hidden');
+
+        if (stream) {
+
+            stream.getTracks().forEach(
+                track => track.stop()
+            );
+
+            stream = null;
+        }
+
+        cameraVideo.pause();
+
+        cameraVideo.srcObject = null;
+
+        cameraVideo.style.display = 'none';
+
+        currentElementIdForCamera = null;
+
+        capturedImage = null;
+
+        confirmImageButton.disabled = true;
+    }
+
+
+    takePhotoButton.addEventListener(
+        'click',
+        () => {
+
+            if (!stream) return;
+
+            const videoWidth =
+                cameraVideo.videoWidth;
+
+            const videoHeight =
+                cameraVideo.videoHeight;
+
+            if (!videoWidth || !videoHeight) {
+                return;
+            }
+
+            cameraCanvas.width =
+                videoWidth;
+
+            cameraCanvas.height =
+                videoHeight;
+
+            const ctx =
+                cameraCanvas.getContext('2d');
+
+            ctx.drawImage(
+                cameraVideo,
+                0,
+                0,
+                videoWidth,
+                videoHeight
+            );
+
+            capturedImage =
+                cameraCanvas.toDataURL(
+                    'image/jpeg',
+                    0.82
+                );
+
+            cameraVideo.style.display =
+                'none';
+
+            confirmImageButton.disabled =
+                false;
+        }
+    );
+
+
+    cancelCameraButton.addEventListener(
+        'click',
+        closeCameraModal
+    );
+
+
+    confirmImageButton.addEventListener(
+        'click',
+        async () => {
+
+            if (!capturedImage ||
+                !currentElementIdForCamera) {
+                return;
+            }
+
+            const processedURL =
+                await fixOrientationResizeAndCompress(
+                    capturedImage,
+                    1
+                );
+
+            const elementId =
+                currentElementIdForCamera;
+
+            const element =
+                reportElements.find(
+                    e => e.id === elementId
+                );
+
+            if (element) {
+
+                element.image =
+                    processedURL;
+
+                const elementDiv =
+                    document.getElementById(
+                        elementId
+                    );
+
+                if (elementDiv) {
+
+                    const previewDiv =
+                        elementDiv.querySelector(
+                            `[data-preview-id="${elementId}"]`
+                        );
+
+                    previewDiv.classList.remove(
+                        'hidden'
+                    );
+
+                    previewDiv.querySelector(
+                        'img'
+                    ).src = processedURL;
+
+                    const fileInput =
+                        elementDiv.querySelector(
+                            'input[data-type="image"]'
+                        );
+
+                    if (fileInput) {
+                        fileInput.value = '';
+                    }
+                }
+
+                saveFormData();
+            }
+
+            closeCameraModal();
+        }
+    );
+
+
+    /* =========================================================
+       ELEMENTOS DINÁMICOS
+    ========================================================= */
+
+    function escapeHTML(value) {
+
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+
+    function addReportElement(elementData = {}) {
+
+        elementCounter++;
+
+        const id =
+            `el_${elementCounter}`;
+
+        const container =
+            document.getElementById(
+                'reportElementsContainer'
+            );
+
+        const newElement =
+            document.createElement('div');
+
+        newElement.id = id;
+
+        newElement.classList.add(
+            'p-3',
+            'border',
+            'rounded-md',
+            'bg-white',
+            'shadow-sm'
+        );
+
+        newElement.innerHTML = `
+
+            <div class="flex justify-between items-center mb-2 border-b pb-2">
+
+                <h3 class="font-medium text-gray-700">
+                    Página #${elementCounter}
+                </h3>
+
+                <button type="button"
+                    onclick="removeReportElement('${id}')"
+                    class="text-red-500 hover:text-red-700 text-sm">
+                    Eliminar
+                </button>
+
+            </div>
+
+            <div class="mb-3">
+
+                <label class="block text-sm font-medium text-gray-700">
+                    Sub-Tema o Breve Descripción
+                </label>
+
+                <input type="text"
+                    data-type="description"
+                    value="${escapeHTML(elementData.description || '')}"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                    placeholder="Ej: Estado del Rack Principal">
+
+            </div>
+
+            <div>
+
+                <label class="block text-sm font-medium text-gray-700">
+                    Foto (Arrastra o Selecciona)
+                </label>
+
+                <div data-dnd-id="${id}"
+                    class="drag-drop-area flex flex-col items-center justify-center p-4 mt-1">
+
+                    <div class="flex space-x-2 w-full">
+
+                        <button type="button"
+                            data-action="capture"
+                            data-element-id="${id}"
+                            class="flex-1 flex items-center justify-center py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-yellow-50 hover:bg-yellow-100 transition">
+
+                            📷 Tomar Foto
+
+                        </button>
+
+                        <input type="file"
+                            data-type="image"
+                            accept="image/*"
+                            class="flex-1 block w-full text-sm text-gray-500">
+
+                    </div>
+
+                </div>
+
+                <div data-preview-id="${id}"
+                    class="mt-2 ${elementData.image ? '' : 'hidden'}">
+
+                    <img src="${elementData.image || ''}"
+                        class="w-32 h-32 object-cover rounded-md border p-1"
+                        alt="Preview">
+
+                </div>
+
+            </div>
+
+            <div class="mt-3">
+
+                <label class="block text-sm font-medium text-gray-700">
+                    Detalles Adicionales de la Foto
+                </label>
+
+                <textarea data-type="details"
+                    rows="2"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                    placeholder="Observaciones, valores o comentarios específicos sobre la imagen subida.">${escapeHTML(elementData.details || '')}</textarea>
+
+            </div>
+
+            <div class="pt-3 border-t mt-3">
+
+                <button type="button"
+                    onclick="addReportElement()"
+                    class="w-full bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-md hover:bg-blue-700 transition">
+
+                    + Añadir Otra Página
+
+                </button>
+
+            </div>
+        `;
+
+        container.appendChild(newElement);
+
+        const newElementObject = {
+
+            id: id,
+
+            description:
+                elementData.description || '',
+
+            image:
+                elementData.image || '',
+
+            details:
+                elementData.details || ''
+        };
+
+        reportElements.push(
+            newElementObject
+        );
+
+        const descInput =
+            newElement.querySelector(
+                'input[data-type="description"]'
+            );
+
+        const detailsInput =
+            newElement.querySelector(
+                'textarea[data-type="details"]'
+            );
+
+        const imageInput =
+            newElement.querySelector(
+                'input[data-type="image"]'
+            );
+
+        const captureButton =
+            newElement.querySelector(
+                'button[data-action="capture"]'
+            );
+
+        const dndArea =
+            newElement.querySelector(
+                `[data-dnd-id="${id}"]`
+            );
+
+
+        dndArea.addEventListener(
+            'dragover',
+            event => {
+
+                event.preventDefault();
+
+                dndArea.classList.add(
+                    'drag-over'
+                );
+            }
+        );
+
+
+        dndArea.addEventListener(
+            'dragleave',
+            event => {
+
+                event.preventDefault();
+
+                dndArea.classList.remove(
+                    'drag-over'
+                );
+            }
+        );
+
+
+        dndArea.addEventListener(
+            'drop',
+            event => {
+
+                event.preventDefault();
+
+                dndArea.classList.remove(
+                    'drag-over'
+                );
+
+                const files =
+                    event.dataTransfer.files;
+
+                if (files.length &&
+                    files[0].type.startsWith('image/')) {
+
+                    processUploadedFile(
+                        files[0],
+                        id
+                    );
+                }
+            }
+        );
+
+
+        captureButton.addEventListener(
+            'click',
+            () => openCamera(id)
+        );
+
+
+        descInput.addEventListener(
+            'input',
+            () => {
+
+                const element =
+                    reportElements.find(
+                        e => e.id === id
+                    );
+
+                if (element) {
+
+                    element.description =
+                        descInput.value;
+
+                    saveFormData();
+                }
+            }
+        );
+
+
+        detailsInput.addEventListener(
+            'input',
+            () => {
+
+                const element =
+                    reportElements.find(
+                        e => e.id === id
+                    );
+
+                if (element) {
+
+                    element.details =
+                        detailsInput.value;
+
+                    saveFormData();
+                }
+            }
+        );
+
+
+        imageInput.addEventListener(
+            'change',
+            event => {
+
+                const file =
+                    event.target.files[0];
+
+                if (file) {
+
+                    processUploadedFile(
+                        file,
+                        id
+                    );
+                }
+            }
+        );
+
+        saveFormData();
+    }
+
+
+    function removeReportElement(id) {
+
+        const element =
+            document.getElementById(id);
+
+        if (element) {
+            element.remove();
+        }
+
+        reportElements =
+            reportElements.filter(
+                e => e.id !== id
+            );
+
+        const saved =
+            [...reportElements];
+
+        reportElements = [];
+
+        elementCounter = 0;
+
+        document.getElementById(
+            'reportElementsContainer'
+        ).innerHTML = '';
+
+        saved.forEach(
+            el => addReportElement(el)
+        );
+
+        if (!reportElements.length) {
+            addReportElement();
+        }
+
+        saveFormData();
+    }
+
+
+    /* =========================================================
+       MENSAJES
+    ========================================================= */
+
+    function showMessage(
+        message,
+        type = 'success'
+    ) {
+
+        const messageBox =
+            document.getElementById(
+                'messageBox'
+            );
+
+        messageBox.textContent =
+            message;
+
+        messageBox.className =
+            type === 'success'
+                ? 'fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50'
+                : 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+
+        messageBox.classList.remove(
+            'hidden'
+        );
+
+        setTimeout(
+            () => messageBox.classList.add('hidden'),
+            3000
+        );
+    }
+
+
+    /* =========================================================
+       FIRMA
+    ========================================================= */
+
+    const canvas =
+        document.getElementById(
+            'signatureCanvas_reporte'
+        );
+
+    const ctx =
+        canvas.getContext('2d');
+
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+    let hasSigned = false;
+
+
+    function drawPlaceholder() {
+
+        if (hasSigned) return;
+
+        ctx.save();
+
+        ctx.fillStyle =
+            '#E5E7EB';
+
+        ctx.font =
+            '24px Inter, sans-serif';
+
+        ctx.textAlign =
+            'center';
+
+        ctx.textBaseline =
+            'middle';
+
+        ctx.fillText(
+            'Firma del Reporteador',
+            canvas.width / 2,
+            canvas.height / 2
+        );
+
+        ctx.restore();
+    }
+
+
+    function resizeCanvas() {
+
+        const container =
+            document.getElementById(
+                'signatureCanvasContainer_reporte'
+            );
+
+        const width =
+            Math.max(
+                300,
+                container.offsetWidth
+            );
+
+        const height = 150;
+
+        const oldSignature =
+            hasSigned
+                ? canvas.toDataURL('image/png')
+                : null;
+
+        canvas.width = width;
+        canvas.height = height;
+
+        ctx.fillStyle =
+            'white';
+
+        ctx.fillRect(
+            0,
+            0,
+            width,
+            height
+        );
+
+        if (oldSignature) {
+
+            const img =
+                new Image();
+
+            img.onload = () => {
+
+                ctx.drawImage(
+                    img,
+                    0,
+                    0,
+                    width,
+                    height
+                );
+            };
+
+            img.src =
+                oldSignature;
+
+        } else {
+
+            drawPlaceholder();
+        }
+    }
+
+
+    window.addEventListener(
+        'resize',
+        resizeCanvas
+    );
+
+
+    function getPointerPosition(e) {
+
+        const rect =
+            canvas.getBoundingClientRect();
+
+        const source =
+            e.touches
+                ? e.touches[0]
+                : e;
+
+        return {
+
+            x:
+                source.clientX - rect.left,
+
+            y:
+                source.clientY - rect.top
+        };
+    }
+
+
+    function startDrawing(e) {
+
+        e.preventDefault();
+
+        const point =
+            getPointerPosition(e);
+
+        isDrawing = true;
+
+        lastX = point.x;
+        lastY = point.y;
+
+        if (!hasSigned) {
+
+            ctx.clearRect(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+            ctx.fillStyle =
+                'white';
+
+            ctx.fillRect(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+            hasSigned = true;
+        }
+    }
+
+
+    function draw(e) {
+
+        if (!isDrawing) return;
+
+        e.preventDefault();
+
+        const point =
+            getPointerPosition(e);
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            lastX,
+            lastY
+        );
+
+        ctx.lineTo(
+            point.x,
+            point.y
+        );
+
+        ctx.strokeStyle =
+            '#000';
+
+        ctx.lineWidth =
+            2;
+
+        ctx.lineCap =
+            'round';
+
+        ctx.stroke();
+
+        lastX =
+            point.x;
+
+        lastY =
+            point.y;
+    }
+
+
+    function stopDrawing() {
+        isDrawing = false;
+    }
+
+
+    canvas.addEventListener(
+        'mousedown',
+        startDrawing
+    );
+
+    canvas.addEventListener(
+        'mousemove',
+        draw
+    );
+
+    canvas.addEventListener(
+        'mouseup',
+        stopDrawing
+    );
+
+    canvas.addEventListener(
+        'mouseleave',
+        stopDrawing
+    );
+
+    canvas.addEventListener(
+        'touchstart',
+        startDrawing,
+        { passive: false }
+    );
+
+    canvas.addEventListener(
+        'touchmove',
+        draw,
+        { passive: false }
+    );
+
+    canvas.addEventListener(
+        'touchend',
+        stopDrawing
+    );
+
+
+    /* =========================================================
+       STORAGE
+    ========================================================= */
+
+    const form =
+        document.getElementById(
+            'documentForm_reporte'
+        );
+
+
+    function saveFormData() {
+
+        const data = {
+
+            nombre_reporte:
+                document.getElementById(
+                    'nombre_reporte'
+                ).value,
+
+            nombre_tecnico:
+                document.getElementById(
+                    'nombre_tecnico'
+                ).value,
+
+            cargo_tecnico:
+                document.getElementById(
+                    'cargo_tecnico'
+                ).value,
+
+            signature:
+                hasSigned
+                    ? canvas.toDataURL('image/png')
+                    : null,
+
+            reportElements:
+                reportElements,
+
+            extraNotes:
+                extraNotesInput.value
+        };
+
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(data)
+        );
+
+        localStorage.setItem(
+            NOTES_KEY,
+            extraNotesInput.value
+        );
+    }
+
+
+    function loadFormData() {
+
+        const saved =
+            localStorage.getItem(
+                STORAGE_KEY
+            );
+
+        const savedNotes =
+            localStorage.getItem(
+                NOTES_KEY
+            );
+
+        if (savedNotes !== null) {
+            extraNotesInput.value =
+                savedNotes;
+        }
+
+        if (!saved) {
+
+            reportElements = [];
+
+            elementCounter = 0;
+
+            addReportElement();
+
+            resizeCanvas();
+
+            return;
+        }
+
+        try {
+
+            const data =
+                JSON.parse(saved);
+
+            document.getElementById(
+                'nombre_reporte'
+            ).value =
+                data.nombre_reporte || '';
+
+            document.getElementById(
+                'nombre_tecnico'
+            ).value =
+                data.nombre_tecnico || '';
+
+            document.getElementById(
+                'cargo_tecnico'
+            ).value =
+                data.cargo_tecnico || '';
+
+            extraNotesInput.value =
+                data.extraNotes ||
+                savedNotes ||
+                '';
+
+            reportElements = [];
+
+            elementCounter = 0;
+
+            document.getElementById(
+                'reportElementsContainer'
+            ).innerHTML = '';
+
+            if (
+                Array.isArray(
+                    data.reportElements
+                ) &&
+                data.reportElements.length
+            ) {
+
+                data.reportElements.forEach(
+                    el => addReportElement(el)
+                );
+
+            } else {
+
+                addReportElement();
+            }
+
+            resizeCanvas();
+
+            if (data.signature) {
+
+                hasSigned = true;
+
+                const img =
+                    new Image();
+
+                img.onload = () => {
+
+                    ctx.drawImage(
+                        img,
+                        0,
+                        0,
+                        canvas.width,
+                        canvas.height
+                    );
+                };
+
+                img.src =
+                    data.signature;
+
+            } else {
+
+                hasSigned = false;
+
+                ctx.clearRect(
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height
+                );
+
+                ctx.fillStyle =
+                    'white';
+
+                ctx.fillRect(
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height
+                );
+
+                drawPlaceholder();
+            }
+
+        } catch (error) {
+
+            console.error(error);
+
+            reportElements = [];
+
+            elementCounter = 0;
+
+            document.getElementById(
+                'reportElementsContainer'
+            ).innerHTML = '';
+
+            addReportElement();
+
+            resizeCanvas();
+        }
+    }
+
+
+    form.addEventListener(
+        'input',
+        saveFormData
+    );
+
+
+    /* =========================================================
+       PDF
+       TAMAÑO CARTA
+       8.5 x 11 pulgadas
+       jsPDF: [216, 279] mm
+    ========================================================= */
+
+    const logoUrl =
+        'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
+
+
+    async function getLogoBase64() {
+
+        try {
+
+            const response =
+                await fetch(
+                    logoUrl
+                );
+
+            if (!response.ok) {
+                return null;
+            }
+
+            const blob =
+                await response.blob();
+
+            return await new Promise(
+                (resolve, reject) => {
+
+                    const reader =
+                        new FileReader();
+
+                    reader.onloadend =
+                        () => resolve(
+                            reader.result
+                        );
+
+                    reader.onerror =
+                        reject;
+
+                    reader.readAsDataURL(
+                        blob
+                    );
+                }
+            );
+
+        } catch (error) {
+
+            console.warn(
+                'No se pudo cargar el logo.',
+                error
+            );
+
+            return null;
+        }
+    }
+
+
+    /*
+     * ENCABEZADO
+     *
+     * Devuelve la posición Y donde puede
+     * comenzar el contenido.
+     */
+    async function addHeader(
+        doc,
+        pageNum,
+        totalPages,
+        logoBase64,
+        reportName
+    ) {
+
+        const margin = 15;
+
+        const pageWidth =
+            doc.internal.pageSize.getWidth();
+
+        const headerY = 10;
+
+        const logoWidth = 34;
+        const logoHeight = 17;
+
+        if (logoBase64) {
+
+            doc.addImage(
+                logoBase64,
+                'PNG',
+                margin,
+                headerY,
+                logoWidth,
+                logoHeight
+            );
+        }
+
+        /*
+         * INFORMACIÓN DERECHA
+         */
+        const rightX =
+            pageWidth - margin;
+
+        doc.setFont(
+            'helvetica',
+            'normal'
+        );
+
+        doc.setFontSize(8);
+
+        doc.text(
+            'Tiendas 01.001.0001.0001',
+            rightX,
+            headerY + 2,
+            null,
+            null,
+            'right'
+        );
+
+        doc.text(
+            'soporte redes',
+            pageWidth - 33,
+            headerY + 7,
+            null,
+            null,
+            'center'
+        );
+
+        doc.text(
+            'y telecomunicaciones',
+            pageWidth - 33,
+            headerY + 11,
+            null,
+            null,
+            'center'
+        );
+
+        doc.text(
+            `Fecha de Reporte: ${new Date().toLocaleDateString('es-SV')}`,
+            rightX,
+            headerY + 16,
+            null,
+            null,
+            'right'
+        );
+
+
+        /*
+         * TÍTULO
+         */
+        doc.setFont(
+            'helvetica',
+            'bold'
+        );
+
+        doc.setFontSize(15);
+
+        const title =
+            (
+                reportName ||
+                'REPORTE DE EVIDENCIA'
+            )
+            .trim()
+            .toUpperCase();
+
+        const titleLeft =
+            margin + logoWidth + 7;
+
+        const titleRight =
+            pageWidth - 72;
+
+        const titleWidth =
+            titleRight - titleLeft;
+
+        const titleLines =
+            doc.splitTextToSize(
+                title,
+                titleWidth
+            );
+
+        const titleX =
+            titleLeft +
+            (titleWidth / 2);
+
+        doc.text(
+            titleLines,
+            titleX,
+            headerY + 7,
+            {
+                align: 'center',
+                baseline: 'middle'
+            }
+        );
+
+        const titleHeight =
+            Math.max(
+                12,
+                titleLines.length * 6
+            );
+
+        const lineY =
+            Math.max(
+                headerY + logoHeight,
+                headerY + 18,
+                headerY + 7 + titleHeight
+            ) + 5;
+
+        doc.setDrawColor(
+            0,
+            0,
+            0
+        );
+
+        doc.setLineWidth(
+            0.3
+        );
+
+        doc.line(
+            margin,
+            lineY,
+            pageWidth - margin,
+            lineY
+        );
+
+        return lineY + 9;
+    }
+
+
+    /*
+     * PIE DE PÁGINA
+     *
+     * TODO queda en la misma línea:
+     *
+     * Firma --------------------- Página X de Y
+     *
+     * Solo se muestra la firma en la última página.
+     */
+    function addFooter(
+        doc,
+        data,
+        pageNum,
+        totalPages,
+        signatureCanvas,
+        signed
+    ) {
+
+        const margin = 15;
+
+        const pageWidth =
+            doc.internal.pageSize.getWidth();
+
+        const pageHeight =
+            doc.internal.pageSize.getHeight();
+
+        /*
+         * Esta es la línea base común.
+         * Ambos elementos parten exactamente
+         * desde la misma altura.
+         */
+        const baselineY =
+            pageHeight - 14;
+
+
+        /*
+         * FIRMA SOLO EN ÚLTIMA PÁGINA
+         */
+        if (
+            pageNum === totalPages
+        ) {
+
+            const signatureX =
+                margin;
+
+            const signatureWidth =
+                52;
+
+            /*
+             * La firma se dibuja por encima
+             * de la misma línea base.
+             */
+            if (signed) {
+
+                const maxSignatureHeight =
+                    15;
+
+                const ratio =
+                    signatureCanvas.height /
+                    signatureCanvas.width;
+
+                let signatureHeight =
+                    signatureWidth * ratio;
+
+                signatureHeight =
+                    Math.min(
+                        signatureHeight,
+                        maxSignatureHeight
+                    );
+
+                doc.addImage(
+                    signatureCanvas.toDataURL(
+                        'image/png'
+                    ),
+                    'PNG',
+                    signatureX,
+                    baselineY - signatureHeight - 4,
+                    signatureWidth,
+                    signatureHeight
+                );
+            }
+
+            /*
+             * Línea para firmar.
+             *
+             * La línea termina exactamente
+             * antes del conteo de páginas.
+             */
+            const signatureLineY =
+                baselineY - 2;
+
+            doc.setLineWidth(
+                0.3
+            );
+
+            doc.line(
+                signatureX,
+                signatureLineY,
+                signatureX + signatureWidth,
+                signatureLineY
+            );
+
+            /*
+             * Nombre
+             */
+            doc.setFont(
+                'helvetica',
+                'normal'
+            );
+
+            doc.setFontSize(8);
+
+            const tecnico =
+                (
+                    data.nombre_tecnico ||
+                    ''
+                ).trim();
+
+            if (tecnico) {
+
+                doc.text(
+                    tecnico,
+                    signatureX,
+                    baselineY + 2.5
+                );
+
+            } else {
+
+                doc.text(
+                    'Firma',
+                    signatureX,
+                    baselineY + 2.5
+                );
+            }
+
+            /*
+             * Cargo
+             */
+            const cargo =
+                (
+                    data.cargo_tecnico ||
+                    ''
+                ).trim();
+
+            if (cargo) {
+
+                doc.setFontSize(7);
+
+                doc.text(
+                    cargo,
+                    signatureX,
+                    baselineY + 6
+                );
+            }
+        }
+
+
+        /*
+         * CONTEO DE PÁGINAS
+         *
+         * Siempre en el mismo nivel horizontal
+         * de la zona de firma.
+         */
+        doc.setFont(
+            'helvetica',
+            'normal'
+        );
+
+        doc.setFontSize(8);
+
+        doc.text(
+            `Página ${pageNum} de ${totalPages}`,
+            pageWidth - margin,
+            baselineY,
+            null,
+            null,
+            'right'
+        );
+    }
+
+
+    /*
+     * NOTAS
+     */
+    function addExtraNotesToPage(
+        doc,
+        notes,
+        y,
+        margin
+    ) {
+
+        if (!notes) {
+            return y;
+        }
+
+        const pageWidth =
+            doc.internal.pageSize.getWidth();
+
+        const boxWidth =
+            pageWidth - (
+                margin * 2
+            );
+
+        const lines =
+            doc.splitTextToSize(
+                notes,
+                boxWidth - 6
+            );
+
+        const boxHeight =
+            Math.max(
+                20,
+                13 +
+                (lines.length * 5)
+            );
+
+        doc.setFillColor(
+            240,
+            240,
+            240
+        );
+
+        doc.rect(
+            margin,
+            y,
+            boxWidth,
+            boxHeight,
+            'F'
+        );
+
+        doc.setDrawColor(
+            0,
+            0,
+            0
+        );
+
+        doc.rect(
+            margin,
+            y,
+            boxWidth,
+            boxHeight
+        );
+
+        doc.setFont(
+            'helvetica',
+            'bold'
+        );
+
+        doc.setFontSize(
+            9
+        );
+
+        doc.text(
+            'NOTAS GENERALES DEL REPORTE:',
+            margin + 3,
+            y + 5
+        );
+
+        doc.setFont(
+            'helvetica',
+            'normal'
+        );
+
+        doc.setFontSize(
+            8
+        );
+
+        doc.text(
+            lines,
+            margin + 3,
+            y + 11
+        );
+
+        return y +
+            boxHeight +
+            5;
+    }
+
+
+    /* =========================================================
+       GENERACIÓN DEL PDF
+    ========================================================= */
+
+    form.addEventListener(
+        'submit',
+        async function(e) {
+
+            e.preventDefault();
+
+            const loadingOverlay =
+                document.getElementById(
+                    'loadingOverlay'
+                );
+
+            loadingOverlay.classList.remove(
+                'hidden'
+            );
+
+            try {
+
+                const {
+                    jsPDF
+                } = window.jspdf;
+
+
+                /*
+                 * IMPORTANTE:
+                 *
+                 * format: 'letter'
+                 *
+                 * orientación vertical.
+                 */
+                const doc =
+                    new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'letter',
+                        compress: true
+                    });
+
+
+                const formData =
+                    new FormData(
+                        e.target
+                    );
+
+                const data =
+                    Object.fromEntries(
+                        formData.entries()
+                    );
+
+
+                const reportName =
+                    data.nombre_reporte ||
+                    'REPORTE DE EVIDENCIA';
+
+
+                const extraNotes =
+                    extraNotesInput.value.trim();
+
+
+                const elements =
+                    reportElements.filter(
+                        el =>
+                            el.description ||
+                            el.image ||
+                            el.details
+                    );
+
+
+                const logoBase64 =
+                    await getLogoBase64();
+
+
+                /*
+                 * Preparar páginas.
+                 *
+                 * Cada elemento representa
+                 * una página del reporte.
+                 */
+                const totalElements =
+                    elements.length;
+
+
+                /*
+                 * Mínimo una página.
+                 */
+                let totalPages =
+                    Math.max(
+                        1,
+                        totalElements
+                    );
+
+
+                const margin = 15;
+
+                const pageWidth =
+                    doc.internal.pageSize.getWidth();
+
+                const pageHeight =
+                    doc.internal.pageSize.getHeight();
+
+
+                /*
+                 * Espacio reservado para el pie.
+                 */
+                const footerTop =
+                    pageHeight - 28;
+
+
+                /*
+                 * =================================================
+                 * SI NO HAY ELEMENTOS
+                 * =================================================
+                 */
+                if (totalElements === 0) {
+
+                    let y =
+                        await addHeader(
+                            doc,
+                            1,
+                            totalPages,
+                            logoBase64,
+                            reportName
+                        );
+
+
+                    doc.setFont(
+                        'helvetica',
+                        'bold'
+                    );
+
+                    doc.setFontSize(
+                        12
+                    );
+
+                    doc.text(
+                        'INFORMACIÓN Y RESUMEN',
+                        margin,
+                        y
+                    );
+
+                    y += 7;
+
+
+                    doc.setFont(
+                        'helvetica',
+                        'normal'
+                    );
+
+                    doc.setFontSize(
+                        9
+                    );
+
+                    doc.text(
+                        `Generado por: ${data.nombre_tecnico || 'No especificado'}`,
+                        margin,
+                        y
+                    );
+
+                    y += 5;
+
+                    doc.text(
+                        `Fecha de Generación: ${new Date().toLocaleDateString('es-SV')}`,
+                        margin,
+                        y
+                    );
+
+                    y += 9;
+
+
+                    if (extraNotes) {
+
+                        const notesLines =
+                            doc.splitTextToSize(
+                                extraNotes,
+                                pageWidth -
+                                (margin * 2) -
+                                6
+                            );
+
+                        const notesHeight =
+                            13 +
+                            (
+                                notesLines.length *
+                                5
+                            );
+
+                        /*
+                         * Si las notas no caben
+                         * antes del pie, se crea
+                         * otra página.
+                         */
+                        if (
+                            y +
+                            notesHeight +
+                            5 >
+                            footerTop
+                        ) {
+
+                            doc.addPage();
+
+                            totalPages++;
+
+                            /*
+                             * Rehacer encabezado
+                             * de página 1 con total
+                             * actualizado.
+                             */
+                            doc.setPage(1);
+
+                            await addHeader(
+                                doc,
+                                1,
+                                totalPages,
+                                logoBase64,
+                                reportName
+                            );
+
+                            doc.setPage(
+                                totalPages
+                            );
+
+                            y =
+                                await addHeader(
+                                    doc,
+                                    totalPages,
+                                    totalPages,
+                                    logoBase64,
+                                    reportName
+                                );
+                        }
+
+                        y =
+                            addExtraNotesToPage(
+                                doc,
+                                extraNotes,
+                                y,
+                                margin
+                            );
+                    }
+
+
+                    /*
+                     * Pie final.
+                     */
+                    addFooter(
+                        doc,
+                        data,
+                        totalPages === 1
+                            ? 1
+                            : totalPages,
+                        totalPages,
+                        canvas,
+                        hasSigned
+                    );
+                }
+
+
+                /*
+                 * =================================================
+                 * CON ELEMENTOS
+                 * =================================================
+                 */
+
+                for (
+                    let i = 0;
+                    i < elements.length;
+                    i++
+                ) {
+
+                    const element =
+                        elements[i];
+
+                    const pageNum =
+                        i + 1;
 
                     if (i > 0) {
                         doc.addPage();
-                        y = await addHeader(doc, i + 1, totalPages);
-                    }
-                    
-                    // Mostrar el subtema únicamente si fue ingresado.
-                    if (element.description && element.description.trim()) {
-                        doc.setFont('helvetica', 'bold');
-                        doc.text(element.description.trim(), margin, y);
-                        y += 8;
                     }
 
-                    // Image
-                    let imgWidth = 0;
-                    let imgHeight = 0;
-                    let detailsBoxYStart = y;
-                    const maxImgWidth = pageWidth - (margin * 2);
-                    
+                    doc.setPage(
+                        pageNum
+                    );
+
+
+                    let y =
+                        await addHeader(
+                            doc,
+                            pageNum,
+                            totalPages,
+                            logoBase64,
+                            reportName
+                        );
+
+
+                    /*
+                     * SUBTEMA
+                     */
+                    if (
+                        element.description &&
+                        element.description.trim()
+                    ) {
+
+                        doc.setFont(
+                            'helvetica',
+                            'bold'
+                        );
+
+                        doc.setFontSize(
+                            11
+                        );
+
+                        const descriptionLines =
+                            doc.splitTextToSize(
+                                element.description.trim(),
+                                pageWidth -
+                                (margin * 2)
+                            );
+
+                        doc.text(
+                            descriptionLines,
+                            margin,
+                            y
+                        );
+
+                        y +=
+                            descriptionLines.length *
+                            5 +
+                            4;
+                    }
+
+
+                    /*
+                     * IMAGEN
+                     */
                     if (element.image) {
-                        const img = new Image();
-                        await new Promise(resolve => { img.onload = resolve; img.src = element.image; });
 
-                        // Recalculate dimensions based on the pre-processed image
-                        imgWidth = img.width;
-                        imgHeight = img.height;
+                        const img =
+                            new Image();
 
-                        const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxImgWidth - 4);
-                        const detailsBoxHeight = 4 + 5 + 4 + (detailsLines.length * 5) + 4;
-                        
-                        // Check required space for the rest of the page (if last element)
-                        let requiredHeightForNotesAndSignature = 0;
-                        if (isLastElement) {
-                            const signatureBlockHeight = 24; 
-                            const signatureSafetyMargin = 8; 
-                            const requiredHeightForSignature = signatureBlockHeight + signatureSafetyMargin + margin;
-                            
-                            if (extraNotes) {
-                                // Preliminary calculation for notes box height
-                                const notesLinesTemp = doc.splitTextToSize(extraNotes, maxImgWidth - 4);
-                                const notesBoxHeightTemp = (notesLinesTemp.length * 5) + 12;
-                                requiredHeightForNotesAndSignature = notesBoxHeightTemp + 5 + requiredHeightForSignature; // 5 is gap
-                            } else {
-                                requiredHeightForNotesAndSignature = requiredHeightForSignature;
+                        await new Promise(
+                            resolve => {
+
+                                img.onload =
+                                    resolve;
+
+                                img.onerror =
+                                    resolve;
+
+                                img.src =
+                                    element.image;
                             }
-                        }
+                        );
 
-                        // Max height available for the image
-                        const maxImgHeight = pageHeight - y - margin - detailsBoxHeight - 5 - requiredHeightForNotesAndSignature; 
-                        
-                        // Scale image to fit max constraints
-                        if (imgWidth > maxImgWidth || imgHeight > maxImgHeight) {
-                            const ratio = Math.min(maxImgWidth / imgWidth, maxImgHeight / imgHeight);
-                            imgWidth = imgWidth * ratio;
-                            imgHeight = imgHeight * ratio;
-                        }
-                        
-                        const imgX = (pageWidth - imgWidth) / 2;
-                        doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight); 
-                        y += imgHeight + 5;
+
+                        let imgWidth =
+                            img.width;
+
+                        let imgHeight =
+                            img.height;
+
+
+                        const maxWidth =
+                            pageWidth -
+                            (margin * 2);
+
+
+                        /*
+                         * El pie siempre queda
+                         * reservado.
+                         */
+                        const isLast =
+                            pageNum ===
+                            totalPages;
+
+
+                        /*
+                         * Reservar espacio
+                         * para detalles.
+                         */
+                        const detailsLines =
+                            doc.splitTextToSize(
+                                element.details ||
+                                'Sin detalles.',
+                                maxWidth - 6
+                            );
+
+
+                        const detailsHeight =
+                            17 +
+                            (
+                                detailsLines.length *
+                                5
+                            );
+
+
+                        /*
+                         * Si es última página,
+                         * reservar además el pie.
+                         */
+                        const bottomReserve =
+                            isLast
+                                ? 30
+                                : 15;
+
+
+                        const maxHeight =
+                            Math.max(
+                                40,
+                                footerTop -
+                                y -
+                                detailsHeight -
+                                7
+                            );
+
+
+                        const ratio =
+                            Math.min(
+                                1,
+                                maxWidth /
+                                    imgWidth,
+                                maxHeight /
+                                    imgHeight
+                            );
+
+
+                        imgWidth *=
+                            ratio;
+
+                        imgHeight *=
+                            ratio;
+
+
+                        const imgX =
+                            (
+                                pageWidth -
+                                imgWidth
+                            ) / 2;
+
+
+                        doc.addImage(
+                            element.image,
+                            'JPEG',
+                            imgX,
+                            y,
+                            imgWidth,
+                            imgHeight
+                        );
+
+
+                        y +=
+                            imgHeight +
+                            5;
                     }
 
-                    // Details Text (Inside Box)
-                    detailsBoxYStart = y;
-                    const detailsBoxWidth = pageWidth - (margin * 2);
-                    doc.setFontSize(10);
-                    doc.setFont('helvetica', 'bold');
-                    doc.text('Detalles Adicionales:', margin + 2, y + 4);
-                    y += 8;
 
-                    doc.setFont('helvetica', 'normal');
-                    const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', detailsBoxWidth - 4);
-                    doc.text(detailsLines, margin + 2, y);
-                    y += (detailsLines.length * 5) + 4; 
+                    /*
+                     * DETALLES
+                     */
+                    const detailsBoxY =
+                        y;
 
-                    const finalDetailsBoxHeight = y - detailsBoxYStart;
-                    doc.rect(margin, detailsBoxYStart, detailsBoxWidth, finalDetailsBoxHeight);
+                    const detailsBoxWidth =
+                        pageWidth -
+                        (margin * 2);
+
+
+                    doc.setFont(
+                        'helvetica',
+                        'bold'
+                    );
+
+                    doc.setFontSize(
+                        9
+                    );
+
+                    doc.text(
+                        'Detalles Adicionales:',
+                        margin + 3,
+                        y + 5
+                    );
+
+
+                    y += 10;
+
+
+                    doc.setFont(
+                        'helvetica',
+                        'normal'
+                    );
+
+                    doc.setFontSize(
+                        8
+                    );
+
+
+                    const detailsLines =
+                        doc.splitTextToSize(
+                            element.details ||
+                            'Sin detalles.',
+                            detailsBoxWidth - 6
+                        );
+
+
+                    doc.text(
+                        detailsLines,
+                        margin + 3,
+                        y
+                    );
+
+
+                    y +=
+                        detailsLines.length *
+                        5 +
+                        3;
+
+
+                    const detailsBoxHeight =
+                        y -
+                        detailsBoxY;
+
+
+                    doc.rect(
+                        margin,
+                        detailsBoxY,
+                        detailsBoxWidth,
+                        detailsBoxHeight
+                    );
+
+
                     y += 5;
 
-                    // --- LAST ELEMENT ONLY: Check for page break for Notes/Signature ---
-                    if (isLastElement) {
-                        let requiredHeightForNotesAndSignature = 0;
-                        let notesBoxHeight = 0;
-                        let notesLines = [];
-                        
-                        // 1. Calculate space required
-                        const signatureBlockHeight = 24; 
-                        const signatureSafetyMargin = 8; 
-                        const requiredHeightForSignature = signatureBlockHeight + signatureSafetyMargin + margin;
-                        
-                        if (extraNotes) {
-                            notesLines = doc.splitTextToSize(extraNotes, maxImgWidth - 4);
-                            const titleAndPaddingHeight = 12;
-                            notesBoxHeight = (notesLines.length * 5) + titleAndPaddingHeight;
-                            requiredHeightForNotesAndSignature = notesBoxHeight + 5 + requiredHeightForSignature; 
-                        } else {
-                            requiredHeightForNotesAndSignature = requiredHeightForSignature;
-                        }
 
-                        // 2. Check for page break
-                        if ((y + requiredHeightForNotesAndSignature) > pageHeight) {
-                            doc.addPage();
-                            totalPages++;
-                            
-                            // Re-render headers for all pages with the new total
-                            const totalPagesFinal = totalPages;
-                            for (let p = 1; p < totalPagesFinal; p++) {
-                                doc.setPage(p);
-                                // The new total page count is required for Page X of Y
-                                await addHeader(doc, p, totalPagesFinal); 
+                    /*
+                     * =================================================
+                     * ÚLTIMA PÁGINA
+                     * NOTAS + FIRMA
+                     * =================================================
+                     */
+                    if (
+                        pageNum ===
+                        totalPages
+                    ) {
+
+                        if (extraNotes) {
+
+                            const notesLines =
+                                doc.splitTextToSize(
+                                    extraNotes,
+                                    detailsBoxWidth - 6
+                                );
+
+                            const notesHeight =
+                                13 +
+                                (
+                                    notesLines.length *
+                                    5
+                                );
+
+
+                            /*
+                             * Si las notas no caben
+                             * antes del pie, se agrega
+                             * una nueva página.
+                             */
+                            if (
+                                y +
+                                notesHeight +
+                                5 >
+                                footerTop
+                            ) {
+
+                                doc.addPage();
+
+                                totalPages++;
+
+                                /*
+                                 * Actualizar encabezados
+                                 * de todas las páginas.
+                                 */
+                                for (
+                                    let p = 1;
+                                    p <= totalPages;
+                                    p++
+                                ) {
+
+                                    doc.setPage(p);
+
+                                    await addHeader(
+                                        doc,
+                                        p,
+                                        totalPages,
+                                        logoBase64,
+                                        reportName
+                                    );
+                                }
+
+
+                                doc.setPage(
+                                    totalPages
+                                );
+
+
+                                y =
+                                    await addHeader(
+                                        doc,
+                                        totalPages,
+                                        totalPages,
+                                        logoBase64,
+                                        reportName
+                                    );
                             }
 
-                            doc.setPage(totalPagesFinal); // Back to the last page
-                            y = await addHeader(doc, totalPagesFinal, totalPagesFinal); 
-                            
-                        } else if (extraNotes && (y + notesBoxHeight + 5 + requiredHeightForSignature) > pageHeight - margin) {
-                            // Small optimization: If notes and signature don't fit well but content is on page 1, 
-                            // force a break to ensure clean layout.
-                            doc.addPage();
-                            totalPages++;
-                            const totalPagesFinal = totalPages;
-                            for (let p = 1; p < totalPagesFinal; p++) {
-                                doc.setPage(p);
-                                await addHeader(doc, p, totalPagesFinal); 
-                            }
-                            doc.setPage(totalPagesFinal);
-                            y = await addHeader(doc, totalPagesFinal, totalPagesFinal); 
-                        }
-                        
-                        // 3. Draw Notes (starts at 'y' which is now guaranteed to be safe)
-                        if (extraNotes) {
-                            y = addExtraNotesToPage(doc, extraNotes, y, margin, notesBoxHeight, notesLines); 
-                        }
 
-                        // 4. Draw Signature (fixed at bottom)
-                        await addSignatureSection(doc, data, pageHeight, margin, canvas, hasSigned);
+                            y =
+                                addExtraNotesToPage(
+                                    doc,
+                                    extraNotes,
+                                    y,
+                                    margin
+                                );
+                        }
                     }
-                }
-                
-                // --- Finalizing for Empty Reports (If totalElements is 0) ---
-                if (totalElements === 0) {
-                     // Check and add notes/signature on the single page (Page 1)
-                    let requiredHeightForNotesAndSignature = 0;
-                    let notesBoxHeight = 0;
-                    let notesLines = [];
-                    const signatureBlockHeight = 24; 
-                    const signatureSafetyMargin = 8; 
-                    const requiredHeightForSignature = signatureBlockHeight + signatureSafetyMargin + margin;
-
-                    if (extraNotes) {
-                        const notesBoxWidth = pageWidth - (margin * 2);
-                        notesLines = doc.splitTextToSize(extraNotes, notesBoxWidth - 4);
-                        const titleAndPaddingHeight = 12;
-                        notesBoxHeight = (notesLines.length * 5) + titleAndPaddingHeight;
-                        requiredHeightForNotesAndSignature = notesBoxHeight + 5 + requiredHeightForSignature; 
-                    } else {
-                        requiredHeightForNotesAndSignature = requiredHeightForSignature;
-                    }
-                    
-                    if ((y + requiredHeightForNotesAndSignature) > pageHeight - margin) {
-                        doc.addPage();
-                        totalPages++;
-                        doc.setPage(totalPages);
-                        y = await addHeader(doc, totalPages, totalPages); 
-                        // Update header for page 1
-                        doc.setPage(1);
-                        await addHeader(doc, 1, totalPages);
-                        doc.setPage(totalPages);
-                    }
-                    
-                    if (extraNotes) {
-                        y = addExtraNotesToPage(doc, extraNotes, y, margin, notesBoxHeight, notesLines); 
-                    }
-                    await addSignatureSection(doc, data, pageHeight, margin, canvas, hasSigned);
                 }
 
 
-                // --- Finalizar ---
-                const fileName = data.nombre_reporte.replace(/[^a-z0-9]/gi, '_').substring(0, 30);
-                doc.save(`${fileName}_${new Date().getTime()}.pdf`);
-                
-                loadingOverlay.style.display = 'none';
-                showMessage('Reporte generado con éxito.', 'success');
+                /*
+                 * =================================================
+                 * ACTUALIZAR TODOS LOS ENCABEZADOS
+                 * CON EL TOTAL REAL DE PÁGINAS
+                 * =================================================
+                 */
+                for (
+                    let p = 1;
+                    p <= totalPages;
+                    p++
+                ) {
+
+                    doc.setPage(p);
+
+                    await addHeader(
+                        doc,
+                        p,
+                        totalPages,
+                        logoBase64,
+                        reportName
+                    );
+                }
+
+
+                /*
+                 * =================================================
+                 * PIES DE PÁGINA
+                 *
+                 * Se dibujan DESPUÉS de todo el contenido.
+                 * Esto evita que se monten con imágenes,
+                 * notas o detalles.
+                 * =================================================
+                 */
+                for (
+                    let p = 1;
+                    p <= totalPages;
+                    p++
+                ) {
+
+                    doc.setPage(p);
+
+                    addFooter(
+                        doc,
+                        data,
+                        p,
+                        totalPages,
+                        canvas,
+                        hasSigned
+                    );
+                }
+
+
+                /*
+                 * NOMBRE DEL ARCHIVO
+                 */
+                const safeFileName =
+                    (
+                        data.nombre_reporte ||
+                        'reporte'
+                    )
+                    .replace(
+                        /[^a-z0-9áéíóúñü\s_-]/gi,
+                        ''
+                    )
+                    .trim()
+                    .replace(
+                        /\s+/g,
+                        '_'
+                    )
+                    .substring(
+                        0,
+                        40
+                    );
+
+
+                doc.save(
+                    `${safeFileName}_${Date.now()}.pdf`
+                );
+
+
+                loadingOverlay.classList.add(
+                    'hidden'
+                );
+
+                showMessage(
+                    'Reporte generado con éxito.',
+                    'success'
+                );
+
             } catch (error) {
-                console.error('Error al generar el PDF:', error);
-                loadingOverlay.style.display = 'none';
-                showMessage('Error al generar el documento.', 'error');
+
+                console.error(
+                    'Error al generar PDF:',
+                    error
+                );
+
+                loadingOverlay.classList.add(
+                    'hidden'
+                );
+
+                showMessage(
+                    'Error al generar el documento.',
+                    'error'
+                );
             }
         });
-        
-        // --- CLEAR FORM AND SIGNATURE LOGIC ---
-        document.getElementById('clearFormButton_reporte').addEventListener('click', function() {
-            document.getElementById('confirmationModal_reporte').classList.remove('hidden');
-        });
-        document.getElementById('cancelClearButton_reporte').addEventListener('click', function() {
-            document.getElementById('confirmationModal_reporte').classList.add('hidden');
-        });
-        document.getElementById('confirmClearButton_reporte').addEventListener('click', function() {
-            document.getElementById('documentForm_reporte').reset();
-            
+
+
+    /* =========================================================
+       LIMPIAR FORMULARIO
+    ========================================================= */
+
+    document.getElementById(
+        'clearFormButton_reporte'
+    ).addEventListener(
+        'click',
+        () => {
+
+            document.getElementById(
+                'confirmationModal_reporte'
+            ).classList.remove(
+                'hidden'
+            );
+        }
+    );
+
+
+    document.getElementById(
+        'cancelClearButton_reporte'
+    ).addEventListener(
+        'click',
+        () => {
+
+            document.getElementById(
+                'confirmationModal_reporte'
+            ).classList.add(
+                'hidden'
+            );
+        }
+    );
+
+
+    document.getElementById(
+        'confirmClearButton_reporte'
+    ).addEventListener(
+        'click',
+        () => {
+
+            form.reset();
+
             reportElements = [];
+
             elementCounter = 0;
-            document.getElementById('reportElementsContainer').innerHTML = '';
+
+            document.getElementById(
+                'reportElementsContainer'
+            ).innerHTML = '';
+
             addReportElement();
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.clearRect(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+            ctx.fillStyle =
+                'white';
+
+            ctx.fillRect(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
             hasSigned = false;
+
             drawPlaceholder();
-            
-            document.getElementById('confirmationModal_reporte').classList.add('hidden');
-            showMessage('Formulario limpiado. Listo para un nuevo reporte.', 'success');
-       
-            localStorage.removeItem('documentFormData_reporte_simple');
-            localStorage.removeItem('extraNotes_reporte_simple'); 
-            extraNotesInput.value = ''; 
-        });
-        document.getElementById('clearSignatureButton_reporte').addEventListener('click', function() {
-            document.getElementById('clearSignatureConfirmationModal_reporte').classList.remove('hidden');
-        });
-        document.getElementById('cancelClearSignatureButton_reporte').addEventListener('click', function() {
-            document.getElementById('clearSignatureConfirmationModal_reporte').classList.add('hidden');
-        });
-        document.getElementById('confirmClearSignatureButton_reporte').addEventListener('click', function() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            hasSigned = false;
-            drawPlaceholder();
-            saveFormData();
-            document.getElementById('clearSignatureConfirmationModal_reporte').classList.add('hidden');
-            showMessage('Firma borrada.', 'success');
-        });
-        if (reportElements.length === 0) {
-            addReportElement();
+
+
+            extraNotesInput.value = '';
+
+            localStorage.removeItem(
+                STORAGE_KEY
+            );
+
+            localStorage.removeItem(
+                NOTES_KEY
+            );
+
+
+            document.getElementById(
+                'confirmationModal_reporte'
+            ).classList.add(
+                'hidden'
+            );
+
+
+            showMessage(
+                'Formulario limpiado. Listo para un nuevo reporte.',
+                'success'
+            );
         }
-    </script>
+    );
+
+
+    /* =========================================================
+       LIMPIAR FIRMA
+    ========================================================= */
+
+    document.getElementById(
+        'clearSignatureButton_reporte'
+    ).addEventListener(
+        'click',
+        () => {
+
+            document.getElementById(
+                'clearSignatureConfirmationModal_reporte'
+            ).classList.remove(
+                'hidden'
+            );
+        }
+    );
+
+
+    document.getElementById(
+        'cancelClearSignatureButton_reporte'
+    ).addEventListener(
+        'click',
+        () => {
+
+            document.getElementById(
+                'clearSignatureConfirmationModal_reporte'
+            ).classList.add(
+                'hidden'
+            );
+        }
+    );
+
+
+    document.getElementById(
+        'confirmClearSignatureButton_reporte'
+    ).addEventListener(
+        'click',
+        () => {
+
+            ctx.clearRect(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+            ctx.fillStyle =
+                'white';
+
+            ctx.fillRect(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+            hasSigned = false;
+
+            drawPlaceholder();
+
+            saveFormData();
+
+
+            document.getElementById(
+                'clearSignatureConfirmationModal_reporte'
+            ).classList.add(
+                'hidden'
+            );
+
+
+            showMessage(
+                'Firma borrada.',
+                'success'
+            );
+        }
+    );
+
+
+    /*
+     * Inicializar firma.
+     */
+    window.addEventListener(
+        'load',
+        () => {
+
+            setTimeout(
+                resizeCanvas,
+                100
+            );
+        }
+    );
+
+</script>
+
 </body>
 </html>
