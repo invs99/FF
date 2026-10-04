@@ -147,6 +147,10 @@
                     <label for="nombre_tecnico" class="block text-sm font-medium text-gray-700">Nombre de quien Reporta</label>
                     <input type="text" id="nombre_tecnico" name="nombre_tecnico" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" required/>
                 </div>
+                <div>
+                    <label for="cargo_tecnico" class="block text-sm font-medium text-gray-700">Cargo</label>
+                    <input type="text" id="cargo_tecnico" name="cargo_tecnico" placeholder="Ej. Técnico de Soporte" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"/>
+                </div>
             </div>
 
             <div class="space-y-4 border p-4 rounded-md bg-gray-50">
@@ -732,35 +736,34 @@
 
         // --- PDF GENERATION UTILITIES ---
 
-        // FUNCIÓN para dibujar la firma (fija al fondo)
+        // FUNCIÓN para dibujar la firma (compacta y fija al fondo)
         async function addSignatureSection(doc, data, pageHeight, margin, canvas, hasSigned) {
-            const signatureBlockHeight = 40;
+            const signatureBlockHeight = 24;
             let currentY = pageHeight - margin - signatureBlockHeight;
 
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.text('FIRMA', margin, currentY); 
-            currentY += 5; 
-            
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(12);
-            
-            const signatureData = canvas.toDataURL('image/png');
-            const signatureImageHeight = 20;
-            const signatureWidth = 60;
+            const signatureWidth = 52;
+            const signatureImageHeight = signatureWidth * (canvas.height / canvas.width);
+            const signatureX = margin + 8;
 
             if (hasSigned) {
-                const signatureX = margin + 10;
+                const signatureData = canvas.toDataURL('image/png');
                 doc.addImage(signatureData, 'PNG', signatureX, currentY, signatureWidth, signatureImageHeight);
             }
-            currentY += signatureImageHeight + 2;
-            
-            doc.line(margin + 10, currentY, margin + 10 + signatureWidth, currentY);
-            currentY += 5; 
-            
-            const tecnicoName = data.nombre_tecnico;
-            const tecnicoText = "Nombre: " + tecnicoName;
-            doc.text(tecnicoText, margin + 10, currentY);
+
+            currentY += signatureImageHeight + 1.5;
+            doc.setLineWidth(0.3);
+            doc.line(signatureX, currentY, signatureX + signatureWidth, currentY);
+            currentY += 3.5;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            const tecnicoName = data.nombre_tecnico || '____________________________';
+            doc.text(tecnicoName, signatureX, currentY);
+            doc.setFontSize(8);
+            const cargo = (data.cargo_tecnico || '').trim();
+            if (cargo) {
+                doc.text(cargo, signatureX, currentY + 3.5);
+            }
         }
 
         // FUNCIÓN para dibujar la sección de Notas Extra (ahora simplificada, no chequea el final de página)
@@ -820,16 +823,47 @@
             doc.setFontSize(8);
             doc.setFont('helvetica', 'normal');
             doc.text('Tiendas 01.001.0001.0001', headerX, headerY, null, null, 'right');
-            doc.text('Redes y Soporte', headerX, headerY + 4, null, null, 'right');
-            doc.text('Telecomunicaciones', headerX, headerY + 8, null, null, 'right');
+            const headerTextCenterX = pageWidth - margin - 18;
+            doc.text('soporte redes', headerTextCenterX, headerY + 4, null, null, 'center');
+            doc.text('y telecomunicaciones', headerTextCenterX, headerY + 8, null, null, 'center');
             doc.text(`Fecha de Reporte: ${new Date().toLocaleDateString()}`, headerX, headerY + 12, null, null, 'right');
             
-            const titleY = headerY + (Math.max(logoHeight, 15) / 2) + 2;
+            // --- TÍTULO DEL REPORTE ---
+            // Reservamos espacio a la izquierda para el logo y a la derecha para
+            // los datos de tienda/departamento/fecha. El título nunca invadirá esas zonas.
             doc.setFontSize(16);
             doc.setFont('helvetica', 'bold');
-            doc.text(doc.internal.data.reportName.toUpperCase() || 'REPORTE DE EVIDENCIA', pageWidth / 2, titleY, { align: 'center' });
-            
-            let currentY = headerY + Math.max(logoHeight, 15) + 10;
+
+            const reportTitle = (
+                doc.internal.data.reportName || 'REPORTE DE EVIDENCIA'
+            ).trim().toUpperCase();
+
+            // Zona exclusiva del título.
+            const titleLeft = margin + logoWidth + 8;
+            const rightInfoReservedWidth = 58;
+            const titleRight = pageWidth - margin - rightInfoReservedWidth;
+            const titleMaxWidth = Math.max(40, titleRight - titleLeft);
+            const titleCenterX = titleLeft + (titleMaxWidth / 2);
+
+            // Divide automáticamente los títulos largos en varias líneas.
+            const titleLines = doc.splitTextToSize(reportTitle, titleMaxWidth);
+            const titleLineHeight = 6.5;
+            const titleY = headerY + 6;
+
+            doc.text(titleLines, titleCenterX, titleY, {
+                align: 'center',
+                baseline: 'middle'
+            });
+
+            // El encabezado crece según las líneas que necesite el título.
+            const titleHeight = Math.max(titleLineHeight, titleLines.length * titleLineHeight);
+            const headerContentBottom = Math.max(
+                headerY + logoHeight,
+                headerY + 12,
+                titleY + titleHeight
+            );
+
+            let currentY = headerContentBottom + 8;
             doc.line(margin, currentY, pageWidth - margin, currentY);
             currentY += 8;
             
@@ -865,21 +899,26 @@
                 const margin = 15;
                 const pageWidth = doc.internal.pageSize.getWidth();
                 const pageHeight = doc.internal.pageSize.getHeight(); 
-                const reportDate = new Date().toLocaleDateString();
-
-                
                 // --- Page 1: Information and First Element (if exists) ---
                 y = await addHeader(doc, 1, totalPages);
                 doc.setFontSize(12);
                 doc.setFont('helvetica', 'bold');
                 doc.text('INFORMACIÓN Y RESUMEN', margin, y);
                 y += 6;
+                // Responsable del reporte
+                const generatedByLines = doc.splitTextToSize(
+                    `Generado por: ${data.nombre_tecnico || 'No especificado'}`,
+                    pageWidth - (margin * 2)
+                );
+
+                doc.setFontSize(9);
                 doc.setFont('helvetica', 'normal');
-                doc.text(`Reporte generado por: ${data.nombre_tecnico}`, margin, y);
-                doc.text(`Fecha de Generación: ${reportDate}`, pageWidth / 2, y);
-                y += 10;
-                doc.text(`Asunto del Reporte: ${data.nombre_reporte}`, margin, y);
-                y += 10;
+                doc.text(generatedByLines, margin, y);
+                y += generatedByLines.length * 4.5 + 4;
+
+                // Fecha de generación, colocada debajo de "Generado por".
+                doc.text(`Fecha de Generación: ${new Date().toLocaleDateString()}`, margin, y);
+                y += 9;
                 
                 // --- Loop to generate pages for each element ---
                 for (let i = 0; i < totalElements; i++) {
@@ -891,15 +930,13 @@
                         y = await addHeader(doc, i + 1, totalPages);
                     }
                     
-                    doc.setFont('helvetica', 'bold');
-                    doc.text(`${element.description || 'SIN SUB-TEMA'}`, margin, y);
-                    y += 8;
+                    // Mostrar el subtema únicamente si fue ingresado.
+                    if (element.description && element.description.trim()) {
+                        doc.setFont('helvetica', 'bold');
+                        doc.text(element.description.trim(), margin, y);
+                        y += 8;
+                    }
 
-                    doc.setFontSize(11);
-                    doc.setFont('helvetica', 'normal');
-                    doc.text(`Página de Detalle #${i + 1}`, margin, y);
-                    y += 5;
-                    
                     // Image
                     let imgWidth = 0;
                     let imgHeight = 0;
@@ -920,8 +957,8 @@
                         // Check required space for the rest of the page (if last element)
                         let requiredHeightForNotesAndSignature = 0;
                         if (isLastElement) {
-                            const signatureBlockHeight = 40; 
-                            const signatureSafetyMargin = 15; 
+                            const signatureBlockHeight = 24; 
+                            const signatureSafetyMargin = 8; 
                             const requiredHeightForSignature = signatureBlockHeight + signatureSafetyMargin + margin;
                             
                             if (extraNotes) {
@@ -947,9 +984,6 @@
                         const imgX = (pageWidth - imgWidth) / 2;
                         doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight); 
                         y += imgHeight + 5;
-                    } else {
-                        doc.text('No se adjuntó imagen para este elemento.', margin, y);
-                        y += 10;
                     }
 
                     // Details Text (Inside Box)
@@ -976,8 +1010,8 @@
                         let notesLines = [];
                         
                         // 1. Calculate space required
-                        const signatureBlockHeight = 40; 
-                        const signatureSafetyMargin = 15; 
+                        const signatureBlockHeight = 24; 
+                        const signatureSafetyMargin = 8; 
                         const requiredHeightForSignature = signatureBlockHeight + signatureSafetyMargin + margin;
                         
                         if (extraNotes) {
@@ -1035,8 +1069,8 @@
                     let requiredHeightForNotesAndSignature = 0;
                     let notesBoxHeight = 0;
                     let notesLines = [];
-                    const signatureBlockHeight = 40; 
-                    const signatureSafetyMargin = 15; 
+                    const signatureBlockHeight = 24; 
+                    const signatureSafetyMargin = 8; 
                     const requiredHeightForSignature = signatureBlockHeight + signatureSafetyMargin + margin;
 
                     if (extraNotes) {
