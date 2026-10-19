@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Recepción de Equipo</title>
+    <title>Recepción de Equipo - Freund</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
@@ -18,190 +18,212 @@
         };
     </script>
     <style>
-        .home-button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 8px 12px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            transition: background-color 0.3s;
-        }
-        .home-button:hover {
-            background-color: #217dbb;
-        }
         #signatureCanvas_recepcion {
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
-            background-color: white;
+            border: 2px dashed #cbd5e1;
+            border-radius: 0.5rem;
+            background-color: #f8fafc;
             cursor: crosshair;
             touch-action: none;
         }
         #signatureCanvasContainer_recepcion {
-            min-height: 150px;
+            min-height: 160px;
         }
         .modal-overlay {
             z-index: 999;
         }
-        .main-content {
-            z-index: 10;
-        }
     </style>
 </head>
-<body class="bg-gray-100 flex flex-col items-center justify-start min-h-screen p-4 font-sans">
-    <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-[998] hidden">
-        <div class="bg-white p-6 rounded-lg shadow-xl flex items-center space-x-3">
-            <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+<body class="bg-slate-100 min-h-screen flex flex-col items-center justify-start py-6 px-3 font-sans text-slate-800">
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-[998] hidden">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl flex items-center space-x-4">
+            <svg class="animate-spin h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p class="text-gray-700">Generando PDF...</p>
+            <p class="text-slate-700 font-medium">Generando PDF...</p>
         </div>
     </div>
 
-    <!-- MODAL PARA AGREGAR NOTA -->
-    <div id="notaModal_recepcion" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
-        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
-            <h3 class="text-xl font-bold text-gray-800 mb-3 text-center">Agregar Nota Adicional</h3>
-            <p class="text-gray-600 text-sm text-center mb-4">Escribe los detalles o observaciones que deseas que aparezcan en el documento.</p>
-            <textarea id="notaInputText" rows="4" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border mb-4" placeholder="Ej: Se entregaron 2 equipos nuevos y uno usado..."></textarea>
-            <div class="flex space-x-4">
-                <button id="cancelNotaButton" class="flex-1 justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+    <!-- Modal Nota Adicional -->
+    <div id="notaModal_recepcion" class="fixed inset-0 bg-slate-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center modal-overlay hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm animate-in fade-in zoom-in duration-200">
+            <h3 class="text-lg font-bold text-slate-800 mb-2 text-center">Nota Adicional</h3>
+            <p class="text-slate-500 text-xs text-center mb-4">Escribe detalles u observaciones para el documento.</p>
+            <textarea id="notaInputText" rows="4" class="w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-3 border bg-slate-50 mb-4" placeholder="Ej: Se entregaron 2 equipos nuevos y uno usado..."></textarea>
+            <div class="flex space-x-3">
+                <button id="cancelNotaButton" class="flex-1 py-2.5 px-4 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 bg-white hover:bg-slate-50 transition-colors">
                     Cancelar
                 </button>
-                <button id="saveNotaButton" class="flex-1 justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">
-                    Guardar Nota
+                <button id="saveNotaButton" class="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-md shadow-blue-200">
+                    Guardar
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="confirmationModal_recepcion" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
-        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Confirmar</h3>
-            <p class="text-gray-700 text-center mb-6">¿Estás seguro que quieres limpiar el formulario? Los datos actuales se perderán.</p>
-            <div class="flex space-x-4">
-                <button id="cancelClearButton_recepcion" class="flex-1 justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+    <!-- Modal Limpiar Formulario -->
+    <div id="confirmationModal_recepcion" class="fixed inset-0 bg-slate-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center modal-overlay hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
+            <h3 class="text-lg font-bold text-slate-800 mb-2 text-center">Nuevo Documento</h3>
+            <p class="text-slate-600 text-sm text-center mb-6">¿Estás seguro que quieres limpiar el formulario? Los datos actuales se perderán.</p>
+            <div class="flex space-x-3">
+                <button id="cancelClearButton_recepcion" class="flex-1 py-2.5 px-4 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 bg-white hover:bg-slate-50">
                     Cancelar
                 </button>
-                <button id="confirmClearButton_recepcion" class="flex-1 justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none">
-                    Confirmar
+                <button id="confirmClearButton_recepcion" class="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium text-white bg-red-600 hover:bg-red-700 shadow-md shadow-red-200">
+                    Sí, limpiar
                 </button>
             </div>
         </div>
     </div>
-    <div id="clearSignatureConfirmationModal_recepcion" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
-        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Confirmar</h3>
-            <p class="text-gray-700 text-center mb-6">¿Estás seguro que quieres borrar la firma?</p>
-            <div class="flex space-x-4">
-                <button id="cancelClearSignatureButton_recepcion" class="flex-1 justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+
+    <!-- Modal Borrar Firma -->
+    <div id="clearSignatureConfirmationModal_recepcion" class="fixed inset-0 bg-slate-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center modal-overlay hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
+            <h3 class="text-lg font-bold text-slate-800 mb-2 text-center">Borrar Firma</h3>
+            <p class="text-slate-600 text-sm text-center mb-6">¿Estás seguro que quieres borrar la firma actual?</p>
+            <div class="flex space-x-3">
+                <button id="cancelClearSignatureButton_recepcion" class="flex-1 py-2.5 px-4 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 bg-white hover:bg-slate-50">
                     Cancelar
                 </button>
-                <button id="confirmClearSignatureButton_recepcion" class="flex-1 justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none">
-                    Confirmar
+                <button id="confirmClearSignatureButton_recepcion" class="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium text-white bg-red-600 hover:bg-red-700 shadow-md shadow-red-200">
+                    Borrar
                 </button>
             </div>
         </div>
     </div>
-    <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg mb-6 main-content">
-        <div class="flex justify-center mb-6">
-            <img src="https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png" alt="Logo Freund" class="h-16 w-auto" />
+
+    <!-- Contenedor Principal App Card -->
+    <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-5 sm:p-8 w-full max-w-md mb-6">
+        
+        <!-- Logo y Título -->
+        <div class="flex flex-col items-center mb-6">
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 shadow-sm mb-3">
+                <img src="https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png" alt="Logo Freund" class="h-12 w-auto object-contain" />
+            </div>
+            <h1 class="text-xl font-bold text-slate-900 tracking-tight">Recepción de Equipo</h1>
+            <p class="text-xs text-slate-400 mt-0.5">Redes Soporte y Telecomunicaciones</p>
         </div>
-        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Recepción de Equipo</h1>
+
         <form id="documentForm_recepcion" class="space-y-4">
-            <div>
-                <label for="nombre_r" class="block text-sm font-medium text-gray-700">Nombre de quien Recibe:</label>
-                <input type="text" id="nombre_r" name="nombre_r" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-            </div>
-            <div>
-                <label for="nombre_entrega" class="block text-sm font-medium text-gray-700">Nombre de quien Entrega:</label>
-                <input type="text" id="nombre_entrega" name="nombre_entrega" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-            </div>
-            <div>
-                <label for="nombre_equipo" class="block text-sm font-medium text-gray-700">Nombre del Equipo</label>
-                <input type="text" id="nombre_equipo" name="nombre_equipo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-            </div>
-            <div>
-                <label for="marca_r" class="block text-sm font-medium text-gray-700">Marca</label>
-                <input type="text" id="marca_r" name="marca_r" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-            </div>
-            <div>
-                <label for="modelo_r" class="block text-sm font-medium text-gray-700">Modelo</label>
-                <input type="text" id="modelo_r" name="modelo_r" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-            </div>
-            <div>
-                <label for="serie_r" class="block text-sm font-medium text-gray-700">Serie</label>
-                <input type="text" id="serie_r" name="serie_r" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-            </div>
-            <div>
-                <label for="estado_equipo" class="block text-sm font-medium text-gray-700">Estado</label>
-                <select id="estado_equipo" name="estado_equipo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-white">
-                    <option value="">Seleccione estado...</option>
-                    <option value="Nuevo">Nuevo</option>
-                    <option value="Usado">Usado</option>
-                    <option value="Reasignado">Reasignado</option>
-                </select>
-            </div>
-            <div>
-                <label for="para_uso_de" class="block text-sm font-medium text-gray-700">Para uso de</label>
-                <input type="text" id="para_uso_de" name="para_uso_de" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-            </div>
-            <div>
-                <label for="codigoEmpleado_r" class="block text-sm font-medium text-gray-700">Código empleado</label>
-                <input type="text" id="codigoEmpleado_r" name="codigoEmpleado_r" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-            </div>
-            <div>
-                <label for="departamento_r" class="block text-sm font-medium text-gray-700">Departamento</label>
-                <input type="text" id="departamento_r" name="departamento_r" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-            </div>
-            <div>
-                <label for="area_tienda" class="block text-sm font-medium text-gray-700">Área/Tienda</label>
-                <input type="text" id="area_tienda" name="area_tienda" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-            </div>
-
-            <!-- FOTO DEL EQUIPO -->
-            <div>
-                <label for="foto_equipo" class="block text-sm font-medium text-gray-700 mb-1">Foto del Equipo (Opcional):</label>
-                <input type="file" id="foto_equipo" accept="image/*" capture="environment" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md p-1" />
-                <div id="fotoPreviewContainer" class="mt-2 hidden">
-                    <img id="fotoPreview" class="h-32 rounded-md border border-gray-300 object-cover" alt="Vista previa de foto" />
+            
+            <!-- Bloque Personal -->
+            <div class="bg-slate-50/70 p-4 rounded-2xl border border-slate-100 space-y-3">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Personal</p>
+                <div>
+                    <label for="nombre_r" class="block text-xs font-semibold text-slate-600 mb-1">Nombre de quien Recibe</label>
+                    <input type="text" id="nombre_r" name="nombre_r" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white" placeholder="Ej. Berta Liseth" />
+                </div>
+                <div>
+                    <label for="nombre_entrega" class="block text-xs font-semibold text-slate-600 mb-1">Nombre de quien Entrega</label>
+                    <input type="text" id="nombre_entrega" name="nombre_entrega" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white" placeholder="Ej. Jonathan Navas" />
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label for="codigoEmpleado_r" class="block text-xs font-semibold text-slate-600 mb-1">Código Empleado</label>
+                        <input type="text" id="codigoEmpleado_r" name="codigoEmpleado_r" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white" placeholder="Ej. 12345" />
+                    </div>
+                    <div>
+                        <label for="departamento_r" class="block text-xs font-semibold text-slate-600 mb-1">Departamento</label>
+                        <input type="text" id="departamento_r" name="departamento_r" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white" placeholder="Ej. Sistemas" />
+                    </div>
+                </div>
+                <div>
+                    <label for="area_tienda" class="block text-xs font-semibold text-slate-600 mb-1">Área / Tienda</label>
+                    <input type="text" id="area_tienda" name="area_tienda" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white" placeholder="Ej. Tienda Central" />
                 </div>
             </div>
 
-            <div class="mt-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Firma Digital</label>
-                <div id="signatureCanvasContainer_recepcion" class="border rounded-md p-1 relative w-full h-auto">
-                    <canvas id="signatureCanvas_recepcion" class="w-full"></canvas>
+            <!-- Bloque Equipo -->
+            <div class="bg-slate-50/70 p-4 rounded-2xl border border-slate-100 space-y-3">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Detalles del Equipo</p>
+                <div>
+                    <label for="nombre_equipo" class="block text-xs font-semibold text-slate-600 mb-1">Nombre del Equipo</label>
+                    <input type="text" id="nombre_equipo" name="nombre_equipo" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white" placeholder="Ej. Laptop / Mouse" />
                 </div>
-                <button type="button" id="clearSignatureButton_recepcion" class="mt-2 w-1/2 mx-auto flex justify-center py-2 px-4 border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-800 bg-green-200 hover:bg-green-300 focus:outline-none">
-                    Borrar Firma
-                </button>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label for="marca_r" class="block text-xs font-semibold text-slate-600 mb-1">Marca</label>
+                        <input type="text" id="marca_r" name="marca_r" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white" placeholder="Ej. Lenovo" />
+                    </div>
+                    <div>
+                        <label for="modelo_r" class="block text-xs font-semibold text-slate-600 mb-1">Modelo</label>
+                        <input type="text" id="modelo_r" name="modelo_r" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white" placeholder="Ej. ThinkPad" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label for="serie_r" class="block text-xs font-semibold text-slate-600 mb-1">Serie</label>
+                        <input type="text" id="serie_r" name="serie_r" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white" placeholder="Ej. S/N 98213" />
+                    </div>
+                    <div>
+                        <label for="estado_equipo" class="block text-xs font-semibold text-slate-600 mb-1">Estado</label>
+                        <select id="estado_equipo" name="estado_equipo" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white">
+                            <option value="">Seleccione...</option>
+                            <option value="Nuevo">Nuevo</option>
+                            <option value="Usado">Usado</option>
+                            <option value="Reasignado">Reasignado</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label for="para_uso_de" class="block text-xs font-semibold text-slate-600 mb-1">Para uso de</label>
+                    <input type="text" id="para_uso_de" name="para_uso_de" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2 border bg-white" placeholder="Ej. Colaborador" />
+                </div>
             </div>
-            <div class="flex flex-col space-y-2 mt-4">
-                <!-- BOTÓN AGREGAR NOTA (Naranja claro) -->
-                <button type="button" id="openNotaModalButton" class="w-1/2 mx-auto flex justify-center py-2 px-4 border border-orange-300 rounded-md shadow-sm text-sm font-medium text-orange-800 bg-orange-200 hover:bg-orange-300 focus:outline-none">
-                    Agregar Nota
+
+            <!-- Bloque Foto -->
+            <div class="bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+                <label for="foto_equipo" class="block text-xs font-semibold text-slate-600 mb-1">Foto del Equipo (Opcional)</label>
+                <div class="flex items-center space-x-2">
+                    <input type="file" id="foto_equipo" accept="image/*" capture="environment" class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-slate-200 rounded-xl bg-white cursor-pointer" />
+                </div>
+                <div id="fotoPreviewContainer" class="mt-3 hidden text-center">
+                    <img id="fotoPreview" class="h-28 w-auto mx-auto rounded-xl border border-slate-200 object-cover shadow-sm" alt="Vista previa de foto" />
+                </div>
+            </div>
+
+            <!-- Bloque Firma -->
+            <div class="bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="text-xs font-semibold uppercase tracking-wider text-slate-400">Firma Digital</label>
+                    <button type="button" id="clearSignatureButton_recepcion" class="text-xs font-medium text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg transition-colors">
+                        Borrar firma
+                    </button>
+                </div>
+                <div id="signatureCanvasContainer_recepcion" class="relative w-full">
+                    <canvas id="signatureCanvas_recepcion" class="w-full h-36"></canvas>
+                </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="space-y-2.5 pt-2">
+                <button type="button" id="openNotaModalButton" class="w-full flex items-center justify-center py-3 px-4 rounded-xl text-sm font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 transition-colors shadow-sm">
+                    📝 Agregar Nota Adicional
                 </button>
 
-                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">
-                    Generar Documento
+                <button type="submit" class="w-full flex items-center justify-center py-3.5 px-4 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200">
+                    ✨ Generar Documento PDF
                 </button>
-                <button type="button" id="clearFormButton_recepcion" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none">
-                    Nuevo Documento
+                
+                <button type="button" id="clearFormButton_recepcion" class="w-full flex items-center justify-center py-2.5 px-4 rounded-xl text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
+                    🔄 Nuevo Documento / Limpiar
                 </button>
-                <a href="index.html" class="w-full flex justify-center py-1.5 px-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-500 hover:bg-sky-600 no-underline">
-                    Inicio
+                
+                <a href="index.html" class="w-full flex items-center justify-center py-2 px-3 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors no-underline">
+                    ← Ir al Inicio
                 </a>
             </div>
         </form>
     </div>
-    <div id="messageBox" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 hidden">
+
+    <!-- Notificaciones flotantes -->
+    <div id="messageBox" class="fixed bottom-4 right-4 bg-emerald-600 text-white text-sm px-5 py-3 rounded-2xl shadow-xl z-50 hidden transition-all">
         Documento generado con éxito.
     </div>
+
     <script>
         let equipoFotoBase64 = null;
         let notaAdicional = "";
@@ -243,9 +265,9 @@
             const messageBox = document.getElementById('messageBox');
             messageBox.textContent = message;
             if (type === 'success') {
-                messageBox.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                messageBox.className = 'fixed bottom-4 right-4 bg-emerald-600 text-white text-sm px-5 py-3 rounded-2xl shadow-xl z-50';
             } else if (type === 'error') {
-                messageBox.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                messageBox.className = 'fixed bottom-4 right-4 bg-rose-600 text-white text-sm px-5 py-3 rounded-2xl shadow-xl z-50';
             }
             messageBox.classList.remove('hidden');
             setTimeout(() => {
@@ -263,13 +285,13 @@
         function drawPlaceholder() {
             if (!hasSigned) {
                 ctx.save();
-                ctx.fillStyle = '#E5E7EB';
-                ctx.font = '24px Inter, sans-serif';
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '14px Inter, sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 const x = canvas.width / 2;
                 const y = canvas.height / 2;
-                ctx.fillText('Introducir firma', x, y);
+                ctx.fillText('Firme aquí con su dedo o lápiz', x, y);
                 ctx.restore();
             }
         }
@@ -277,10 +299,10 @@
         function resizeCanvas() {
             const container = document.getElementById('signatureCanvasContainer_recepcion');
             const newWidth = container.offsetWidth;
-            const newHeight = container.offsetHeight;
+            const newHeight = 150;
             canvas.width = newWidth;
             canvas.height = newHeight;
-            ctx.fillStyle = 'white';
+            ctx.fillStyle = '#f8fafc';
             ctx.fillRect(0, 0, newWidth, newHeight);
             if (!hasSigned) {
                 drawPlaceholder();
@@ -306,7 +328,7 @@
             if (!isDrawing) return;
             if (!hasSigned) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = 'white';
+                ctx.fillStyle = '#f8fafc';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 hasSigned = true;
             }
@@ -316,8 +338,8 @@
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
             ctx.lineTo(x, y);
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 2.5;
             ctx.lineCap = 'round';
             ctx.stroke();
             [lastX, lastY] = [x, y];
@@ -513,8 +535,6 @@
                     photoBottomY = boxY + boxHeight + 6;
                 }
 
-                // COMPORTAMIENTO DINÁMICO:
-                // Si hay nota, sube 2 renglones (factor 1). Si no hay nota, se mantiene abajo (factor 3).
                 const hasNota = notaAdicional && notaAdicional.trim() !== "";
                 const spacingMultiplier = hasNota ? 1 : 3;
                 y = Math.max(y, photoBottomY) + (itemSpacing * spacingMultiplier);
@@ -524,7 +544,6 @@
                 doc.text(splitClause, margin, y);
                 y += splitClause.length * 7 + 6;
 
-                // --- SI HAY NOTA ADICIONAL, SE DIBUJA EL RECUADRO ABAJO DE LA CLÁUSULA ---
                 if (hasNota) {
                     doc.setFont('helvetica', 'bold');
                     doc.text("Nota / Observaciones:", margin, y);
@@ -539,7 +558,6 @@
                     doc.text(splitNota, margin + 5, y + 6);
                 }
 
-                // --- FIRMA Y DATOS FIJADOS SIEMPRE AL PIE DE PÁGINA ---
                 const footerBlockHeight = 65;
                 let footerY = pageHeight - margin - footerBlockHeight;
 
@@ -596,7 +614,7 @@
             notaAdicional = "";
             document.getElementById('fotoPreviewContainer').classList.add('hidden');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
+            ctx.fillStyle = '#f8fafc';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             hasSigned = false;
             drawPlaceholder();
@@ -610,7 +628,7 @@
         });
         document.getElementById('confirmClearSignatureButton_recepcion').addEventListener('click', function() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
+            ctx.fillStyle = '#f8fafc';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             hasSigned = false;
             drawPlaceholder();
