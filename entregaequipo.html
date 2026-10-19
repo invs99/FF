@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recepción de Equipo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        .home-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        .home-button:hover {
+            background-color: #217dbb;
+        }
+        #signatureCanvas_recepcion {
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            background-color: white;
+            cursor: crosshair;
+            touch-action: none;
+        }
+        #signatureCanvasContainer_recepcion {
+            min-height: 150px;
+        }
+        .modal-overlay {
+            z-index: 999;
+        }
+        .main-content {
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-start min-h-screen p-4 font-sans">
+    <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-[998] hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl flex items-center space-x-3">
+            <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-gray-700">Generando PDF...</p>
+        </div>
+    </div>
+
+    <!-- MODAL PARA AGREGAR NOTA -->
+    <div id="notaModal_recepcion" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
+        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold text-gray-800 mb-3 text-center">Agregar Nota Adicional</h3>
+            <p class="text-gray-600 text-sm text-center mb-4">Escribe los detalles o observaciones que deseas que aparezcan en el documento.</p>
+            <textarea id="notaInputText" rows="4" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border mb-4" placeholder="Ej: Se entregaron 2 equipos nuevos y uno usado..."></textarea>
+            <div class="flex space-x-4">
+                <button id="cancelNotaButton" class="flex-1 justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                    Cancelar
+                </button>
+                <button id="saveNotaButton" class="flex-1 justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">
+                    Guardar Nota
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmationModal_recepcion" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
+        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Confirmar</h3>
+            <p class="text-gray-700 text-center mb-6">¿Estás seguro que quieres limpiar el formulario? Los datos actuales se perderán.</p>
+            <div class="flex space-x-4">
+                <button id="cancelClearButton_recepcion" class="flex-1 justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                    Cancelar
+                </button>
+                <button id="confirmClearButton_recepcion" class="flex-1 justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="clearSignatureConfirmationModal_recepcion" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
+        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Confirmar</h3>
+            <p class="text-gray-700 text-center mb-6">¿Estás seguro que quieres borrar la firma?</p>
+            <div class="flex space-x-4">
+                <button id="cancelClearSignatureButton_recepcion" class="flex-1 justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                    Cancelar
+                </button>
+                <button id="confirmClearSignatureButton_recepcion" class="flex-1 justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg mb-6 main-content">
+        <div class="flex justify-center mb-6">
+            <img src="https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png" alt="Logo Freund" class="h-16 w-auto" />
+        </div>
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Recepción de Equipo</h1>
+        <form id="documentForm_recepcion" class="space-y-4">
+            <div>
+                <label for="nombre_r" class="block text-sm font-medium text-gray-700">Nombre de quien Recibe:</label>
+                <input type="text" id="nombre_r" name="nombre_r" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+            </div>
+            <div>
+                <label for="nombre_entrega" class="block text-sm font-medium text-gray-700">Nombre de quien Entrega:</label>
+                <input type="text" id="nombre_entrega" name="nombre_entrega" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+            </div>
+            <div>
+                <label for="nombre_equipo" class="block text-sm font-medium text-gray-700">Nombre del Equipo</label>
+                <input type="text" id="nombre_equipo" name="nombre_equipo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+            </div>
+            <div>
+                <label for="marca_r" class="block text-sm font-medium text-gray-700">Marca</label>
+                <input type="text" id="marca_r" name="marca_r" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+            </div>
+            <div>
+                <label for="modelo_r" class="block text-sm font-medium text-gray-700">Modelo</label>
+                <input type="text" id="modelo_r" name="modelo_r" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+            </div>
+            <div>
+                <label for="serie_r" class="block text-sm font-medium text-gray-700">Serie</label>
+                <input type="text" id="serie_r" name="serie_r" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+            </div>
+            <div>
+                <label for="estado_equipo" class="block text-sm font-medium text-gray-700">Estado</label>
+                <select id="estado_equipo" name="estado_equipo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-white">
+                    <option value="">Seleccione estado...</option>
+                    <option value="Nuevo">Nuevo</option>
+                    <option value="Usado">Usado</option>
+                    <option value="Reasignado">Reasignado</option>
+                </select>
+            </div>
+            <div>
+                <label for="para_uso_de" class="block text-sm font-medium text-gray-700">Para uso de</label>
+                <input type="text" id="para_uso_de" name="para_uso_de" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+            </div>
+            <div>
+                <label for="codigoEmpleado_r" class="block text-sm font-medium text-gray-700">Código empleado</label>
+                <input type="text" id="codigoEmpleado_r" name="codigoEmpleado_r" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+            </div>
+            <div>
+                <label for="departamento_r" class="block text-sm font-medium text-gray-700">Departamento</label>
+                <input type="text" id="departamento_r" name="departamento_r" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+            </div>
+            <div>
+                <label for="area_tienda" class="block text-sm font-medium text-gray-700">Área/Tienda</label>
+                <input type="text" id="area_tienda" name="area_tienda" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+            </div>
+
+            <!-- FOTO DEL EQUIPO -->
+            <div>
+                <label for="foto_equipo" class="block text-sm font-medium text-gray-700 mb-1">Foto del Equipo (Opcional):</label>
+                <input type="file" id="foto_equipo" accept="image/*" capture="environment" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md p-1" />
+                <div id="fotoPreviewContainer" class="mt-2 hidden">
+                    <img id="fotoPreview" class="h-32 rounded-md border border-gray-300 object-cover" alt="Vista previa de foto" />
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Firma Digital</label>
+                <div id="signatureCanvasContainer_recepcion" class="border rounded-md p-1 relative w-full h-auto">
+                    <canvas id="signatureCanvas_recepcion" class="w-full"></canvas>
+                </div>
+                <button type="button" id="clearSignatureButton_recepcion" class="mt-2 w-1/2 mx-auto flex justify-center py-2 px-4 border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-800 bg-green-200 hover:bg-green-300 focus:outline-none">
+                    Borrar Firma
+                </button>
+            </div>
+            <div class="flex flex-col space-y-2 mt-4">
+                <!-- BOTÓN AGREGAR NOTA (Naranja claro) -->
+                <button type="button" id="openNotaModalButton" class="w-1/2 mx-auto flex justify-center py-2 px-4 border border-orange-300 rounded-md shadow-sm text-sm font-medium text-orange-800 bg-orange-200 hover:bg-orange-300 focus:outline-none">
+                    Agregar Nota
+                </button>
+
+                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">
+                    Generar Documento
+                </button>
+                <button type="button" id="clearFormButton_recepcion" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none">
+                    Nuevo Documento
+                </button>
+                <a href="index.html" class="w-full flex justify-center py-1.5 px-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-500 hover:bg-sky-600 no-underline">
+                    Inicio
+                </a>
+            </div>
+        </form>
+    </div>
+    <div id="messageBox" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 hidden">
+        Documento generado con éxito.
+    </div>
+    <script>
+        let equipoFotoBase64 = null;
+        let notaAdicional = "";
+
+        const notaModal = document.getElementById('notaModal_recepcion');
+        document.getElementById('openNotaModalButton').addEventListener('click', () => {
+            document.getElementById('notaInputText').value = notaAdicional;
+            notaModal.classList.remove('hidden');
+        });
+        document.getElementById('cancelNotaButton').addEventListener('click', () => {
+            notaModal.classList.add('hidden');
+        });
+        document.getElementById('saveNotaButton').addEventListener('click', () => {
+            notaAdicional = document.getElementById('notaInputText').value.trim();
+            notaModal.classList.add('hidden');
+            if(notaAdicional !== "") {
+                showMessage('Nota guardada correctamente.', 'success');
+            }
+        });
+
+        document.getElementById('foto_equipo').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    equipoFotoBase64 = event.target.result;
+                    const preview = document.getElementById('fotoPreview');
+                    preview.src = equipoFotoBase64;
+                    document.getElementById('fotoPreviewContainer').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                equipoFotoBase64 = null;
+                document.getElementById('fotoPreviewContainer').classList.add('hidden');
+            }
+        });
+
+        function showMessage(message, type = 'success') {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = message;
+            if (type === 'success') {
+                messageBox.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+            } else if (type === 'error') {
+                messageBox.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+            }
+            messageBox.classList.remove('hidden');
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 3000);
+        }
+
+        const canvas = document.getElementById('signatureCanvas_recepcion');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let hasSigned = false;
+
+        function drawPlaceholder() {
+            if (!hasSigned) {
+                ctx.save();
+                ctx.fillStyle = '#E5E7EB';
+                ctx.font = '24px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const x = canvas.width / 2;
+                const y = canvas.height / 2;
+                ctx.fillText('Introducir firma', x, y);
+                ctx.restore();
+            }
+        }
+
+        function resizeCanvas() {
+            const container = document.getElementById('signatureCanvasContainer_recepcion');
+            const newWidth = container.offsetWidth;
+            const newHeight = container.offsetHeight;
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, newWidth, newHeight);
+            if (!hasSigned) {
+                drawPlaceholder();
+            } else {
+                const savedData = localStorage.getItem('documentFormData_recepcion');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    if (data.signature) {
+                        const img = new Image();
+                        img.onload = function() {
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        };
+                        img.src = data.signature;
+                    }
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', resizeCanvas);
+        window.addEventListener('resize', resizeCanvas);
+
+        function draw(e) {
+            if (!isDrawing) return;
+            if (!hasSigned) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                hasSigned = true;
+            }
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            [lastX, lastY] = [x, y];
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
+        });
+        canvas.addEventListener('touchstart', (e) => {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            [lastX, lastY] = [e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top];
+            e.preventDefault();
+        });
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('mouseup', () => isDrawing = false);
+        canvas.addEventListener('touchend', () => isDrawing = false);
+        canvas.addEventListener('mouseout', () => isDrawing = false);
+
+        document.getElementById('clearSignatureButton_recepcion').addEventListener('click', () => {
+            document.getElementById('clearSignatureConfirmationModal_recepcion').classList.remove('hidden');
+        });
+
+        const form = document.getElementById('documentForm_recepcion');
+
+        function saveFormData() {
+            const formData = new FormData(form);
+            const data = {};
+            for (const [key, value] of formData.entries()) {
+                if (key !== 'foto_equipo') {
+                    data[key] = value;
+                }
+            }
+            if (hasSigned) {
+                data.signature = canvas.toDataURL('image/png');
+            } else {
+                data.signature = null;
+            }
+            data.notaAdicional = notaAdicional;
+            localStorage.setItem('documentFormData_recepcion', JSON.stringify(data));
+        }
+
+        function loadFormData() {
+            const savedData = localStorage.getItem('documentFormData_recepcion');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                for (const key in data) {
+                    const input = document.getElementById(key);
+                    if (input && input.type !== 'file') {
+                        input.value = data[key];
+                    }
+                }
+                if (data.notaAdicional) {
+                    notaAdicional = data.notaAdicional;
+                }
+                if (data.signature) {
+                    hasSigned = true;
+                    const img = new Image();
+                    img.onload = function() {
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    };
+                    img.src = data.signature;
+                } else {
+                    hasSigned = false;
+                    drawPlaceholder();
+                }
+            } else {
+                hasSigned = false;
+                drawPlaceholder();
+            }
+        }
+
+        form.addEventListener('input', saveFormData);
+        window.addEventListener('load', loadFormData);
+
+        document.getElementById('documentForm_recepcion').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.display = 'flex';
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({
+                    format: 'letter',
+                    unit: 'mm'
+                });
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+                const margin = 15;
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                let y = margin;
+                const logoHeight = 17;
+                const logoWidth = 34;
+                const logoUrl = 'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
+
+                try {
+                    const response = await fetch(logoUrl);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const blob = await response.blob();
+                    const reader = new FileReader();
+                    reader.readAsDataURL(blob);
+                    const base64Image = await new Promise((resolve, reject) => {
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                    });
+                    const logoX = margin;
+                    doc.addImage(base64Image, 'PNG', logoX, y, logoWidth, logoHeight);
+                } catch (error) {
+                    console.warn('No se pudo cargar el logo para el PDF:', error);
+                }
+
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
+                const headerX = pageWidth - margin;
+                doc.text('Tiendas 01.001.0001.0001', headerX, y, null, null, 'right');
+                doc.text('Redes Soporte y', headerX, y + 4, null, null, 'right');
+                doc.text('Telecomunicaciones', headerX, y + 8, null, null, 'right');
+                doc.text(`Fecha de Entrega: ${new Date().toLocaleDateString()}`, headerX, y + 12, null, null, 'right');
+
+                const headerHeight = 15;
+                const titleY = y + (Math.max(logoHeight, headerHeight) / 2) + 2;
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.text('RECEPCIÓN DE EQUIPO', pageWidth / 2, titleY, { align: 'center' });
+
+                y = y + Math.max(logoHeight, headerHeight) + 10;
+                doc.line(margin, y, pageWidth - margin, y);
+                y += 12;
+
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'normal');
+                const text = `Yo, ${data.nombre_r || 'N/A'}, con Código de Empleado ${data.codigoEmpleado_r || 'N/A'} del Departamento de ${data.departamento_r || 'N/A'}, confirmo la recepción del equipo entregado por ${data.nombre_entrega || 'N/A'}:`;
+                const maxTextWidth = pageWidth - (margin * 2);
+                const splitText = doc.splitTextToSize(text, maxTextWidth);
+                doc.text(splitText, margin, y);
+                y += splitText.length * 7;
+                y += 8;
+
+                const listStartY = y;
+                doc.setFontSize(12);
+                const itemSpacing = 11; 
+
+                doc.text(`• Nombre: ${data.nombre_equipo && data.nombre_equipo.trim() !== '' ? data.nombre_equipo : 'N/A'}`, margin + 5, y);
+                y += itemSpacing;
+                doc.text(`• Marca: ${data.marca_r && data.marca_r.trim() !== '' ? data.marca_r : 'N/A'}`, margin + 5, y);
+                y += itemSpacing;
+                doc.text(`• Modelo: ${data.modelo_r && data.modelo_r.trim() !== '' ? data.modelo_r : 'N/A'}`, margin + 5, y);
+                y += itemSpacing;
+                doc.text(`• Serie: ${data.serie_r && data.serie_r.trim() !== '' ? data.serie_r : 'N/A'}`, margin + 5, y);
+                y += itemSpacing;
+                doc.text(`• Estado: ${data.estado_equipo && data.estado_equipo.trim() !== '' ? data.estado_equipo : 'N/A'}`, margin + 5, y);
+                y += itemSpacing;
+                doc.text(`• Para uso de: ${data.para_uso_de && data.para_uso_de.trim() !== '' ? data.para_uso_de : 'N/A'}`, margin + 5, y);
+                y += itemSpacing;
+
+                let photoBottomY = y;
+                if (equipoFotoBase64) {
+                    const boxWidth = 75;
+                    const boxHeight = 55;
+                    const boxX = pageWidth - margin - boxWidth - 12; 
+                    const boxY = listStartY - 2;
+
+                    doc.rect(boxX, boxY, boxWidth, boxHeight);
+
+                    const imgObj = new Image();
+                    imgObj.src = equipoFotoBase64;
+                    await new Promise((resolve) => {
+                        imgObj.onload = resolve;
+                    });
+
+                    const imgRatio = imgObj.width / imgObj.height;
+                    const boxRatio = boxWidth / boxHeight;
+
+                    let renderW = boxWidth - 2;
+                    let renderH = boxHeight - 2;
+
+                    if (imgRatio > boxRatio) {
+                        renderH = (boxWidth - 2) / imgRatio;
+                    } else {
+                        renderW = (boxHeight - 2) * imgRatio;
+                    }
+
+                    const renderX = boxX + (boxWidth - renderW) / 2;
+                    const renderY = boxY + (boxHeight - renderH) / 2;
+
+                    doc.addImage(equipoFotoBase64, 'JPEG', renderX, renderY, renderW, renderH);
+
+                    photoBottomY = boxY + boxHeight + 6;
+                }
+
+                // COMPORTAMIENTO DINÁMICO:
+                // Si hay nota, sube 2 renglones (factor 1). Si no hay nota, se mantiene abajo (factor 3).
+                const hasNota = notaAdicional && notaAdicional.trim() !== "";
+                const spacingMultiplier = hasNota ? 1 : 3;
+                y = Math.max(y, photoBottomY) + (itemSpacing * spacingMultiplier);
+
+                const clause = `Este documento confirma la recepción del equipo. Al firmar, el receptor y el area aceptan la responsabilidad por el equipo en el estado en que se entrega.`;
+                const splitClause = doc.splitTextToSize(clause, maxTextWidth);
+                doc.text(splitClause, margin, y);
+                y += splitClause.length * 7 + 6;
+
+                // --- SI HAY NOTA ADICIONAL, SE DIBUJA EL RECUADRO ABAJO DE LA CLÁUSULA ---
+                if (hasNota) {
+                    doc.setFont('helvetica', 'bold');
+                    doc.text("Nota / Observaciones:", margin, y);
+                    y += 5;
+
+                    doc.setFont('helvetica', 'normal');
+                    const splitNota = doc.splitTextToSize(notaAdicional, maxTextWidth - 10);
+                    const notaBoxHeight = (splitNota.length * 6) + 8;
+                    const notaBoxWidth = maxTextWidth;
+
+                    doc.rect(margin, y, notaBoxWidth, notaBoxHeight);
+                    doc.text(splitNota, margin + 5, y + 6);
+                }
+
+                // --- FIRMA Y DATOS FIJADOS SIEMPRE AL PIE DE PÁGINA ---
+                const footerBlockHeight = 65;
+                let footerY = pageHeight - margin - footerBlockHeight;
+
+                const signatureY = footerY + 15;
+                if (hasSigned) {
+                    const signatureData = canvas.toDataURL('image/png');
+                    const signatureWidth = 60;
+                    const signatureHeight = (canvas.height / canvas.width) * signatureWidth;
+                    const signatureX = margin;
+                    const signatureImageY = signatureY - signatureHeight / 2;
+                    doc.addImage(signatureData, 'PNG', signatureX, signatureImageY, signatureWidth, signatureHeight);
+                }
+
+                let signTextY = signatureY + 10;
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(12);
+
+                const nameLabel = "Nombre: ";
+                const nameText = data.nombre_r && data.nombre_r.trim() !== '' ? data.nombre_r : 'N/A';
+                const totalText = nameLabel + nameText;
+                const totalTextWidth = doc.getStringUnitWidth(totalText) * doc.internal.getFontSize();
+                const textX = margin;
+                const textY = signTextY + 5;
+
+                doc.line(margin, signTextY, margin + Math.max(totalTextWidth * 0.4, 50), signTextY);
+                doc.text(totalText, textX, textY);
+
+                signTextY = textY + 7;
+                doc.text(`Código: ${data.codigoEmpleado_r && data.codigoEmpleado_r.trim() !== '' ? data.codigoEmpleado_r : 'N/A'}`, margin, signTextY);
+                signTextY += 7;
+                doc.text(`Dpto: ${data.departamento_r && data.departamento_r.trim() !== '' ? data.departamento_r : 'N/A'}`, margin, signTextY);
+                signTextY += 7;
+                doc.text(`Área: ${data.area_tienda && data.area_tienda.trim() !== '' ? data.area_tienda : 'N/A'}`, margin, signTextY);
+
+                doc.save(`Recepcion_Equipo_${data.nombre_r ? data.nombre_r.replace(/\s/g, '_') : 'documento'}.pdf`);
+                loadingOverlay.style.display = 'none';
+                showMessage('Documento generado con éxito.', 'success');
+            } catch (error) {
+                console.error('Error al generar el PDF:', error);
+                loadingOverlay.style.display = 'none';
+                showMessage('Error al generar el documento.', 'error');
+            }
+        });
+
+        document.getElementById('clearFormButton_recepcion').addEventListener('click', function() {
+            document.getElementById('confirmationModal_recepcion').classList.remove('hidden');
+        });
+        document.getElementById('cancelClearButton_recepcion').addEventListener('click', function() {
+            document.getElementById('confirmationModal_recepcion').classList.add('hidden');
+        });
+        document.getElementById('confirmClearButton_recepcion').addEventListener('click', function() {
+            document.getElementById('documentForm_recepcion').reset();
+            equipoFotoBase64 = null;
+            notaAdicional = "";
+            document.getElementById('fotoPreviewContainer').classList.add('hidden');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            hasSigned = false;
+            drawPlaceholder();
+            document.getElementById('confirmationModal_recepcion').classList.add('hidden');
+            showMessage('Formulario limpiado. Listo para un nuevo documento.', 'success');
+            localStorage.removeItem('documentFormData_recepcion');
+        });
+
+        document.getElementById('cancelClearSignatureButton_recepcion').addEventListener('click', function() {
+            document.getElementById('clearSignatureConfirmationModal_recepcion').classList.add('hidden');
+        });
+        document.getElementById('confirmClearSignatureButton_recepcion').addEventListener('click', function() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            hasSigned = false;
+            drawPlaceholder();
+            saveFormData();
+            document.getElementById('clearSignatureConfirmationModal_recepcion').classList.add('hidden');
+            showMessage('Firma borrada.', 'success');
+        });
+    </script>
+</body>
+</html>
