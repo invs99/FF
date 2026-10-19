@@ -255,7 +255,7 @@
                 ctx.font = '12px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText('Firme aquí con su dedo o ratón', canvas.width / 2, canvas.height / 2);
+                ctx.fillText('Firme aquí con su dedo', canvas.width / 2, canvas.height / 2);
             };
 
             const resize = () => {
@@ -672,7 +672,11 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                 doc.text(uUser, usrX, y + 8.5);
                 doc.text(uDepto, usrX, y + 12.5);
 
-                doc.save(`Politica_Aceptacion_Equipo_${document.getElementById('nombre').value.replace(/\s/g, '_')}.pdf`);
+                // Formato de Nombre del Archivo: Laptop_nombreusuario_fecha
+                const fechaFormateada = hoy.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '_');
+                const nombreArchivo = `Laptop_${userMail.replace(/\s/g, '_')}_${fechaFormateada}.pdf`;
+
+                doc.save(nombreArchivo);
                 document.getElementById('loadingOverlay').classList.add('hidden');
 
             } catch (err) {
