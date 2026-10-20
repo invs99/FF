@@ -299,7 +299,6 @@
             }
         });
 
-        // Corrección de rotación / EXIF de imagen para evitar que la foto salga volteada
         document.getElementById('foto_equipo').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
@@ -309,8 +308,6 @@
                     img.onload = function() {
                         const canvasImg = document.createElement('canvas');
                         const ctxImg = canvasImg.getContext('2d');
-                        
-                        // Normalizar dimensiones para que no pierda calidad pero corrija orientación
                         canvasImg.width = img.width;
                         canvasImg.height = img.height;
                         ctxImg.drawImage(img, 0, 0);
@@ -633,14 +630,25 @@
 
             const signatureY = footerY + 15;
             if (hasSigned) {
-                // Generamos un canvas temporal blanco para la firma para evitar cualquier sombra o gris
+                // Procesar la firma mediante filtro de píxeles para hacer el fondo 100% transparente
                 const tempCanvas = document.createElement('canvas');
                 tempCanvas.width = canvas.width;
                 tempCanvas.height = canvas.height;
                 const tempCtx = tempCanvas.getContext('2d');
-                tempCtx.fillStyle = '#ffffff';
-                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
                 tempCtx.drawImage(canvas, 0, 0);
+
+                const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                const dataPixels = imgData.data;
+                for (let i = 0; i < dataPixels.length; i += 4) {
+                    const red = dataPixels[i];
+                    const green = dataPixels[i + 1];
+                    const blue = dataPixels[i + 2];
+                    // Si el píxel es blanco o muy cercano a blanco, lo volvemos transparente
+                    if (red > 240 && green > 240 && blue > 240) {
+                        dataPixels[i + 3] = 0;
+                    }
+                }
+                tempCtx.putImageData(imgData, 0, 0);
 
                 const signatureData = tempCanvas.toDataURL('image/png');
                 const signatureWidth = 60;
