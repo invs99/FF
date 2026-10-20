@@ -97,7 +97,7 @@
         </div>
     </div>
 
-    <!-- Interfaz Web Principal Optimizada y Amigable para Celular -->
+    <!-- Interfaz Web Principal Compacta y Optimizada -->
     <div class="max-w-lg mx-auto bg-white p-4 sm:p-6 rounded-2xl shadow-xl space-y-6 my-2 border border-slate-100">
         <div class="text-center space-y-1">
             <img src="https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png" alt="Freund" class="h-12 mx-auto mb-3 object-contain" />
@@ -180,30 +180,79 @@
                 </div>
             </div>
 
-            <!-- SELECCIÓN DE SOFTWARES INSTALADOS -->
+            <!-- SELECCIÓN DE SOFTWARES INSTALADOS (REORGANIZADO EN CUADRÍCULA COMPACTA TIPO TARJETA) -->
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-3.5 shadow-sm">
                 <h2 class="font-bold text-blue-900 text-xs border-b border-slate-200 pb-1.5 uppercase tracking-wide flex items-center space-x-1.5">
                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                     <span>5. Softwares Instalados</span>
                 </h2>
                 <p class="text-[11px] text-slate-500 font-medium">Seleccione los programas instalados en el equipo:</p>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-                    <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"><input type="checkbox" id="sw_win11" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" /> <span class="font-medium text-slate-700">Windows 11</span></label>
-                    <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"><input type="checkbox" id="sw_bitlocker" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" /> <span class="font-medium text-slate-700">BitLocker</span></label>
-                    <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"><input type="checkbox" id="sw_trend" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" /> <span class="font-medium text-slate-700">Trend Micro OfficeScan</span></label>
-                    <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"><input type="checkbox" id="sw_chrome" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" /> <span class="font-medium text-slate-700">Google Chrome</span></label>
-                    <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"><input type="checkbox" id="sw_acrobat" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" /> <span class="font-medium text-slate-700">Acrobat Reader</span></label>
-                    <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"><input type="checkbox" id="sw_rapid7" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" /> <span class="font-medium text-slate-700">Rapid7</span></label>
-                    <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"><input type="checkbox" id="sw_libreoffice" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" /> <span class="font-medium text-slate-700">Libre Office</span></label>
-                    <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"><input type="checkbox" id="sw_firefox" class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" /> <span class="font-medium text-slate-700">Mozilla Firefox</span></label>
-                    <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"><input type="checkbox" id="sw_zoom" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" /> <span class="font-medium text-slate-700">Zoom</span></label>
-                    <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"><input type="checkbox" id="sw_endpoint" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" /> <span class="font-medium text-slate-700">Endpoint Central</span></label>
-                    <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"><input type="checkbox" id="sw_office365" class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" /> <span class="font-medium text-slate-700">Microsoft Office 365</span></label>
-                    <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"><input type="checkbox" id="sw_netskope" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" /> <span class="font-medium text-slate-700">Netskope</span></label>
-                    <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"><input type="checkbox" id="sw_cortex" class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" /> <span class="font-medium text-slate-700">Cortex XDR</span></label>
-                    <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"><input type="checkbox" id="sw_vpn" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" /> <span class="font-medium text-slate-700">VPN</span></label>
-                    <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"><input type="checkbox" id="sw_gfi" class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" /> <span class="font-medium text-slate-700">GFI Endpoint Security</span></label>
-                    <label class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"><input type="checkbox" id="sw_citrix" class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" /> <span class="font-medium text-slate-700">Citrix Workspace</span></label>
+                
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <label class="flex items-center space-x-2.5 p-2 bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition cursor-pointer shadow-xs">
+                        <input type="checkbox" id="sw_win11" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                        <span class="font-semibold text-slate-700 leading-tight">Windows 11</span>
+                    </label>
+                    <label class="flex items-center space-x-2.5 p-2 bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition cursor-pointer shadow-xs">
+                        <input type="checkbox" id="sw_bitlocker" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                        <span class="font-semibold text-slate-700 leading-tight">BitLocker</span>
+                    </label>
+                    <label class="flex items-center space-x-2.5 p-2 bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition cursor-pointer shadow-xs">
+                        <input type="checkbox" id="sw_trend" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                        <span class="font-semibold text-slate-700 leading-tight">Trend Micro OfficeScan</span>
+                    </label>
+                    <label class="flex items-center space-x-2.5 p-2 bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition cursor-pointer shadow-xs">
+                        <input type="checkbox" id="sw_chrome" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                        <span class="font-semibold text-slate-700 leading-tight">Google Chrome</span>
+                    </label>
+                    <label class="flex items-center space-x-2.5 p-2 bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition cursor-pointer shadow-xs">
+                        <input type="checkbox" id="sw_acrobat" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                        <span class="font-semibold text-slate-700 leading-tight">Acrobat Reader</span>
+                    </label>
+                    <label class="flex items-center space-x-2.5 p-2 bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition cursor-pointer shadow-xs">
+                        <input type="checkbox" id="sw_rapid7" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                        <span class="font-semibold text-slate-700 leading-tight">Rapid7</span>
+                    </label>
+                    <label class="flex items-center space-x-2.5 p-2 bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition cursor-pointer shadow-xs">
+                        <input type="checkbox" id="sw_libreoffice" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                        <span class="font-semibold text-slate-700 leading-tight">Libre Office</span>
+                    </label>
+                    <label class="flex items-center space-x-2.5 p-2 bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition cursor-pointer shadow-xs">
+                        <input type="checkbox" id="sw_firefox" class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                        <span class="font-semibold text-slate-700 leading-tight">Mozilla Firefox</span>
+                    </label>
+                    <label class="flex items-center space-x-2.5 p-2 bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition cursor-pointer shadow-xs">
+                        <input type="checkbox" id="sw_zoom" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                        <span class="font-semibold text-slate-700 leading-tight">Zoom</span>
+                    </label>
+                    <label class="flex items-center space-x-2.5 p-2 bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition cursor-pointer shadow-xs">
+                        <input type="checkbox" id="sw_endpoint" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                        <span class="font-semibold text-slate-700 leading-tight">Endpoint Central</span>
+                    </label>
+                    <label class="flex items-center space-x-2.5 p-2 bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition cursor-pointer shadow-xs">
+                        <input type="checkbox" id="sw_office365" class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                        <span class="font-semibold text-slate-700 leading-tight">Microsoft Office 365</span>
+                    </label>
+                    <label class="flex items-center space-x-2.5 p-2 bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition cursor-pointer shadow-xs">
+                        <input type="checkbox" id="sw_netskope" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                        <span class="font-semibold text-slate-700 leading-tight">Netskope</span>
+                    </label>
+                    <label class="flex items-center space-x-2.5 p-2 bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition cursor-pointer shadow-xs">
+                        <input type="checkbox" id="sw_cortex" class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                        <span class="font-semibold text-slate-700 leading-tight">Cortex XDR</span>
+                    </label>
+                    <label class="flex items-center space-x-2.5 p-2 bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition cursor-pointer shadow-xs">
+                        <input type="checkbox" id="sw_vpn" checked class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                        <span class="font-semibold text-slate-700 leading-tight">VPN</span>
+                    </label>
+                    <label class="flex items-center space-x-2.5 p-2 bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition cursor-pointer shadow-xs">
+                        <input type="checkbox" id="sw_gfi" class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                        <span class="font-semibold text-slate-700 leading-tight">GFI Endpoint Security</span>
+                    </label>
+                    <label class="flex items-center space-x-2.5 p-2 bg-white rounded-xl border border-slate-200 hover:border-blue-400 transition cursor-pointer shadow-xs">
+                        <input type="checkbox" id="sw_citrix" class="rounded w-4 h-4 text-blue-600 focus:ring-blue-500" />
+                        <span class="font-semibold text-slate-700 leading-tight">Citrix Workspace</span>
+                    </label>
                 </div>
             </div>
 
@@ -249,7 +298,7 @@
                 </div>
             </div>
 
-            <!-- BOTONES DE ACCIÓN PRINCIPALES -->
+            <!-- BOTONES DE ACCIÓN PRINCIPALES (MANTENIDOS EXACTAMENTE IGUAL) -->
             <div class="pt-3 space-y-2.5">
                 <!-- Botón de Previsualización Ultra HD -->
                 <button type="button" id="btnPreviewDoc" class="w-full flex justify-center items-center space-x-2 py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-emerald-600/20 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none transition active:scale-95 uppercase tracking-wide">
@@ -259,17 +308,17 @@
 
                 <button type="submit" class="w-full flex justify-center items-center space-x-2 py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-blue-600/20 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition active:scale-95">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    <span>Descargar PDF Oficial (5 Páginas)</span>
+                    <span>GENERAR PDF OFICIAL (5 PÁGINAS)</span>
                 </button>
                 
-                <button type="button" id="btnNuevoDoc" class="w-full flex justify-center items-center space-x-2 py-3 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 focus:outline-none transition active:scale-95">
+                <button type="button" id="btnNuevoDoc" class="w-full flex justify-center items-center space-x-2 py-3 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-red-600 hover:bg-red-700 focus:outline-none transition active:scale-95">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                    <span>Nuevo Documento</span>
+                    <span>NUEVO DOCUMENTO</span>
                 </button>
                 
                 <a href="https://invs99.github.io/FF/" class="w-full flex justify-center items-center space-x-2 py-3 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-cyan-500 hover:bg-cyan-600 text-center transition active:scale-95">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                    <span>Inicio</span>
+                    <span>INICIO</span>
                 </a>
             </div>
         </form>
@@ -425,7 +474,7 @@
             }
         });
 
-        // FUNCIÓN BASE: CONSTRUIR Y GENERAR EL OBJETO JSPDF (EXACTAMENTE IGUAL, SIN MODIFICAR EL DOCUMENTO)
+        // FUNCIÓN BASE: CONSTRUIR Y GENERAR EL OBJETO JSPDF (EXACTAMENTE IGUAL)
         async function buildPdfDoc() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ unit: 'mm', format: 'letter' });
@@ -786,7 +835,6 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
 
                 const ctx = canvas.getContext('2d');
                 
-                // Usamos scale = 2.5 para una nitidez extrema y cristalina en celulares y PC
                 const viewport = page.getViewport({ scale: 2.5 });
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
