@@ -2,107 +2,68 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
-    <title>UTILIDADES WEB</title>
+    <title>Utilidades Web - Freund</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #eaeaea;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            padding-top: 40px;
-        }
-        .container {
-            background: #fff;
-            padding: 25px;
-            padding-bottom: 40px;
-            margin: 15px;
-            width: 100%;
-            max-width: 420px;
-            border-radius: 12px;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            position: relative;
-        }
-        .logo {
-            width: 200px;
-            height: auto;
-            display: block;
-            margin: 0 auto 10px auto;
-            object-fit: contain;
-        }
-        h1 {
-            font-size: 1.6rem;
-            margin-top: 0;
-            margin-bottom: 25px;
-            color: #2c3e50;
-        }
-        .seccion-btn {
-            display: block;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 12px;
-            margin: 10px auto;
-            width: 90%;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            font-size: 1.1rem;
-            text-transform: uppercase;
-            text-align: center;
-        }
-        .seccion-btn:hover {
-            background-color: #217dbb;
-        }
-        .footer-text {
-            position: absolute;
-            bottom: 5px;
-            right: 15px;
-            color: #999999;
-            font-size: 0.75rem;
-            font-weight: bold;
-            opacity: 0.85;
-            text-transform: uppercase;
-            z-index: 1;
-        }
-        @media (max-width: 420px) {
-            .seccion-btn {
-                width: 95%;
-                font-size: 1rem;
-            }
-            .footer-text {
-                font-size: 0.65rem;
-                bottom: 5px;
-                right: 10px;
-            }
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
 </head>
-<body>
+<body class="bg-slate-100 min-h-screen flex flex-col items-center justify-start py-8 px-3 font-sans text-slate-800">
 
-    <div class="container" id="mainCover">
-        <img src="https://www.freundferreteria.com/img/logo.svg" alt="Logo Freund" class="logo" />
-        <h1>Bienvenido</h1>
+    <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 sm:p-8 w-full max-w-md mb-6" id="mainCover">
+        <div class="flex flex-col items-center mb-6">
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 shadow-sm mb-3">
+                <img src="https://www.freundferreteria.com/img/logo.svg" alt="Logo Freund" class="h-12 w-auto object-contain" />
+            </div>
+            <h1 class="text-xl font-bold text-slate-900 tracking-tight">Menú de Utilidades</h1>
+            <p class="text-xs text-slate-400 mt-0.5">Soporte Redes y Telecomunicaciones</p>
+        </div>
         
-        <!-- Botones -->
-        <button id="btnReporteImpresores" class="seccion-btn" style="margin-top:20px;" onclick="window.location.href='reporteimpresores.html'">REPORTE DE ETIQUETADORES</button>
+        <!-- Botones de Navegación Unificados -->
+        <div class="space-y-2.5">
+            <button id="btnReporteImpresores" class="w-full flex justify-center items-center py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition active:scale-95 shadow-md shadow-blue-600/20 uppercase tracking-wide" onclick="window.location.href='reporteimpresores.html'">
+                Reporte de Etiquetadores
+            </button>
     
-        <button id="btnRepositorioReporte" class="seccion-btn" style="margin-top:10px;" onclick="window.location.href='Reporte.html'">REPORTE GENERAL</button>
+            <button id="btnRepositorioReporte" class="w-full flex justify-center items-center py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition active:scale-95 shadow-md shadow-blue-600/20 uppercase tracking-wide" onclick="window.location.href='Reporte.html'">
+                Reporte General
+            </button>
+            
+            <button id="btnEntregaEquipo" class="w-full flex justify-center items-center py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition active:scale-95 shadow-md shadow-blue-600/20 uppercase tracking-wide" onclick="window.location.href='https://invs99.github.io/FF/entregaequipo.html'">
+                Entrega de Equipos
+            </button>
+
+            <button id="btnEntregaLaptop" class="w-full flex justify-center items-center py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition active:scale-95 shadow-md shadow-blue-600/20 uppercase tracking-wide" onclick="window.location.href='https://invs99.github.io/FF/entregalaptop.html'">
+                Entrega de Laptop
+            </button>
+
+            <button id="btnEntregaCelulares" class="w-full flex justify-center items-center py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition active:scale-95 shadow-md shadow-blue-600/20 uppercase tracking-wide" onclick="window.location.href='celulares.html'">
+                Entrega de Celulares
+            </button>
+
+            <button id="btnEntregaModem" class="w-full flex justify-center items-center py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition active:scale-95 shadow-md shadow-blue-600/20 uppercase tracking-wide" onclick="window.location.href='modem.html'">
+                Entrega de Módem
+            </button>
+
+            <button id="btnFirmaCorreo" class="w-full flex justify-center items-center py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition active:scale-95 shadow-md shadow-blue-600/20 uppercase tracking-wide" onclick="window.location.href='firma.html'">
+                Firma de Correo
+            </button>
+
+            <button id="btnConvertidorImagenes" class="w-full flex justify-center items-center py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition active:scale-95 shadow-md shadow-blue-600/20 uppercase tracking-wide" onclick="window.location.href='convertidor.html'">
+                Convertidor de Imágenes a PDF
+            </button>
+        </div>
         
-        <button id="btnEntregaEquipo" class="seccion-btn" style="margin-top:10px;" onclick="window.location.href='https://invs99.github.io/FF/entregaequipo.html'">ENTREGA DE EQUIPOS</button>
-        <button id="btnEntregaLaptop" class="seccion-btn" style="margin-top:10px;" onclick="window.location.href='https://invs99.github.io/FF/entregalaptop.html'">ENTREGA DE LAPTOP</button>
-        <button id="btnEntregaCelulares" class="seccion-btn" style="margin-top:10px;" onclick="window.location.href='celulares.html'">ENTREGA DE CELULARES</button>
-        <button id="btnEntregaModem" class="seccion-btn" style="margin-top:10px;" onclick="window.location.href='modem.html'">ENTREGA DE MODEM</button>
-        <button id="btnFirmaCorreo" class="seccion-btn" style="margin-top:10px;" onclick="window.location.href='firma.html'">FIRMA DE CORREO</button>
-        <button id="btnConvertidorImagenes" class="seccion-btn" style="margin-top:10px;" onclick="window.location.href='convertidor.html'">CONVERTIDOR DE IMAGENES A PDF</button>
-        
-        <div class="footer-text">Powered by Jonathann</div>
+        <div class="text-center text-[10px] text-slate-400 mt-6 uppercase font-semibold">Powered by Jonathann</div>
     </div>
 
     <script>
