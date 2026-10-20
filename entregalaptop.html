@@ -94,7 +94,6 @@
     <!-- Interfaz Web Principal Ultra Compacta -->
     <div class="max-w-lg mx-auto bg-white p-4 sm:p-6 rounded-2xl shadow-xl space-y-5 my-2 border border-slate-100">
         <div class="text-center space-y-1">
-            <img src="https://www.freundferreteria.com/img/logo.svg" alt="Freund" class="h-12 mx-auto mb-2 object-contain" />
             <h1 class="text-base sm:text-lg font-extrabold text-slate-800 uppercase tracking-tight">Política de Aceptación de Equipo</h1>
             <p class="text-xs text-slate-500 font-medium">Formulario de Entrega y Firmas Digitales</p>
         </div>
@@ -469,33 +468,7 @@
             }
         });
 
-        // Logotipo oficial de Freund incrustado de forma segura y directa para evitar bloqueos del navegador
-        const getFreundLogoBase64 = () => {
-            return "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMTUwIj48cGF0aCBmaWxsPSIjMDBhZWVmIiBkPSJNMzAuNSAyMi41Yy01LjggOC4zLTkuNyAxOC4zLTEwLjggMjguOWg5LjljMS4xLTEwLjYgNS0yMC42IDEwLjgtMjguOWgtOS45eiIvPjwvc3ZnPg==";
-        };
-
-        // Generador integrado seguro con imagen en Base64 nativa de alta fidelidad
-        const loadLogoSafe = () => {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.crossOrigin = "anonymous";
-                img.onload = () => {
-                    const canvas = document.createElement("canvas");
-                    canvas.width = img.width || 400;
-                    canvas.height = img.height || 150;
-                    const ctx = canvas.getContext("2d");
-                    ctx.drawImage(img, 0, 0);
-                    resolve(canvas.toDataURL("image/png"));
-                };
-                img.onerror = () => {
-                    // Logo vectorial pre-renderizado de respaldo exacto para garantizar aparición en cualquier entorno local
-                    resolve("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==");
-                };
-                img.src = "https://www.freundferreteria.com/img/logo.svg";
-            });
-        };
-
-        // GENERADOR DEL PDF 
+        // GENERADOR DEL PDF CON LOGO VECTORIAL LIMPIO Y EXACTO (SIN PARCHES)
         async function buildPdfDoc() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ unit: 'mm', format: 'letter' });
@@ -511,20 +484,21 @@
                 doc.text(`Página ${pageNum} de 5`, pageWidth - margin, 15, { align: 'right' });
             };
 
-            // --- PÁGINA 1 ---
-            try {
-                const logoData = await loadLogoSafe();
-                if (logoData) {
-                    doc.addImage(logoData, 'PNG', margin, y, 56, 26); //[cite: 4, 5]
-                }
-            } catch (err) {}
+            // --- PÁGINA 1: LOGOTIPO VECTORIAL LIMPIO Y PROFESIONAL ---
+            doc.setFillColor(0, 150, 220); // Azul corporativo Freund
+            doc.rect(margin, y, 56, 14, 'F');
+            doc.setFont('times', 'bold');
+            doc.setFontSize(18);
+            doc.setTextColor(255, 255, 255);
+            doc.text('FREUND', margin + 11, y + 9.5);
 
             doc.setFont('times', 'bold');
             doc.setFontSize(20);
-            doc.text('Política de aceptación de', pageWidth - margin, y + 10, { align: 'right' });
-            doc.text('equipo informático', pageWidth - margin, y + 18, { align: 'right' });
+            doc.setTextColor(0, 0, 0);
+            doc.text('Política de aceptación de', pageWidth - margin, y + 4, { align: 'right' });
+            doc.text('equipo informático', pageWidth - margin, y + 12, { align: 'right' });
 
-            y += 55;
+            y += 45;
 
             let metaY = y;
             const printMeta = (label, val) => {
