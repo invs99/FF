@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Entrega de Modem</title>
+    <title>Entrega de Módem - Freund</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- PDF.js para renderizar la vista previa universal en alta definición -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -20,8 +22,8 @@
     </script>
     <style>
         #signatureCanvas {
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
+            border: 2px dashed #cbd5e1;
+            border-radius: 0.5rem;
             background-color: white;
             cursor: crosshair;
             touch-action: none;
@@ -35,142 +37,272 @@
         .main-content {
             z-index: 10;
         }
+        /* Estilos exactos del visor de previsualización de tus otras web */
+        #previewModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .modal-content-preview {
+            background: #fff;
+            width: 100%;
+            max-width: 850px;
+            height: 90vh;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .modal-header-preview {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+        }
+        .close-modal-preview {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: auto;
+            margin: 0;
+            padding: 0;
+        }
+        #pdfContainer {
+            flex: 1;
+            overflow-y: auto;
+            background: #525659;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .pdf-page-canvas {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            max-width: 100%;
+            height: auto !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            margin-bottom: 15px;
+            background: white;
+        }
+        .modal-footer-preview {
+            padding: 12px 20px;
+            background: #f1f1f1;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .modal-footer-preview button {
+            width: auto;
+            padding: 10px 20px;
+            margin: 0;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
     </style>
 </head>
-<body class="bg-gray-100 flex flex-col items-center justify-start min-h-screen p-4 font-sans">
-    <div id="loadingOverlay" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-[998] hidden">
-        <div class="bg-white p-6 rounded-lg shadow-xl flex items-center space-x-3">
-            <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+<body class="bg-slate-100 min-h-screen flex flex-col items-center justify-start py-6 px-3 font-sans text-slate-800">
+
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-[998] hidden">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl flex items-center space-x-4">
+            <svg class="animate-spin h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p class="text-gray-700">Generando PDF...</p>
+            <p id="loadingText" class="text-slate-700 font-medium">Generando PDF...</p>
         </div>
     </div>
-    <div id="confirmationModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
-        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Confirmar</h3>
-            <p class="text-gray-700 text-center mb-6">¿Estás seguro que quieres limpiar el formulario? Los datos actuales se perderán.</p>
-            <div class="flex space-x-4">
-                <button id="cancelClearButton" class="flex-1 justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+
+    <!-- MODAL DE PREVISUALIZACIÓN IDÉNTICO A TUS OTRAS WEBS -->
+    <div id="previewModal">
+        <div class="modal-content-preview">
+            <div class="modal-header-preview">
+                <span>Vista Previa del Reporte</span>
+                <button type="button" class="close-modal-preview" id="closePreviewBtn">&times;</button>
+            </div>
+            <div id="pdfContainer"></div>
+            <div class="modal-footer-preview">
+                <button type="button" id="closePreviewBottomBtn" style="background: #6c757d;">Cerrar</button>
+                <button type="button" id="downloadFromPreviewBtn" style="background: #007BFF;">Descargar PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmationModal" class="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
+            <h3 class="text-xl font-bold text-slate-800 mb-4 text-center">Confirmar</h3>
+            <p class="text-slate-600 text-center mb-6 text-sm">¿Estás seguro que quieres limpiar el formulario? Los datos actuales se perderán.</p>
+            <div class="flex space-x-3">
+                <button id="cancelClearButton" class="flex-1 justify-center py-2.5 px-4 border border-slate-300 rounded-xl shadow-sm text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 transition">
                     Cancelar
                 </button>
-                <button id="confirmClearButton" class="flex-1 justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                <button id="confirmClearButton" class="flex-1 justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition">
                     Confirmar
                 </button>
             </div>
         </div>
     </div>
-    <div id="clearSignatureConfirmationModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
-        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Confirmar</h3>
-            <p class="text-gray-700 text-center mb-6">¿Estás seguro que quieres borrar la firma?</p>
-            <div class="flex space-x-4">
-                <button id="cancelClearSignatureButton" class="flex-1 justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+
+    <div id="clearSignatureConfirmationModal" class="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
+            <h3 class="text-xl font-bold text-slate-800 mb-4 text-center">Confirmar</h3>
+            <p class="text-slate-600 text-center mb-6 text-sm">¿Estás seguro que quieres borrar la firma?</p>
+            <div class="flex space-x-3">
+                <button id="cancelClearSignatureButton" class="flex-1 justify-center py-2.5 px-4 border border-slate-300 rounded-xl shadow-sm text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 transition">
                     Cancelar
                 </button>
-                <button id="confirmClearSignatureButton" class="flex-1 justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                <button id="confirmClearSignatureButton" class="flex-1 justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-xs font-bold text-white bg-red-600 hover:bg-red-700 transition">
                     Confirmar
                 </button>
             </div>
         </div>
     </div>
-    <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg mb-6 main-content">
-        <div class="flex justify-center mb-6">
-            <img src="https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png" alt="Logo Freund" class="h-16 w-auto" />
+
+    <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 sm:p-8 w-full max-w-md mb-6 main-content">
+        <div class="flex flex-col items-center mb-6">
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 shadow-sm mb-3">
+                <img src="https://www.freundferreteria.com/img/logo.svg" alt="Logo Freund" class="h-12 w-auto object-contain" />
+            </div>
+            <h1 class="text-xl font-bold text-slate-900 tracking-tight">Entrega de Módem</h1>
+            <p class="text-xs text-slate-400 mt-0.5">Soporte y Telecomunicaciones</p>
         </div>
-        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Entrega de Modem
-        </h1>
+
         <form id="documentForm" class="space-y-4">
-            <div>
-                <label for="marca" class="block text-sm font-medium text-gray-700">Marca</label>
-                <input type="text" id="marca" name="marca" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-            </div>
-            <div>
-                <label for="modelo" class="block text-sm font-medium text-gray-700">Modelo</label>
-                <input type="text" id="modelo" name="modelo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-            </div>
-            <div>
-                <label for="imei" class="block text-sm font-medium text-gray-700">IMEI</label>
-                <input type="text" id="imei" name="imei" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-            </div>
-            <div>
-                <label for="numeroTelefonico" class="block text-sm font-medium text-gray-700">Número Telefónico</label>
-                <input type="text" id="numeroTelefonico" name="numeroTelefonico" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-            </div>
-            <div>
-                <label for="concepto" class="block text-sm font-medium text-gray-700">En concepto de</label>
-                <select id="concepto" name="concepto" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border">
-                    <option value="Renovación">Renovación</option>
-                    <option value="Asignación">Asignación</option>
-                </select>
-            </div>
-            <div>
-                <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
-                <input type="text" id="nombre" name="nombre" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-            </div>
-            <div>
-                <label for="codigoEmpleado" class="block text-sm font-medium text-gray-700">Código empleado</label>
-                <input type="text" id="codigoEmpleado" name="codigoEmpleado" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-            </div>
-            <div>
-                <label for="departamento" class="block text-sm font-medium text-gray-700">Departamento</label>
-                <input type="text" id="departamento" name="departamento" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-            </div>
-            <div>
-                <label for="ssd" class="block text-sm font-medium text-gray-700">SSD</label>
-                <input type="text" id="ssd" name="ssd" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
-            </div>
-            <div class="mt-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Firma Digital</label>
-                <div id="signatureCanvasContainer" class="border rounded-md p-1 relative w-full h-auto">
-                    <canvas id="signatureCanvas" class="w-full"></canvas>
+            <div class="bg-slate-50/70 p-4 rounded-2xl border border-slate-100 space-y-3">
+                <div>
+                    <label for="marca" class="block text-xs font-semibold text-slate-600 mb-1">MARCA</label>
+                    <input type="text" id="marca" name="marca" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white uppercase" placeholder="Ej. Huawei" />
                 </div>
-                <button type="button" id="clearSignatureButton" class="mt-2 w-1/2 mx-auto flex justify-center py-2 px-4 border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-800 bg-green-200 hover:bg-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-400">
-                    Borrar Firma
-                </button>
+                <div>
+                    <label for="modelo" class="block text-xs font-semibold text-slate-600 mb-1">MODELO</label>
+                    <input type="text" id="modelo" name="modelo" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white uppercase" placeholder="Ej. E5577" />
+                </div>
+                <div>
+                    <label for="imei" class="block text-xs font-semibold text-slate-600 mb-1">IMEI</label>
+                    <input type="text" id="imei" name="imei" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white" placeholder="Ej. 8654..." />
+                </div>
+                <div>
+                    <label for="numeroTelefonico" class="block text-xs font-semibold text-slate-600 mb-1">NÚMERO TELEFÓNICO</label>
+                    <input type="text" id="numeroTelefonico" name="numeroTelefonico" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white" placeholder="Ej. 7000-0000" />
+                </div>
+                <div>
+                    <label for="concepto" class="block text-xs font-semibold text-slate-600 mb-1">EN CONCEPTO DE</label>
+                    <select id="concepto" name="concepto" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white">
+                        <option value="Renovación">Renovación</option>
+                        <option value="Asignación">Asignación</option>
+                    </select>
+                </div>
             </div>
-            <div class="flex flex-col space-y-2 mt-4">
-                <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    Generar Documento
+
+            <div class="bg-slate-50/70 p-4 rounded-2xl border border-slate-100 space-y-3">
+                <div>
+                    <label for="nombre" class="block text-xs font-semibold text-slate-600 mb-1">NOMBRE</label>
+                    <input type="text" id="nombre" name="nombre" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white uppercase" placeholder="Ej. Juan Pérez" />
+                </div>
+                <div>
+                    <label for="codigoEmpleado" class="block text-xs font-semibold text-slate-600 mb-1">CÓDIGO EMPLEADO</label>
+                    <input type="text" id="codigoEmpleado" name="codigoEmpleado" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white uppercase" placeholder="Ej. E1234" />
+                </div>
+                <div>
+                    <label for="departamento" class="block text-xs font-semibold text-slate-600 mb-1">DEPARTAMENTO</label>
+                    <input type="text" id="departamento" name="departamento" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white uppercase" placeholder="Ej. Informática" />
+                </div>
+                <div>
+                    <label for="ssd" class="block text-xs font-semibold text-slate-600 mb-1">SSD</label>
+                    <input type="text" id="ssd" name="ssd" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white uppercase" placeholder="Ej. SSD-01" />
+                </div>
+            </div>
+
+            <div class="bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-xs font-semibold text-slate-600">FIRMA DIGITAL</label>
+                    <button type="button" id="clearSignatureButton" class="text-xs font-medium text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg transition-colors">
+                        Borrar Firma
+                    </button>
+                </div>
+                <div id="signatureCanvasContainer" class="relative w-full">
+                    <canvas id="signatureCanvas" class="w-full h-36"></canvas>
+                </div>
+            </div>
+
+            <div class="space-y-2.5 pt-2">
+                <!-- Botón de Previsualización HD -->
+                <button type="button" id="btnPreviewDoc" class="w-full flex justify-center items-center space-x-2 py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-emerald-600/20 text-xs sm:text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none transition active:scale-95 uppercase tracking-wide">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    <span>Previsualizar Documento</span>
                 </button>
-                <button type="button" id="clearFormButton" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                    Nuevo Documento
+
+                <button type="submit" class="w-full flex justify-center items-center space-x-2 py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-blue-600/20 text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition active:scale-95">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span>Generar Documento</span>
                 </button>
-                <a href="index.html" class="w-full flex justify-center py-1.5 px-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-500 hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-400 no-underline">
-                    Inicio
+
+                <button type="button" id="clearFormButton" class="w-full flex justify-center items-center space-x-2 py-3 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-red-600 hover:bg-red-700 focus:outline-none transition active:scale-95">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    <span>Nuevo Documento</span>
+                </button>
+
+                <a href="index.html" class="w-full flex justify-center items-center space-x-2 py-3 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-cyan-500 hover:bg-cyan-600 text-center transition active:scale-95 no-underline">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    <span>Inicio</span>
                 </a>
             </div>
         </form>
+        <div class="text-center text-[10px] text-slate-400 mt-4 uppercase font-semibold">Powered by Jonathann</div>
     </div>
-    <div id="messageBox" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 hidden">
+
+    <div id="messageBox" class="fixed bottom-4 right-4 bg-emerald-600 text-white px-6 py-3 rounded-2xl shadow-xl z-50 hidden text-xs font-bold">
         Documento generado con éxito.
     </div>
+
     <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        let currentPdfDoc = null;
+
         function showMessage(message, type = 'success') {
             const messageBox = document.getElementById('messageBox');
             messageBox.textContent = message;
             if (type === 'success') {
-                messageBox.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                messageBox.className = 'fixed bottom-4 right-4 bg-emerald-600 text-white px-6 py-3 rounded-2xl shadow-xl z-50 text-xs font-bold';
             } else if (type === 'error') {
-                messageBox.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                messageBox.className = 'fixed bottom-4 right-4 bg-rose-600 text-white px-6 py-3 rounded-2xl shadow-xl z-50 text-xs font-bold';
             }
             messageBox.classList.remove('hidden');
             setTimeout(() => {
                 messageBox.classList.add('hidden');
             }, 3000);
         }
+
         const canvas = document.getElementById('signatureCanvas');
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
         let lastX = 0;
         let lastY = 0;
         let hasSigned = false;
+
         function drawPlaceholder() {
             if (!hasSigned) {
                 ctx.save();
-                ctx.fillStyle = '#E5E7EB';
-                ctx.font = '24px Inter, sans-serif';
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '14px Inter, sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 const x = canvas.width / 2;
@@ -179,10 +311,11 @@
                 ctx.restore();
             }
         }
+
         function resizeCanvas() {
             const container = document.getElementById('signatureCanvasContainer');
             const newWidth = container.offsetWidth;
-            const newHeight = container.offsetHeight;
+            const newHeight = 150;
             canvas.width = newWidth;
             canvas.height = newHeight;
             ctx.fillStyle = 'white';
@@ -203,8 +336,10 @@
                 }
             }
         }
+
         document.addEventListener('DOMContentLoaded', resizeCanvas);
         window.addEventListener('resize', resizeCanvas);
+
         function draw(e) {
             if (!isDrawing) return;
             if (!hasSigned) {
@@ -219,12 +354,13 @@
             ctx.beginPath();
             ctx.moveTo(lastX, lastY);
             ctx.lineTo(x, y);
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 2.5;
             ctx.lineCap = 'round';
             ctx.stroke();
             [lastX, lastY] = [x, y];
         }
+
         canvas.addEventListener('mousedown', (e) => {
             isDrawing = true;
             const rect = canvas.getBoundingClientRect();
@@ -241,9 +377,11 @@
         canvas.addEventListener('mouseup', () => isDrawing = false);
         canvas.addEventListener('touchend', () => isDrawing = false);
         canvas.addEventListener('mouseout', () => isDrawing = false);
+
         document.getElementById('clearSignatureButton').addEventListener('click', () => {
             document.getElementById('clearSignatureConfirmationModal').classList.remove('hidden');
         });
+
         const form = document.getElementById('documentForm');
         function saveFormData() {
             const formData = new FormData(form);
@@ -258,6 +396,7 @@
             }
             localStorage.setItem('documentFormData', JSON.stringify(data));
         }
+
         function loadFormData() {
             const savedData = localStorage.getItem('documentFormData');
             if (savedData) {
@@ -286,91 +425,100 @@
         }
         form.addEventListener('input', saveFormData);
         window.addEventListener('load', loadFormData);
-        document.getElementById('documentForm').addEventListener('submit', async function(e) {
+
+        // FUNCIÓN ORIGINAL INTACTA PARA GENERAR EL PDF
+        async function buildPdfDoc() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            const margin = 15;
+            const pageWidth = doc.internal.pageSize.getWidth();
+            let y = margin;
+            const logoHeight = 17;
+            const logoWidth = 34;
+            const logoUrl = 'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
+            try {
+                const response = await fetch(logoUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const blob = await response.blob();
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                const base64Image = await new Promise((resolve, reject) => {
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = reject;
+                });
+                const logoX = margin;
+                doc.addImage(base64Image, 'PNG', logoX, y, logoWidth, logoHeight);
+            } catch (error) {
+                console.warn('No se pudo cargar el logo para el PDF:', error);
+            }
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            const headerX = pageWidth - margin;
+            doc.text('Tiendas 01.001.0001.0001', headerX, y, null, null, 'right');
+            doc.text('Redes y Telecomunicaciones', headerX, y + 4, null, null, 'right');
+            doc.text('Responsable: CC', headerX, y + 8, null, null, 'right');
+            doc.text(`Fecha Modificación: ${new Date().toLocaleDateString()}`, headerX, y + 12, null, null, 'right');
+            const headerHeight = 15;
+            const titleY = y + (Math.max(logoHeight, headerHeight) / 2) + 2;
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.text('RENOVACIÓN DE LÍNEA MODEM', pageWidth / 2, titleY, { align: 'center' });
+            y = y + Math.max(logoHeight, headerHeight) + 10;
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 12;
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            const text = `Recibí de FREUND, S.A. de C.V. un MODEM wifi con las siguientes características:`;
+            const splitText = doc.splitTextToSize(text, 180);
+            doc.text(splitText, margin, y);
+            y += splitText.length * 7;
+            y += 10;
+            doc.setFontSize(12);
+            doc.text(`Marca: ${data.marca || ''}`, margin, y);
+            doc.text(`Modelo: ${data.modelo || ''}`, 105, y);
+            y += 7;
+            doc.text(`IMEI: ${data.imei || ''}`, margin, y);
+            doc.text(`Número Telefónico: ${data.numeroTelefonico || ''}`, 105, y);
+            y += 7;
+            doc.text(`En concepto de: ${data.concepto || ''}`, margin, y);
+            y += 20;
+            const clause = `El cual recibo completamente nuevo y en perfecto estado con todos sus accesorios, así mismo autorizo al departamento de Recursos Humanos de FREUND, S.A. de C.V. para que de mi salario mensual se me descuente el costo del dispositivo en caso de daño o extravío.`;
+            const splitClause = doc.splitTextToSize(clause, 180);
+            doc.text(splitClause, margin, y);
+            y += splitClause.length * 7 + 30;
+            const signatureY = y + 15;
+            const signatureData = canvas.toDataURL('image/png');
+            if (hasSigned) {
+                const signatureWidth = 60;
+                const signatureHeight = (canvas.height / canvas.width) * signatureWidth;
+                const signatureX = margin;
+                const signatureImageY = signatureY - signatureHeight / 2;
+                doc.addImage(signatureData, 'PNG', signatureX, signatureImageY, signatureWidth, signatureHeight);
+            }
+            y = signatureY + 15;
+            doc.text(`Nombre: ${data.nombre || ''}`, margin, y);
+            y += 7;
+            doc.text(`Código empleado: ${data.codigoEmpleado || ''}`, margin, y);
+            y += 7;
+            doc.text(`Departamento: ${data.departamento || ''}`, margin, y);
+            y += 7;
+            doc.text(`SSD: ${data.ssd || ''}`, margin, y);
+            return doc;
+        }
+
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
             const loadingOverlay = document.getElementById('loadingOverlay');
             loadingOverlay.style.display = 'flex';
             try {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
+                const doc = await buildPdfDoc();
                 const formData = new FormData(e.target);
-                const data = Object.fromEntries(formData.entries());
-                const margin = 15;
-                const pageWidth = doc.internal.pageSize.getWidth();
-                let y = margin;
-                const logoHeight = 17;
-                const logoWidth = 34;
-                const logoUrl = 'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
-                try {
-                    const response = await fetch(logoUrl);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    const blob = await response.blob();
-                    const reader = new FileReader();
-                    reader.readAsDataURL(blob);
-                    const base64Image = await new Promise((resolve, reject) => {
-                        reader.onloadend = () => resolve(reader.result);
-                        reader.onerror = reject;
-                    });
-                    const logoX = margin;
-                    doc.addImage(base64Image, 'PNG', logoX, y, logoWidth, logoHeight);
-                } catch (error) {
-                    console.warn('No se pudo cargar el logo para el PDF:', error);
-                }
-                doc.setFontSize(8);
-                doc.setFont('helvetica', 'normal');
-                const headerX = pageWidth - margin;
-                doc.text('Tiendas 01.001.0001.0001', headerX, y, null, null, 'right');
-                doc.text('Redes y Telecomunicaciones', headerX, y + 4, null, null, 'right');
-                doc.text('Responsable: CC', headerX, y + 8, null, null, 'right');
-                doc.text(`Fecha Modificación: ${new Date().toLocaleDateString()}`, headerX, y + 12, null, null, 'right');
-                const headerHeight = 15;
-                const titleY = y + (Math.max(logoHeight, headerHeight) / 2) + 2;
-                doc.setFontSize(16);
-                doc.setFont('helvetica', 'bold');
-                doc.text('RENOVACIÓN DE LÍNEA MODEM', pageWidth / 2, titleY, { align: 'center' });
-                y = y + Math.max(logoHeight, headerHeight) + 10;
-                doc.line(margin, y, pageWidth - margin, y);
-                y += 12;
-                doc.setFontSize(12);
-                doc.setFont('helvetica', 'normal');
-                const text = `Recibí de FREUND, S.A. de C.V. un MODEM wifi con las siguientes características:`;
-                const splitText = doc.splitTextToSize(text, 180);
-                doc.text(splitText, margin, y);
-                y += splitText.length * 7;
-                y += 10;
-                doc.setFontSize(12);
-                doc.text(`Marca: ${data.marca}`, margin, y);
-                doc.text(`Modelo: ${data.modelo}`, 105, y);
-                y += 7;
-                doc.text(`IMEI: ${data.imei}`, margin, y);
-                doc.text(`Número Telefónico: ${data.numeroTelefonico}`, 105, y);
-                y += 7;
-                doc.text(`En concepto de: ${data.concepto}`, margin, y);
-                y += 20;
-                const clause = `El cual recibo completamente nuevo y en perfecto estado con todos sus accesorios, así mismo autorizo al departamento de Recursos Humanos de FREUND, S.A. de C.V. para que de mi salario mensual se me descuente el costo del dispositivo en caso de daño o extravío.`;
-                const splitClause = doc.splitTextToSize(clause, 180);
-                doc.text(splitClause, margin, y);
-                y += splitClause.length * 7 + 30;
-                const signatureY = y + 15;
-                const signatureData = canvas.toDataURL('image/png');
-                if (hasSigned) {
-                    const signatureWidth = 60;
-                    const signatureHeight = (canvas.height / canvas.width) * signatureWidth;
-                    const signatureX = margin;
-                    const signatureImageY = signatureY - signatureHeight / 2;
-                    doc.addImage(signatureData, 'PNG', signatureX, signatureImageY, signatureWidth, signatureHeight);
-                }
-                y = signatureY + 15;
-                doc.text(`Nombre: ${data.nombre}`, margin, y);
-                y += 7;
-                doc.text(`Código empleado: ${data.codigoEmpleado}`, margin, y);
-                y += 7;
-                doc.text(`Departamento: ${data.departamento}`, margin, y);
-                y += 7;
-                doc.text(`SSD: ${data.ssd}`, margin, y);
-                doc.save(`Documento_Freund_${data.nombre.replace(/\s/g, '_')}.pdf`);
+                const nombre = formData.get('nombre') || 'Documento';
+                doc.save(`Documento_Freund_${nombre.replace(/\s/g, '_')}.pdf`);
                 loadingOverlay.style.display = 'none';
                 showMessage('Documento generado con éxito.', 'success');
             } catch (error) {
@@ -379,6 +527,51 @@
                 showMessage('Error al generar el documento.', 'error');
             }
         });
+
+        // Previsualizador HD con PDF.js
+        async function renderVerticalPreview(pdfDocObj) {
+            const container = document.getElementById('pdfContainer');
+            container.innerHTML = ''; 
+            for (let i = 1; i <= pdfDocObj.numPages; i++) {
+                const page = await pdfDocObj.getPage(i);
+                const canvas = document.createElement('canvas');
+                canvas.className = 'pdf-page-canvas';
+                container.appendChild(canvas);
+                const ctx = canvas.getContext('2d');
+                const viewport = page.getViewport({ scale: 2.5 });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+            }
+        }
+
+        document.getElementById('btnPreviewDoc').addEventListener('click', async () => {
+            document.getElementById('loadingText').textContent = 'Cargando vista previa ultra nítida...';
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            try {
+                currentPdfDoc = await buildPdfDoc();
+                const pdfArrayBuffer = currentPdfDoc.output('arraybuffer');
+                const pdfPdfDocObj = await pdfjsLib.getDocument({ data: pdfArrayBuffer }).promise;
+                await renderVerticalPreview(pdfPdfDocObj);
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('previewModal').style.display = 'flex';
+            } catch (err) {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                alert('Ocurrió un error al previsualizar el PDF.');
+            }
+        });
+
+        const cerrarModalPreview = () => document.getElementById('previewModal').style.display = 'none';
+        document.getElementById('closePreviewBtn').addEventListener('click', cerrarModalPreview);
+        document.getElementById('closePreviewBottomBtn').addEventListener('click', cerrarModalPreview);
+        document.getElementById('downloadFromPreviewBtn').addEventListener('click', () => {
+            if (currentPdfDoc) {
+                const formData = new FormData(form);
+                const nombre = formData.get('nombre') || 'Documento';
+                currentPdfDoc.save(`Documento_Freund_${nombre.replace(/\s/g, '_')}.pdf`);
+            }
+        });
+
         document.getElementById('clearFormButton').addEventListener('click', function() {
             document.getElementById('confirmationModal').classList.remove('hidden');
         });
