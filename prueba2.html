@@ -48,27 +48,18 @@
         </div>
     </div>
 
-    <!-- MODAL DE PREVISUALIZACIÓN DEL DOCUMENTO -->
+    <!-- MODAL DE PREVISUALIZACIÓN DEL DOCUMENTO (SCROLL VERTICAL) -->
     <div id="previewModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden p-2 sm:p-4">
         <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden">
             <!-- Encabezado Modal -->
             <div class="flex justify-between items-center bg-gray-800 text-white p-3 px-4">
-                <h3 class="font-bold text-xs sm:text-sm uppercase tracking-wide">Vista Previa del Documento</h3>
+                <h3 class="font-bold text-xs sm:text-sm uppercase tracking-wide">Vista Previa del Documento (Desliza hacia abajo)</h3>
                 <button type="button" id="closePreviewBtn" class="text-gray-300 hover:text-white text-xl font-bold p-1 leading-none">&times;</button>
             </div>
-            
-            <!-- Barra de Controles de Navegación -->
-            <div class="flex items-center justify-between bg-gray-100 border-b p-2 px-4 text-xs">
-                <div class="space-x-1">
-                    <button type="button" id="prevPageBtn" class="px-3 py-1 bg-white border border-gray-300 rounded font-bold hover:bg-gray-50 disabled:opacity-50">Anterior</button>
-                    <button type="button" id="nextPageBtn" class="px-3 py-1 bg-white border border-gray-300 rounded font-bold hover:bg-gray-50 disabled:opacity-50">Siguiente</button>
-                </div>
-                <span id="pageNumDisplay" class="font-semibold text-gray-700">Página 1 de 5</span>
-            </div>
 
-            <!-- Área de Visualización (Canvas de PDF.js) -->
-            <div class="flex-1 overflow-auto p-2 bg-gray-200 flex justify-center items-start">
-                <canvas id="pdfPreviewCanvas" class="shadow-lg max-w-full h-auto bg-white rounded"></canvas>
+            <!-- Área de Visualización Continua (Contenedor de Canvases) -->
+            <div id="pdfContainer" class="flex-1 overflow-auto p-4 bg-gray-200 flex flex-col items-center space-y-4">
+                <!-- Las páginas se inyectarán aquí dinámicamente -->
             </div>
 
             <!-- Pie del Modal -->
@@ -250,8 +241,6 @@
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
         let currentPdfDoc = null;
-        let pdfPdfDocObj = null;
-        let currentNumPage = 1;
 
         // Función para mostrar el modal de confirmación bonito
         const mostrarConfirmacion = (titulo, mensaje) => {
@@ -540,7 +529,7 @@
             y += 4;
 
             text = `Por este medio, se le hace entrega de un equipo informático corporativo con el software previamente instalado y autorizado por la empresa, conforme a las regulaciones vigentes.
-Queda strictly prohibida la instalación, uso o descarga de cualquier software adicional que no haya sido debidamente autorizado por el departamento de Sistemas. La instalación de programas no autorizados constituye una infracción a las políticas de seguridad y cumplimiento de la organización, y se considerará una falta grave.
+Queda estrictamente prohibida la instalación, uso o descarga de cualquier software adicional que no haya sido debidamente autorizado por el departamento de Sistemas. La instalación de programas no autorizados constituye una infracción a las políticas de seguridad y cumplimiento de la organización, y se considerará una falta grave.
 En caso de una revisión por parte de autoridades legales o entidades reguladoras, como la fiscalía general, el usuario asumirá toda responsabilidad legal derivada del uso de software no autorizado en el equipo asignado.
 El equipo informático asignado al colaborador es propiedad de la empresa y se entrega para uso exclusivo en el ejercicio de sus funciones laborales. A partir del momento de la recepción, la responsabilidad total por el resguardo, conservación y uso adecuado del equipo recae exclusivamente en el usuario.`;
             lines = doc.splitTextToSize(text, pageWidth - (margin * 2));
@@ -744,29 +733,29 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
             }
         });
 
-        // NAVEGACIÓN Y RENDERIZADO DENTRO DEL VISOR MODAL (PDF.JS)
-        async function renderPreviewPage(num) {
-            if (!pdfPdfDocObj) return;
-            currentNumPage = num;
-            const page = await pdfPdfDocObj.getPage(num);
-            
-            const canvas = document.getElementById('pdfPreviewCanvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Ajustar escala para vista previa clara en celular/PC
-            const viewport = page.getViewport({ scale: 1.2 });
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
+        // RENDERIZADO VERTICAL CONTINUO DENTRO DEL VISOR MODAL (PDF.JS)
+        async function renderVerticalPreview(pdfDocObj) {
+            const container = document.getElementById('pdfContainer');
+            container.innerHTML = ''; // Limpiar vistas previas anteriores
 
-            const renderContext = {
-                canvasContext: ctx,
-                viewport: viewport
-            };
-            await page.render(renderContext).promise;
+            for (let i = 1; i <= pdfDocObj.numPages; i++) {
+                const page = await pdfDocObj.getPage(i);
+                
+                // Crear un canvas separado para cada página y agregarlo en vertical
+                const canvas = document.createElement('canvas');
+                canvas.className = 'shadow-lg max-w-full h-auto bg-white rounded mb-4';
+                container.appendChild(canvas);
 
-            document.getElementById('pageNumDisplay').textContent = `Página ${num} de ${pdfPdfDocObj.numPages}`;
-            document.getElementById('prevPageBtn').disabled = (num <= 1);
-            document.getElementById('nextPageBtn').disabled = (num >= pdfPdfDocObj.numPages);
+                const ctx = canvas.getContext('2d');
+                const viewport = page.getViewport({ scale: 1.2 });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                await page.render({
+                    canvasContext: ctx,
+                    viewport: viewport
+                }).promise;
+            }
         }
 
         // BOTÓN: PREVISUALIZAR DOCUMENTO
@@ -784,10 +773,9 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                 currentPdfDoc = await buildPdfDoc();
                 const pdfArrayBuffer = currentPdfDoc.output('arraybuffer');
 
-                // Cargar documento en PDF.js
-                pdfPdfDocObj = await pdfjsLib.getDocument({ data: pdfArrayBuffer }).promise;
-                
-                await renderPreviewPage(1);
+                // Cargar documento en PDF.js y renderizar de forma continua
+                const pdfPdfDocObj = await pdfjsLib.getDocument({ data: pdfArrayBuffer }).promise;
+                await renderVerticalPreview(pdfPdfDocObj);
                 
                 document.getElementById('loadingOverlay').classList.add('hidden');
                 document.getElementById('previewModal').classList.remove('hidden');
@@ -795,19 +783,6 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                 console.error(err);
                 document.getElementById('loadingOverlay').classList.add('hidden');
                 alert('Ocurrió un error al previsualizar el PDF.');
-            }
-        });
-
-        // Eventos de controles de página del Modal
-        document.getElementById('prevPageBtn').addEventListener('click', () => {
-            if (currentNumPage > 1) {
-                renderPreviewPage(currentNumPage - 1);
-            }
-        });
-
-        document.getElementById('nextPageBtn').addEventListener('click', () => {
-            if (pdfPdfDocObj && currentNumPage < pdfPdfDocObj.numPages) {
-                renderPreviewPage(currentNumPage + 1);
             }
         });
 
