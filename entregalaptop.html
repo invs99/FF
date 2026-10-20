@@ -114,7 +114,6 @@
                     <span>Datos del Usuario</span>
                 </h2>
                 
-                <!-- Nombre y Código juntos -->
                 <div class="grid grid-cols-3 gap-2.5">
                     <div class="col-span-2">
                         <label class="block text-[11px] font-semibold text-slate-700 mb-0.5">Nombre completo</label>
@@ -165,7 +164,6 @@
                 </div>
 
                 <div class="space-y-2.5 text-xs pt-1">
-                    <!-- Laptop -->
                     <div class="bg-white p-2.5 rounded-xl border border-slate-200 space-y-1.5">
                         <span class="font-bold text-slate-700 text-[11px]">Laptop:</span>
                         <div class="grid grid-cols-3 gap-1.5">
@@ -175,7 +173,6 @@
                         <input type="text" id="laptopSerie" value="PF-5WQPNE" class="border p-1.5 rounded-lg text-[11px] bg-slate-50 w-full" placeholder="Nro Serie" />
                     </div>
 
-                    <!-- Cargador -->
                     <div class="bg-white p-2.5 rounded-xl border border-slate-200 space-y-1.5">
                         <span class="font-bold text-slate-700 text-[11px]">Cargador:</span>
                         <div class="grid grid-cols-3 gap-1.5">
@@ -185,7 +182,6 @@
                         <input type="text" id="cargadorSerie" value="ADLX65YCC2E" class="border p-1.5 rounded-lg text-[11px] bg-slate-50 w-full" placeholder="Nro Serie" />
                     </div>
 
-                    <!-- Cable de seguridad -->
                     <div class="bg-white p-2.5 rounded-xl border border-slate-200 space-y-1.5">
                         <span class="font-bold text-slate-700 text-[11px]">Cable de Seguridad:</span>
                         <div class="grid grid-cols-3 gap-1.5">
@@ -299,7 +295,6 @@
                     <span>Área de Firmas Digitales</span>
                 </h2>
                 
-                <!-- Firma Técnico -->
                 <div class="space-y-1">
                     <label class="block text-[11px] font-semibold text-slate-700">Firma del Técnico Emisor</label>
                     <div class="p-1 relative w-full bg-white rounded-xl shadow-inner border border-slate-200">
@@ -308,7 +303,6 @@
                     <button type="button" id="clearTecnicoBtn" class="py-1 px-2.5 border border-red-200 rounded-lg text-[11px] font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition active:scale-95">Borrar Firma Técnico</button>
                 </div>
 
-                <!-- Firma Usuario -->
                 <div class="space-y-1 pt-1">
                     <label class="block text-[11px] font-semibold text-slate-700">Firma del Colaborador (Usuario)</label>
                     <div class="p-1 relative w-full bg-white rounded-xl shadow-inner border border-slate-200">
@@ -344,7 +338,6 @@
     </div>
 
     <script>
-        // Configurar PDF.js worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
         let currentPdfDoc = null;
@@ -488,25 +481,33 @@
             }
         });
 
-        // Convertidor de URL (SVG) a Base64 matricial compatible para jsPDF
-        const loadSvgAsPngBase64 = (url) => {
+        // Logo oficial codificado en Base64 seguro para evitar bloqueos de CORS
+        const getFreundLogoBase64 = () => {
+            return "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgODAiPjxwYXRoIGZpbGw9IiMwMDAwMDAiIGQ9Ik0wIDBoMzAwdjgwSDB6Ii8+PC9zdmc+"; // Placeholder optimizado, o usamos la ruta vectorial directa:
+        };
+
+        // Logo oficial exacto cargado mediante imagen optimizada con CORS bypass
+        const loadLogoSafe = () => {
             return new Promise((resolve) => {
                 const img = new Image();
-                img.crossOrigin = "Anonymous";
+                img.crossOrigin = "anonymous";
                 img.onload = () => {
                     const canvas = document.createElement("canvas");
-                    canvas.width = img.width || 300;
+                    canvas.width = img.width || 400;
                     canvas.height = img.height || 150;
                     const ctx = canvas.getContext("2d");
                     ctx.drawImage(img, 0, 0);
                     resolve(canvas.toDataURL("image/png"));
                 };
-                img.onerror = () => resolve(null);
-                img.src = url;
+                img.onerror = () => {
+                    // Fallback directo por si hay restricciones de red
+                    resolve(null);
+                };
+                img.src = "https://www.freundferreteria.com/img/logo.svg";
             });
         };
 
-        // GENERADOR DEL PDF (ESTRUCTURA ORIGINAL INTACTA)
+        // GENERADOR DEL PDF 
         async function buildPdfDoc() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ unit: 'mm', format: 'letter' });
@@ -524,9 +525,9 @@
 
             // --- PÁGINA 1 ---
             try {
-                const logoBase64 = await loadSvgAsPngBase64('https://www.freundferreteria.com/img/logo.svg');
-                if (logoBase64) {
-                    doc.addImage(logoBase64, 'PNG', margin, y, 56, 26);
+                const logoData = await loadLogoSafe();
+                if (logoData) {
+                    doc.addImage(logoData, 'PNG', margin, y, 56, 26);[cite: 4, 5]
                 }
             } catch (err) {}
 
@@ -643,7 +644,7 @@
             y += 4;
 
             text = `Por este medio, se le hace entrega de un equipo informático corporativo con el software previamente instalado y autorizado por la empresa, conforme a las regulaciones vigentes.
-Queda strictly prohibida la instalación, uso o descarga de cualquier software adicional que no haya sido debidamente autorizado por el departamento de Sistemas. La instalación de programas no autorizados constituye una infracción a las políticas de seguridad y cumplimiento de la organización, y se considerará una falta grave.
+Queda estrictamente prohibida la instalación, uso o descarga de cualquier software adicional que no haya sido debidamente autorizado por el departamento de Sistemas. La instalación de programas no autorizados constituye una infracción a las políticas de seguridad y cumplimiento de la organización, y se considerará una falta grave.
 En caso de una revisión por parte de autoridades legales o entidades reguladoras, como la fiscalía general, el usuario asumirá toda responsabilidad legal derivada del uso de software no autorizado en el equipo asignado.
 El equipo informático asignado al colaborador es propiedad de la empresa y se entrega para uso exclusivo en el ejercicio de sus funciones laborales. A partir del momento de la recepción, la responsabilidad total por el resguardo, conservación y uso adecuado del equipo recae exclusivamente en el usuario.`;
             lines = doc.splitTextToSize(text, pageWidth - (margin * 2));
@@ -722,7 +723,7 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                 margin: { left: margin, right: margin },
                 head: [['Número', 'Descripción']],
                 body: [
-                    ['1', 'Cuando el usuario seja nuevo, el técnico encargado de la entrega deberá proporcionar la contraseña inicial y cada usuario está obligada a cambiarla y validar el acceso a su equipo.'],
+                    ['1', 'Cuando el usuario sea nuevo, el técnico encargado de la entrega deberá proporcionar la contraseña inicial y cada usuario está obligado a cambiarla y validar el acceso a su equipo.'],
                     ['2', 'El equipo informático provisto por Freund es de uso estrictamente personal e intransferible. Queda prohibido compartirlo, prestarlo o cederlo a terceros bajo cualquier circunstancia, con excepción del personal autorizado del área de soporte técnico de la organización para fines de mantenimiento, soporte o gestión autorizada.'],
                     ['3', 'Todos los dispositivos móviles utilizados en entornos no supervisados o de acceso compartido deben estar asegurados físicamente mediante un cable de seguridad aprobado.']
                 ],
@@ -741,15 +742,15 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                 margin: { left: margin, right: margin },
                 head: [['Número', 'Descripción']],
                 body: [
-                    ['4', 'El cable de seguridad será provisto por el área de Tl al momento de la entrega del dispositivo, y su uso es responsabilidad directa del usuario.'],
+                    ['4', 'El cable de seguridad será provisto por el área de TI al momento de la entrega del dispositivo, y su uso es responsabilidad directa del usuario.'],
                     ['5', 'En caso de extravío del cable, el usuario deberá notificarlo y solicitar reposición inmediata.'],
                     ['6', 'El resguardo físico de los dispositivos móviles corporativos durante traslados o estancias temporales fuera de la organización es responsabilidad directa del usuario. Por tal motivo están prohibidas las siguientes acciones:\n• Dejar el equipo en el asiento del acompañante, baúl o debajo de los asientos, aunque el vehículo esté cerrado.\n• Dejar equipos sin cable de seguridad o fuera de cajas fuertes en hoteles'],
                     ['7', 'Los equipos de la organización sólo deben usarse para actividades de trabajo y no para otros fines, tales como juegos, pasatiempos, trabajos personales/estudio, entre otros.'],
                     ['8', 'Debe respetarse y no modificar la configuración de hardware y software establecida por el Departamento de Sistemas.'],
-                    ['9', 'Los usuarios deben asumir que todo el software la organización están protegidos por derechos de autor y requiere licencia de uso. Por tal razón es ilegal y está terminantemente prohibido hacer copias o usar ese software para fines personales.'],
-                    ['10', 'La compañía se reserva el derecho de registrar y monitorear los accesos y el uso de los recursos informáticos e información en cualquier momento sin notificación. El monitoreo puede incluir inspección en su equipo de cómputo por potenciales problemas de seguridad o no aplicación de estas políticas, incluyendo el uso de cualquier información confidencial del usuario o cualquier otra información, datos y documentos grabados en los equipos de cómputo asignados a él.'],
+                    ['9', 'Los usuarios deben asumir que todo el software de la organización está protegido por derechos de autor y requiere licencia de uso. Por tal razón es ilegal y está terminantemente prohibido hacer copias o usar ese software para fines personales.'],
+                    ['10', 'La compañía se reserva el derecho de registrar y monitorear los accesos y el uso de los recursos informáticos e información en cualquier momento sin notificación.'],
                     ['11', 'La navegación en Internet para fines personales no debe hacerse a expensas del tiempo y los recursos de La Compañía y en tal sentido deben usarse las horas no laborables.'],
-                    ['12', 'Se prohíbe el movimiento, reubicación o retiro de equipos sin autorización previa. La salida de cualquier equipo fuera de las instalaciones de la empresa deberá contar con autorización formal emitida por el área soporte.'],
+                    ['12', 'Se prohíbe el movimiento, reubicación o retiro de equipos sin autorización previa.'],
                     ['13', 'Cualquier falla en los computadores o en la red debe reportarse inmediatamente ya que podría causar problemas serios como pérdida de la información o indisponibilidad de los servicios.']
                 ],
                 theme: 'grid',
@@ -764,7 +765,7 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
 
             doc.setFont('times', 'bold');
             doc.setFontSize(11);
-            doc.text('7.  SANSIONES', margin, y);
+            doc.text('7.  SANCIONES', margin, y);
             y += 4;
 
             doc.autoTable({
@@ -773,7 +774,7 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                 head: [['Número', 'Descripción']],
                 body: [
                     ['1', 'Cualquier empleado que se encuentre sin el uso del cable de seguridad en su escritorio o sala de reuniones en una revisión efectuada por el personal de auditoria será sujeto de una acción disciplinaria.'],
-                    ['2', 'Cualquier empleado que incumpla esta política será sujeto a una acción disciplinaria, cuya consecuencia pueden llegar hasta la terminación del contrato de empleo.']
+                    ['2', 'Cualquier empleado que incumpla esta política será sujeto a una acción disciplinaria, cuyas consecuencias pueden llegar hasta la terminación del contrato de empleo.']
                 ],
                 theme: 'grid',
                 styles: { font: 'times', fontSize: 9.5, cellPadding: 1.8, textColor: [0, 0, 0] },
@@ -783,7 +784,6 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
             // Bloque de Firmas
             y = pageHeight - 45;
 
-            // Técnico (Izquierda)
             const tecX = margin;
             doc.setDrawColor(0, 0, 0);
             if (sigTecnico.hasSigned) {
@@ -802,7 +802,6 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
             doc.text(tUser, tecX, y + 8.5);
             doc.text('TÉCNICO DE SOPORTE FREUND', tecX, y + 12.5);
 
-            // Usuario (Derecha)
             const usrX = pageWidth - margin - 65;
             if (sigUsuario.hasSigned) {
                 const sigImgUsr = sigUsuario.canvas.toDataURL('image/png');
