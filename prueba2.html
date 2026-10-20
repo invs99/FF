@@ -20,6 +20,11 @@
         input[type="text"], select {
             text-transform: uppercase;
         }
+        /* Forzar máxima nitidez en los canvas del visor de PDF */
+        .pdf-page-canvas {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-3 text-sm font-sans">
@@ -48,16 +53,16 @@
         </div>
     </div>
 
-    <!-- MODAL DE PREVISUALIZACIÓN DEL DOCUMENTO (SCROLL VERTICAL) -->
+    <!-- MODAL DE PREVISUALIZACIÓN DEL DOCUMENTO (HD & SCROLL VERTICAL) -->
     <div id="previewModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden p-2 sm:p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[92vh] flex flex-col overflow-hidden">
+        <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[92vh] flex flex-col overflow-hidden">
             <!-- Encabezado Modal -->
             <div class="flex justify-between items-center bg-gray-800 text-white p-3 px-4">
-                <h3 class="font-bold text-xs sm:text-sm uppercase tracking-wide">Vista Previa del Documento (Desliza hacia abajo)</h3>
+                <h3 class="font-bold text-xs sm:text-sm uppercase tracking-wide">Vista Previa HD (Desliza hacia abajo)</h3>
                 <button type="button" id="closePreviewBtn" class="text-gray-300 hover:text-white text-xl font-bold p-1 leading-none">&times;</button>
             </div>
 
-            <!-- Área de Visualización Continua (Contenedor de Canvases) -->
+            <!-- Área de Visualización Continua (Contenedor de Canvases HD) -->
             <div id="pdfContainer" class="flex-1 overflow-auto p-4 bg-gray-200 flex flex-col items-center space-y-4">
                 <!-- Las páginas se inyectarán aquí dinámicamente -->
             </div>
@@ -224,7 +229,7 @@
 
             <!-- BOTONES DE ACCIÓN PRINCIPALES -->
             <div class="pt-2 space-y-2">
-                <!-- Botón de Previsualización -->
+                <!-- Botón de Previsualización HD -->
                 <button type="button" id="btnPreviewDoc" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none transition uppercase">PREVISUALIZAR DOCUMENTO</button>
 
                 <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition">DESCARGAR PDF OFICIAL (5 PÁGINAS)</button>
@@ -733,7 +738,7 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
             }
         });
 
-        // RENDERIZADO VERTICAL CONTINUO DENTRO DEL VISOR MODAL (PDF.JS)
+        // RENDERIZADO VERTICAL CONTINUO EN ALTA DEFINICIÓN (HD)
         async function renderVerticalPreview(pdfDocObj) {
             const container = document.getElementById('pdfContainer');
             container.innerHTML = ''; // Limpiar vistas previas anteriores
@@ -741,13 +746,14 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
             for (let i = 1; i <= pdfDocObj.numPages; i++) {
                 const page = await pdfDocObj.getPage(i);
                 
-                // Crear un canvas separado para cada página y agregarlo en vertical
                 const canvas = document.createElement('canvas');
-                canvas.className = 'shadow-lg max-w-full h-auto bg-white rounded mb-4';
+                canvas.className = 'pdf-page-canvas shadow-xl max-w-full bg-white rounded mb-4';
                 container.appendChild(canvas);
 
                 const ctx = canvas.getContext('2d');
-                const viewport = page.getViewport({ scale: 1.2 });
+                
+                // Usar scale = 2.0 para renderizar el doble de resolución (HD nítido)
+                const viewport = page.getViewport({ scale: 2.0 });
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
 
@@ -758,7 +764,7 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
             }
         }
 
-        // BOTÓN: PREVISUALIZAR DOCUMENTO
+        // BOTÓN: PREVISUALIZAR DOCUMENTO HD
         document.getElementById('btnPreviewDoc').addEventListener('click', async () => {
             const form = document.getElementById('documentForm');
             if (!form.checkValidity()) {
@@ -766,14 +772,13 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                 return;
             }
 
-            document.getElementById('loadingText').textContent = 'Cargando vista previa...';
+            document.getElementById('loadingText').textContent = 'Cargando vista previa en alta definición...';
             document.getElementById('loadingOverlay').classList.remove('hidden');
 
             try {
                 currentPdfDoc = await buildPdfDoc();
                 const pdfArrayBuffer = currentPdfDoc.output('arraybuffer');
 
-                // Cargar documento en PDF.js y renderizar de forma continua
                 const pdfPdfDocObj = await pdfjsLib.getDocument({ data: pdfArrayBuffer }).promise;
                 await renderVerticalPreview(pdfPdfDocObj);
                 
