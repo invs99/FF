@@ -23,7 +23,7 @@
         #signatureCanvas_recepcion {
             border: 2px dashed #cbd5e1;
             border-radius: 0.5rem;
-            background-color: #f8fafc;
+            background-color: #ffffff;
             cursor: crosshair;
             touch-action: none;
         }
@@ -58,7 +58,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE PREVISUALIZACIÓN NÍTIDA (ULTRA CLARA & SCROLL VERTICAL) -->
+    <!-- MODAL DE PREVISUALIZACIÓN NÍTIDA -->
     <div id="previewModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[1000] hidden p-2 sm:p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full h-[94vh] flex flex-col overflow-hidden border border-slate-200">
             <!-- Encabezado Modal -->
@@ -70,9 +70,9 @@
                 <button type="button" id="closePreviewBtn" class="text-slate-400 hover:text-white text-2xl font-bold p-1 leading-none transition">&times;</button>
             </div>
 
-            <!-- Área de Visualización Continua Optimizada -->
+            <!-- Área de Visualización Continua -->
             <div id="pdfContainer" class="flex-1 overflow-auto p-4 sm:p-8 bg-slate-200 flex flex-col items-center">
-                <!-- Páginas renderizadas dinámicamente en alta definición -->
+                <!-- Páginas renderizadas dinámicamente -->
             </div>
 
             <!-- Pie del Modal -->
@@ -216,7 +216,7 @@
                 </div>
             </div>
 
-            <!-- Bloque Foto (Actualizado para permitir Cámara o Galería) -->
+            <!-- Bloque Foto -->
             <div class="bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
                 <label for="foto_equipo" class="block text-xs font-semibold text-slate-600 mb-1">Foto del Equipo (Opcional)</label>
                 <div class="flex items-center space-x-2">
@@ -240,32 +240,28 @@
                 </div>
             </div>
 
-            <!-- Botones de Acción con Iconos Oficiales Unificados -->
+            <!-- Botones de Acción -->
             <div class="space-y-2.5 pt-2">
                 <button type="button" id="openNotaModalButton" class="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl text-sm font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 transition-colors shadow-sm">
                     <svg class="w-4 h-4 text-amber-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     <span>Agregar Nota Adicional</span>
                 </button>
 
-                <!-- Botón de Previsualización HD -->
                 <button type="button" id="btnPreviewDoc" class="w-full flex justify-center items-center space-x-2 py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-emerald-600/20 text-xs sm:text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none transition active:scale-95 uppercase tracking-wide">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                     <span>Previsualizar Documento</span>
                 </button>
 
-                <!-- Botón Generar PDF -->
                 <button type="submit" class="w-full flex justify-center items-center space-x-2 py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-blue-600/20 text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition active:scale-95">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     <span>Generar Documento PDF</span>
                 </button>
                 
-                <!-- Botón Nuevo Documento / Limpiar -->
                 <button type="button" id="clearFormButton_recepcion" class="w-full flex justify-center items-center space-x-2 py-3 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-red-600 hover:bg-red-700 focus:outline-none transition active:scale-95">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     <span>Nuevo Documento / Limpiar</span>
                 </button>
                 
-                <!-- Botón Inicio -->
                 <a href="index.html" class="w-full flex justify-center items-center space-x-2 py-3 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-cyan-500 hover:bg-cyan-600 text-center transition active:scale-95 no-underline">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                     <span>Ir al Inicio</span>
@@ -303,15 +299,28 @@
             }
         });
 
+        // Corrección de rotación / EXIF de imagen para evitar que la foto salga volteada
         document.getElementById('foto_equipo').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(event) {
-                    equipoFotoBase64 = event.target.result;
-                    const preview = document.getElementById('fotoPreview');
-                    preview.src = equipoFotoBase64;
-                    document.getElementById('fotoPreviewContainer').classList.remove('hidden');
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvasImg = document.createElement('canvas');
+                        const ctxImg = canvasImg.getContext('2d');
+                        
+                        // Normalizar dimensiones para que no pierda calidad pero corrija orientación
+                        canvasImg.width = img.width;
+                        canvasImg.height = img.height;
+                        ctxImg.drawImage(img, 0, 0);
+
+                        equipoFotoBase64 = canvasImg.toDataURL('image/jpeg', 0.85);
+                        const preview = document.getElementById('fotoPreview');
+                        preview.src = equipoFotoBase64;
+                        document.getElementById('fotoPreviewContainer').classList.remove('hidden');
+                    };
+                    img.src = event.target.result;
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -341,8 +350,16 @@
         let lastY = 0;
         let hasSigned = false;
 
+        function fillWhiteBackground() {
+            ctx.save();
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.restore();
+        }
+
         function drawPlaceholder() {
             if (!hasSigned) {
+                fillWhiteBackground();
                 ctx.save();
                 ctx.fillStyle = '#94a3b8';
                 ctx.font = '14px Inter, sans-serif';
@@ -361,8 +378,6 @@
             const newHeight = 150;
             canvas.width = newWidth;
             canvas.height = newHeight;
-            ctx.fillStyle = '#f8fafc';
-            ctx.fillRect(0, 0, newWidth, newHeight);
             if (!hasSigned) {
                 drawPlaceholder();
             } else {
@@ -372,6 +387,7 @@
                     if (data.signature) {
                         const img = new Image();
                         img.onload = function() {
+                            fillWhiteBackground();
                             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                         };
                         img.src = data.signature;
@@ -386,9 +402,7 @@
         function draw(e) {
             if (!isDrawing) return;
             if (!hasSigned) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#f8fafc';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                fillWhiteBackground();
                 hasSigned = true;
             }
             const rect = canvas.getBoundingClientRect();
@@ -461,6 +475,7 @@
                     hasSigned = true;
                     const img = new Image();
                     img.onload = function() {
+                        fillWhiteBackground();
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     };
                     img.src = data.signature;
@@ -618,7 +633,16 @@
 
             const signatureY = footerY + 15;
             if (hasSigned) {
-                const signatureData = canvas.toDataURL('image/png');
+                // Generamos un canvas temporal blanco para la firma para evitar cualquier sombra o gris
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.fillStyle = '#ffffff';
+                tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                tempCtx.drawImage(canvas, 0, 0);
+
+                const signatureData = tempCanvas.toDataURL('image/png');
                 const signatureWidth = 60;
                 const signatureHeight = (canvas.height / canvas.width) * signatureWidth;
                 const signatureX = margin;
@@ -751,9 +775,7 @@
             equipoFotoBase64 = null;
             notaAdicional = "";
             document.getElementById('fotoPreviewContainer').classList.add('hidden');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#f8fafc';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            fillWhiteBackground();
             hasSigned = false;
             drawPlaceholder();
             document.getElementById('confirmationModal_recepcion').classList.add('hidden');
@@ -765,9 +787,7 @@
             document.getElementById('clearSignatureConfirmationModal_recepcion').classList.add('hidden');
         });
         document.getElementById('confirmClearSignatureButton_recepcion').addEventListener('click', function() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#f8fafc';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            fillWhiteBackground();
             hasSigned = false;
             drawPlaceholder();
             saveFormData();
