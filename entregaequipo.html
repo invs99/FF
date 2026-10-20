@@ -6,6 +6,8 @@
     <title>Recepción de Equipo - Freund</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- PDF.js para renderizar vista previa universal en alta definición -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -21,7 +23,7 @@
         #signatureCanvas_recepcion {
             border: 2px dashed #cbd5e1;
             border-radius: 0.5rem;
-            background-color: #f8fafc;
+            background-color: #ffffff;
             cursor: crosshair;
             touch-action: none;
         }
@@ -30,6 +32,16 @@
         }
         .modal-overlay {
             z-index: 999;
+        }
+        /* Máxima nitidez ultra clara en los canvas del visor de PDF */
+        .pdf-page-canvas {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            max-width: 100%;
+            height: auto !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            border-radius: 0.375rem;
         }
     </style>
 </head>
@@ -42,7 +54,37 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p class="text-slate-700 font-medium">Generando PDF...</p>
+            <p id="loadingText" class="text-slate-700 font-medium">Generando PDF...</p>
+        </div>
+    </div>
+
+    <!-- MODAL DE PREVISUALIZACIÓN NÍTIDA -->
+    <div id="previewModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[1000] hidden p-2 sm:p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full h-[94vh] flex flex-col overflow-hidden border border-slate-200">
+            <!-- Encabezado Modal -->
+            <div class="flex justify-between items-center bg-slate-900 text-white p-3.5 px-5">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    <h3 class="font-bold text-xs sm:text-sm uppercase tracking-wider">Vista Previa Ultra Clara (Desliza para ver todo)</h3>
+                </div>
+                <button type="button" id="closePreviewBtn" class="text-slate-400 hover:text-white text-2xl font-bold p-1 leading-none transition">&times;</button>
+            </div>
+
+            <!-- Área de Visualización Continua -->
+            <div id="pdfContainer" class="flex-1 overflow-auto p-4 sm:p-8 bg-slate-200 flex flex-col items-center">
+                <!-- Páginas renderizadas dinámicamente -->
+            </div>
+
+            <!-- Pie del Modal -->
+            <div class="p-3.5 px-5 bg-slate-50 border-t flex justify-end items-center space-x-3">
+                <button type="button" id="closePreviewBottomBtn" class="px-4 py-2.5 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 transition active:scale-95">
+                    Cerrar
+                </button>
+                <button type="button" id="downloadFromPreviewBtn" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-600/30 transition active:scale-95 flex items-center space-x-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span>Descargar PDF Oficial</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -178,7 +220,7 @@
             <div class="bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
                 <label for="foto_equipo" class="block text-xs font-semibold text-slate-600 mb-1">Foto del Equipo (Opcional)</label>
                 <div class="flex items-center space-x-2">
-                    <input type="file" id="foto_equipo" accept="image/*" capture="environment" class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-slate-200 rounded-xl bg-white cursor-pointer" />
+                    <input type="file" id="foto_equipo" accept="image/*" class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-slate-200 rounded-xl bg-white cursor-pointer" />
                 </div>
                 <div id="fotoPreviewContainer" class="mt-3 hidden text-center">
                     <img id="fotoPreview" class="h-28 w-auto mx-auto rounded-xl border border-slate-200 object-cover shadow-sm" alt="Vista previa de foto" />
@@ -200,20 +242,29 @@
 
             <!-- Botones de Acción -->
             <div class="space-y-2.5 pt-2">
-                <button type="button" id="openNotaModalButton" class="w-full flex items-center justify-center py-3 px-4 rounded-xl text-sm font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 transition-colors shadow-sm">
-                    📝 Agregar Nota Adicional
+                <button type="button" id="openNotaModalButton" class="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl text-sm font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 transition-colors shadow-sm">
+                    <svg class="w-4 h-4 text-amber-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    <span>Agregar Nota Adicional</span>
                 </button>
 
-                <button type="submit" class="w-full flex items-center justify-center py-3.5 px-4 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200">
-                    ✨ Generar Documento PDF
+                <button type="button" id="btnPreviewDoc" class="w-full flex justify-center items-center space-x-2 py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-emerald-600/20 text-xs sm:text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none transition active:scale-95 uppercase tracking-wide">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    <span>Previsualizar Documento</span>
+                </button>
+
+                <button type="submit" class="w-full flex justify-center items-center space-x-2 py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-blue-600/20 text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition active:scale-95">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span>Generar Documento PDF</span>
                 </button>
                 
-                <button type="button" id="clearFormButton_recepcion" class="w-full flex items-center justify-center py-2.5 px-4 rounded-xl text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
-                    🔄 Nuevo Documento / Limpiar
+                <button type="button" id="clearFormButton_recepcion" class="w-full flex justify-center items-center space-x-2 py-3 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-red-600 hover:bg-red-700 focus:outline-none transition active:scale-95">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    <span>Nuevo Documento / Limpiar</span>
                 </button>
                 
-                <a href="index.html" class="w-full flex items-center justify-center py-2 px-3 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors no-underline">
-                    ← Ir al Inicio
+                <a href="index.html" class="w-full flex justify-center items-center space-x-2 py-3 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-cyan-500 hover:bg-cyan-600 text-center transition active:scale-95 no-underline">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    <span>Ir al Inicio</span>
                 </a>
             </div>
         </form>
@@ -225,6 +276,10 @@
     </div>
 
     <script>
+        // Configurar PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        let currentPdfDoc = null;
         let equipoFotoBase64 = null;
         let notaAdicional = "";
 
@@ -249,10 +304,20 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(event) {
-                    equipoFotoBase64 = event.target.result;
-                    const preview = document.getElementById('fotoPreview');
-                    preview.src = equipoFotoBase64;
-                    document.getElementById('fotoPreviewContainer').classList.remove('hidden');
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvasImg = document.createElement('canvas');
+                        const ctxImg = canvasImg.getContext('2d');
+                        canvasImg.width = img.width;
+                        canvasImg.height = img.height;
+                        ctxImg.drawImage(img, 0, 0);
+
+                        equipoFotoBase64 = canvasImg.toDataURL('image/jpeg', 0.85);
+                        const preview = document.getElementById('fotoPreview');
+                        preview.src = equipoFotoBase64;
+                        document.getElementById('fotoPreviewContainer').classList.remove('hidden');
+                    };
+                    img.src = event.target.result;
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -282,8 +347,16 @@
         let lastY = 0;
         let hasSigned = false;
 
+        function fillWhiteBackground() {
+            ctx.save();
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.restore();
+        }
+
         function drawPlaceholder() {
             if (!hasSigned) {
+                fillWhiteBackground();
                 ctx.save();
                 ctx.fillStyle = '#94a3b8';
                 ctx.font = '14px Inter, sans-serif';
@@ -302,8 +375,6 @@
             const newHeight = 150;
             canvas.width = newWidth;
             canvas.height = newHeight;
-            ctx.fillStyle = '#f8fafc';
-            ctx.fillRect(0, 0, newWidth, newHeight);
             if (!hasSigned) {
                 drawPlaceholder();
             } else {
@@ -313,6 +384,7 @@
                     if (data.signature) {
                         const img = new Image();
                         img.onload = function() {
+                            fillWhiteBackground();
                             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                         };
                         img.src = data.signature;
@@ -327,9 +399,7 @@
         function draw(e) {
             if (!isDrawing) return;
             if (!hasSigned) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#f8fafc';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                fillWhiteBackground();
                 hasSigned = true;
             }
             const rect = canvas.getBoundingClientRect();
@@ -402,6 +472,7 @@
                     hasSigned = true;
                     const img = new Image();
                     img.onload = function() {
+                        fillWhiteBackground();
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     };
                     img.src = data.signature;
@@ -418,31 +489,26 @@
         form.addEventListener('input', saveFormData);
         window.addEventListener('load', loadFormData);
 
-        document.getElementById('documentForm_recepcion').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            loadingOverlay.style.display = 'flex';
-            try {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({
-                    format: 'letter',
-                    unit: 'mm'
-                });
-                const formData = new FormData(e.target);
-                const data = Object.fromEntries(formData.entries());
-                const margin = 15;
-                const pageWidth = doc.internal.pageSize.getWidth();
-                const pageHeight = doc.internal.pageSize.getHeight();
-                let y = margin;
-                const logoHeight = 17;
-                const logoWidth = 34;
-                const logoUrl = 'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
+        // FUNCIÓN CENTRALIZADA PARA CONSTRUIR EL DOCUMENTO PDF
+        async function buildPdfDoc() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                format: 'letter',
+                unit: 'mm'
+            });
+            const formData = new FormData(document.getElementById('documentForm_recepcion'));
+            const data = Object.fromEntries(formData.entries());
+            const margin = 15;
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            let y = margin;
+            const logoHeight = 17;
+            const logoWidth = 34;
+            const logoUrl = 'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
 
-                try {
-                    const response = await fetch(logoUrl);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
+            try {
+                const response = await fetch(logoUrl);
+                if (response.ok) {
                     const blob = await response.blob();
                     const reader = new FileReader();
                     reader.readAsDataURL(blob);
@@ -452,153 +518,257 @@
                     });
                     const logoX = margin;
                     doc.addImage(base64Image, 'PNG', logoX, y, logoWidth, logoHeight);
-                } catch (error) {
-                    console.warn('No se pudo cargar el logo para el PDF:', error);
+                }
+            } catch (error) {
+                console.warn('No se pudo cargar el logo para el PDF:', error);
+            }
+
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            const headerX = pageWidth - margin;
+            doc.text('Tiendas 01.001.0001.0001', headerX, y, null, null, 'right');
+            doc.text('Redes Soporte y', headerX, y + 4, null, null, 'right');
+            doc.text('Telecomunicaciones', headerX, y + 8, null, null, 'right');
+            doc.text(`Fecha de Entrega: ${new Date().toLocaleDateString()}`, headerX, y + 12, null, null, 'right');
+
+            const headerHeight = 15;
+            const titleY = y + (Math.max(logoHeight, headerHeight) / 2) + 2;
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.text('RECEPCIÓN DE EQUIPO', pageWidth / 2, titleY, { align: 'center' });
+
+            y = y + Math.max(logoHeight, headerHeight) + 10;
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 12;
+
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            const text = `Yo, ${data.nombre_r || 'N/A'}, con Código de Empleado ${data.codigoEmpleado_r || 'N/A'} del Departamento de ${data.departamento_r || 'N/A'}, confirmo la recepción del equipo entregado por ${data.nombre_entrega || 'N/A'}:`;
+            const maxTextWidth = pageWidth - (margin * 2);
+            const splitText = doc.splitTextToSize(text, maxTextWidth);
+            doc.text(splitText, margin, y);
+            y += splitText.length * 7;
+            y += 8;
+
+            const listStartY = y;
+            doc.setFontSize(12);
+            const itemSpacing = 11; 
+
+            doc.text(`• Nombre: ${data.nombre_equipo && data.nombre_equipo.trim() !== '' ? data.nombre_equipo : 'N/A'}`, margin + 5, y);
+            y += itemSpacing;
+            doc.text(`• Marca: ${data.marca_r && data.marca_r.trim() !== '' ? data.marca_r : 'N/A'}`, margin + 5, y);
+            y += itemSpacing;
+            doc.text(`• Modelo: ${data.modelo_r && data.modelo_r.trim() !== '' ? data.modelo_r : 'N/A'}`, margin + 5, y);
+            y += itemSpacing;
+            doc.text(`• Serie: ${data.serie_r && data.serie_r.trim() !== '' ? data.serie_r : 'N/A'}`, margin + 5, y);
+            y += itemSpacing;
+            doc.text(`• Estado: ${data.estado_equipo && data.estado_equipo.trim() !== '' ? data.estado_equipo : 'N/A'}`, margin + 5, y);
+            y += itemSpacing;
+            doc.text(`• Para uso de: ${data.para_uso_de && data.para_uso_de.trim() !== '' ? data.para_uso_de : 'N/A'}`, margin + 5, y);
+            y += itemSpacing;
+
+            let photoBottomY = y;
+            if (equipoFotoBase64) {
+                const boxWidth = 75;
+                const boxHeight = 55;
+                const boxX = pageWidth - margin - boxWidth - 12; 
+                const boxY = listStartY - 2;
+
+                doc.rect(boxX, boxY, boxWidth, boxHeight);
+
+                const imgObj = new Image();
+                imgObj.src = equipoFotoBase64;
+                await new Promise((resolve) => {
+                    imgObj.onload = resolve;
+                });
+
+                const imgRatio = imgObj.width / imgObj.height;
+                const boxRatio = boxWidth / boxHeight;
+
+                let renderW = boxWidth - 2;
+                let renderH = boxHeight - 2;
+
+                if (imgRatio > boxRatio) {
+                    renderH = (boxWidth - 2) / imgRatio;
+                } else {
+                    renderW = (boxHeight - 2) * imgRatio;
                 }
 
-                doc.setFontSize(8);
-                doc.setFont('helvetica', 'normal');
-                const headerX = pageWidth - margin;
-                doc.text('Tiendas 01.001.0001.0001', headerX, y, null, null, 'right');
-                doc.text('Redes Soporte y', headerX, y + 4, null, null, 'right');
-                doc.text('Telecomunicaciones', headerX, y + 8, null, null, 'right');
-                doc.text(`Fecha de Entrega: ${new Date().toLocaleDateString()}`, headerX, y + 12, null, null, 'right');
+                const renderX = boxX + (boxWidth - renderW) / 2;
+                const renderY = boxY + (boxHeight - renderH) / 2;
 
-                const headerHeight = 15;
-                const titleY = y + (Math.max(logoHeight, headerHeight) / 2) + 2;
-                doc.setFontSize(16);
+                doc.addImage(equipoFotoBase64, 'JPEG', renderX, renderY, renderW, renderH);
+
+                photoBottomY = boxY + boxHeight + 6;
+            }
+
+            const hasNota = notaAdicional && notaAdicional.trim() !== "";
+            const spacingMultiplier = hasNota ? 1 : 3;
+            y = Math.max(y, photoBottomY) + (itemSpacing * spacingMultiplier);
+
+            const clause = `Este documento confirma la recepción del equipo. Al firmar, el receptor y el area aceptan la responsabilidad por el equipo en el estado en que se entrega.`;
+            const splitClause = doc.splitTextToSize(clause, maxTextWidth);
+            doc.text(splitClause, margin, y);
+            y += splitClause.length * 7 + 6;
+
+            if (hasNota) {
                 doc.setFont('helvetica', 'bold');
-                doc.text('RECEPCIÓN DE EQUIPO', pageWidth / 2, titleY, { align: 'center' });
+                doc.text("Nota / Observaciones:", margin, y);
+                y += 5;
 
-                y = y + Math.max(logoHeight, headerHeight) + 10;
-                doc.line(margin, y, pageWidth - margin, y);
-                y += 12;
-
-                doc.setFontSize(12);
                 doc.setFont('helvetica', 'normal');
-                const text = `Yo, ${data.nombre_r || 'N/A'}, con Código de Empleado ${data.codigoEmpleado_r || 'N/A'} del Departamento de ${data.departamento_r || 'N/A'}, confirmo la recepción del equipo entregado por ${data.nombre_entrega || 'N/A'}:`;
-                const maxTextWidth = pageWidth - (margin * 2);
-                const splitText = doc.splitTextToSize(text, maxTextWidth);
-                doc.text(splitText, margin, y);
-                y += splitText.length * 7;
-                y += 8;
+                const splitNota = doc.splitTextToSize(notaAdicional, maxTextWidth - 10);
+                const notaBoxHeight = (splitNota.length * 6) + 8;
+                const notaBoxWidth = maxTextWidth;
 
-                const listStartY = y;
-                doc.setFontSize(12);
-                const itemSpacing = 11; 
+                doc.rect(margin, y, notaBoxWidth, notaBoxHeight);
+                doc.text(splitNota, margin + 5, y + 6);
+            }
 
-                doc.text(`• Nombre: ${data.nombre_equipo && data.nombre_equipo.trim() !== '' ? data.nombre_equipo : 'N/A'}`, margin + 5, y);
-                y += itemSpacing;
-                doc.text(`• Marca: ${data.marca_r && data.marca_r.trim() !== '' ? data.marca_r : 'N/A'}`, margin + 5, y);
-                y += itemSpacing;
-                doc.text(`• Modelo: ${data.modelo_r && data.modelo_r.trim() !== '' ? data.modelo_r : 'N/A'}`, margin + 5, y);
-                y += itemSpacing;
-                doc.text(`• Serie: ${data.serie_r && data.serie_r.trim() !== '' ? data.serie_r : 'N/A'}`, margin + 5, y);
-                y += itemSpacing;
-                doc.text(`• Estado: ${data.estado_equipo && data.estado_equipo.trim() !== '' ? data.estado_equipo : 'N/A'}`, margin + 5, y);
-                y += itemSpacing;
-                doc.text(`• Para uso de: ${data.para_uso_de && data.para_uso_de.trim() !== '' ? data.para_uso_de : 'N/A'}`, margin + 5, y);
-                y += itemSpacing;
+            const footerBlockHeight = 65;
+            let footerY = pageHeight - margin - footerBlockHeight;
 
-                let photoBottomY = y;
-                if (equipoFotoBase64) {
-                    const boxWidth = 75;
-                    const boxHeight = 55;
-                    const boxX = pageWidth - margin - boxWidth - 12; 
-                    const boxY = listStartY - 2;
+            const signatureY = footerY + 15;
+            if (hasSigned) {
+                // Procesar la firma mediante filtro de píxeles para hacer el fondo 100% transparente
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(canvas, 0, 0);
 
-                    doc.rect(boxX, boxY, boxWidth, boxHeight);
-
-                    const imgObj = new Image();
-                    imgObj.src = equipoFotoBase64;
-                    await new Promise((resolve) => {
-                        imgObj.onload = resolve;
-                    });
-
-                    const imgRatio = imgObj.width / imgObj.height;
-                    const boxRatio = boxWidth / boxHeight;
-
-                    let renderW = boxWidth - 2;
-                    let renderH = boxHeight - 2;
-
-                    if (imgRatio > boxRatio) {
-                        renderH = (boxWidth - 2) / imgRatio;
-                    } else {
-                        renderW = (boxHeight - 2) * imgRatio;
+                const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                const dataPixels = imgData.data;
+                for (let i = 0; i < dataPixels.length; i += 4) {
+                    const red = dataPixels[i];
+                    const green = dataPixels[i + 1];
+                    const blue = dataPixels[i + 2];
+                    // Si el píxel es blanco o muy cercano a blanco, lo volvemos transparente
+                    if (red > 240 && green > 240 && blue > 240) {
+                        dataPixels[i + 3] = 0;
                     }
-
-                    const renderX = boxX + (boxWidth - renderW) / 2;
-                    const renderY = boxY + (boxHeight - renderH) / 2;
-
-                    doc.addImage(equipoFotoBase64, 'JPEG', renderX, renderY, renderW, renderH);
-
-                    photoBottomY = boxY + boxHeight + 6;
                 }
+                tempCtx.putImageData(imgData, 0, 0);
 
-                const hasNota = notaAdicional && notaAdicional.trim() !== "";
-                const spacingMultiplier = hasNota ? 1 : 3;
-                y = Math.max(y, photoBottomY) + (itemSpacing * spacingMultiplier);
+                const signatureData = tempCanvas.toDataURL('image/png');
+                const signatureWidth = 60;
+                const signatureHeight = (canvas.height / canvas.width) * signatureWidth;
+                const signatureX = margin;
+                const signatureImageY = signatureY - signatureHeight / 2;
+                doc.addImage(signatureData, 'PNG', signatureX, signatureImageY, signatureWidth, signatureHeight);
+            }
 
-                const clause = `Este documento confirma la recepción del equipo. Al firmar, el receptor y el area aceptan la responsabilidad por el equipo en el estado en que se entrega.`;
-                const splitClause = doc.splitTextToSize(clause, maxTextWidth);
-                doc.text(splitClause, margin, y);
-                y += splitClause.length * 7 + 6;
+            let signTextY = signatureY + 10;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(12);
 
-                if (hasNota) {
-                    doc.setFont('helvetica', 'bold');
-                    doc.text("Nota / Observaciones:", margin, y);
-                    y += 5;
+            const nameLabel = "Nombre: ";
+            const nameText = data.nombre_r && data.nombre_r.trim() !== '' ? data.nombre_r : 'N/A';
+            const totalText = nameLabel + nameText;
+            const totalTextWidth = doc.getStringUnitWidth(totalText) * doc.internal.getFontSize();
+            const textX = margin;
+            const textY = signTextY + 5;
 
-                    doc.setFont('helvetica', 'normal');
-                    const splitNota = doc.splitTextToSize(notaAdicional, maxTextWidth - 10);
-                    const notaBoxHeight = (splitNota.length * 6) + 8;
-                    const notaBoxWidth = maxTextWidth;
+            doc.line(margin, signTextY, margin + Math.max(totalTextWidth * 0.4, 50), signTextY);
+            doc.text(totalText, textX, textY);
 
-                    doc.rect(margin, y, notaBoxWidth, notaBoxHeight);
-                    doc.text(splitNota, margin + 5, y + 6);
-                }
+            signTextY = textY + 7;
+            doc.text(`Código: ${data.codigoEmpleado_r && data.codigoEmpleado_r.trim() !== '' ? data.codigoEmpleado_r : 'N/A'}`, margin, signTextY);
+            signTextY += 7;
+            doc.text(`Dpto: ${data.departamento_r && data.departamento_r.trim() !== '' ? data.departamento_r : 'N/A'}`, margin, signTextY);
+            signTextY += 7;
+            doc.text(`Área: ${data.area_tienda && data.area_tienda.trim() !== '' ? data.area_tienda : 'N/A'}`, margin, signTextY);
 
-                const footerBlockHeight = 65;
-                let footerY = pageHeight - margin - footerBlockHeight;
+            return doc;
+        }
 
-                const signatureY = footerY + 15;
-                if (hasSigned) {
-                    const signatureData = canvas.toDataURL('image/png');
-                    const signatureWidth = 60;
-                    const signatureHeight = (canvas.height / canvas.width) * signatureWidth;
-                    const signatureX = margin;
-                    const signatureImageY = signatureY - signatureHeight / 2;
-                    doc.addImage(signatureData, 'PNG', signatureX, signatureImageY, signatureWidth, signatureHeight);
-                }
+        function guardarPdf(doc) {
+            const formData = new FormData(document.getElementById('documentForm_recepcion'));
+            const data = Object.fromEntries(formData.entries());
+            doc.save(`Recepcion_Equipo_${data.nombre_r ? data.nombre_r.replace(/\s/g, '_') : 'documento'}.pdf`);
+        }
 
-                let signTextY = signatureY + 10;
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(12);
-
-                const nameLabel = "Nombre: ";
-                const nameText = data.nombre_r && data.nombre_r.trim() !== '' ? data.nombre_r : 'N/A';
-                const totalText = nameLabel + nameText;
-                const totalTextWidth = doc.getStringUnitWidth(totalText) * doc.internal.getFontSize();
-                const textX = margin;
-                const textY = signTextY + 5;
-
-                doc.line(margin, signTextY, margin + Math.max(totalTextWidth * 0.4, 50), signTextY);
-                doc.text(totalText, textX, textY);
-
-                signTextY = textY + 7;
-                doc.text(`Código: ${data.codigoEmpleado_r && data.codigoEmpleado_r.trim() !== '' ? data.codigoEmpleado_r : 'N/A'}`, margin, signTextY);
-                signTextY += 7;
-                doc.text(`Dpto: ${data.departamento_r && data.departamento_r.trim() !== '' ? data.departamento_r : 'N/A'}`, margin, signTextY);
-                signTextY += 7;
-                doc.text(`Área: ${data.area_tienda && data.area_tienda.trim() !== '' ? data.area_tienda : 'N/A'}`, margin, signTextY);
-
-                doc.save(`Recepcion_Equipo_${data.nombre_r ? data.nombre_r.replace(/\s/g, '_') : 'documento'}.pdf`);
+        // GENERAR DOCUMENTO PDF AL ENVIAR FORMULARIO
+        document.getElementById('documentForm_recepcion').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            document.getElementById('loadingText').textContent = 'Generando PDF...';
+            loadingOverlay.style.display = 'flex';
+            try {
+                const doc = await buildPdfDoc();
+                guardarPdf(doc);
                 loadingOverlay.style.display = 'none';
                 showMessage('Documento generado con éxito.', 'success');
             } catch (error) {
                 console.error('Error al generar el PDF:', error);
                 loadingOverlay.style.display = 'none';
                 showMessage('Error al generar el documento.', 'error');
+            }
+        });
+
+        // RENDERIZADO VERTICAL CONTINUO EN ULTRA ALTA DEFINICIÓN (HD 2.5x)
+        async function renderVerticalPreview(pdfDocObj) {
+            const container = document.getElementById('pdfContainer');
+            container.innerHTML = ''; 
+
+            for (let i = 1; i <= pdfDocObj.numPages; i++) {
+                const page = await pdfDocObj.getPage(i);
+                
+                const canvas = document.createElement('canvas');
+                canvas.className = 'pdf-page-canvas bg-white';
+                container.appendChild(canvas);
+
+                const ctx = canvas.getContext('2d');
+                const viewport = page.getViewport({ scale: 2.5 });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                await page.render({
+                    canvasContext: ctx,
+                    viewport: viewport
+                }).promise;
+            }
+        }
+
+        // BOTÓN: PREVISUALIZAR DOCUMENTO HD
+        document.getElementById('btnPreviewDoc').addEventListener('click', async () => {
+            const form = document.getElementById('documentForm_recepcion');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            document.getElementById('loadingText').textContent = 'Cargando vista previa ultra nítida...';
+            loadingOverlay.style.display = 'flex';
+
+            try {
+                currentPdfDoc = await buildPdfDoc();
+                const pdfArrayBuffer = currentPdfDoc.output('arraybuffer');
+
+                const pdfPdfDocObj = await pdfjsLib.getDocument({ data: pdfArrayBuffer }).promise;
+                await renderVerticalPreview(pdfPdfDocObj);
+                
+                loadingOverlay.style.display = 'none';
+                document.getElementById('previewModal').classList.remove('hidden');
+            } catch (err) {
+                console.error(err);
+                loadingOverlay.style.display = 'none';
+                showMessage('Ocurrió un error al previsualizar el PDF.', 'error');
+            }
+        });
+
+        // Cerrar visor
+        const cerrarModalPreview = () => {
+            document.getElementById('previewModal').classList.add('hidden');
+        };
+        document.getElementById('closePreviewBtn').addEventListener('click', cerrarModalPreview);
+        document.getElementById('closePreviewBottomBtn').addEventListener('click', cerrarModalPreview);
+
+        // Descargar directamente desde el modal
+        document.getElementById('downloadFromPreviewBtn').addEventListener('click', () => {
+            if (currentPdfDoc) {
+                guardarPdf(currentPdfDoc);
             }
         });
 
@@ -613,9 +783,7 @@
             equipoFotoBase64 = null;
             notaAdicional = "";
             document.getElementById('fotoPreviewContainer').classList.add('hidden');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#f8fafc';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            fillWhiteBackground();
             hasSigned = false;
             drawPlaceholder();
             document.getElementById('confirmationModal_recepcion').classList.add('hidden');
@@ -627,9 +795,7 @@
             document.getElementById('clearSignatureConfirmationModal_recepcion').classList.add('hidden');
         });
         document.getElementById('confirmClearSignatureButton_recepcion').addEventListener('click', function() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#f8fafc';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            fillWhiteBackground();
             hasSigned = false;
             drawPlaceholder();
             saveFormData();
