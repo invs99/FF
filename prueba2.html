@@ -19,16 +19,20 @@
         input[type="text"], select {
             text-transform: uppercase;
         }
+
+        body {
+            -webkit-text-size-adjust: 100%;
+        }
     </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen p-3 text-sm font-sans">
 
-    <!-- Modal de confirmación -->
+    <!-- MODAL DE CONFIRMACIÓN -->
     <div id="confirmModal"
-         class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 hidden transition-opacity duration-300 p-4">
+         class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 hidden p-4">
 
-        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 text-center transform transition-all scale-100 space-y-4 border border-gray-100">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 text-center space-y-4 border border-gray-100">
 
             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 text-red-600">
                 <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg"
@@ -48,19 +52,19 @@
 
             <div class="grid grid-cols-2 gap-3 pt-2">
                 <button type="button" id="modalCancelBtn"
-                        class="w-full py-2 px-3 border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 transition">
+                        class="w-full py-2 px-3 border border-gray-300 rounded-lg text-xs font-semibold text-gray-700 bg-gray-50">
                     Cancelar
                 </button>
 
                 <button type="button" id="modalConfirmBtn"
-                        class="w-full py-2 px-3 border border-transparent rounded-lg text-xs font-semibold text-white bg-red-600 hover:bg-red-700 shadow-sm transition">
+                        class="w-full py-2 px-3 rounded-lg text-xs font-semibold text-white bg-red-600">
                     Sí, borrar
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Pantalla de carga -->
+    <!-- PANTALLA DE CARGA -->
     <div id="loadingOverlay"
          class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 hidden">
 
@@ -69,46 +73,17 @@
                  xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10"
                         stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75"
-                      fill="currentColor"
+                <path class="opacity-75" fill="currentColor"
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
 
             <p class="text-gray-800 font-bold text-xs">
-                Generando PDF oficial exacto...
+                Generando PDF...
             </p>
         </div>
     </div>
 
-    <!-- Vista previa del PDF -->
-    <div id="previewModal"
-         class="fixed inset-0 bg-gray-900 bg-opacity-70 z-50 hidden p-2 sm:p-5">
-
-        <div class="bg-white rounded-xl shadow-2xl w-full h-full max-w-6xl mx-auto flex flex-col overflow-hidden">
-
-            <div class="flex items-center justify-between gap-3 p-3 border-b">
-                <div>
-                    <h2 class="font-bold text-gray-800">
-                        Vista previa del documento
-                    </h2>
-                    <p class="text-xs text-gray-500">
-                        Revise las páginas antes de descargar el PDF.
-                    </p>
-                </div>
-
-                <button type="button" id="closePreviewBtn"
-                        class="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-semibold">
-                    Cerrar ✕
-                </button>
-            </div>
-
-            <iframe id="previewFrame"
-                    title="Vista previa del documento PDF"
-                    class="w-full flex-1 bg-gray-200"></iframe>
-        </div>
-    </div>
-
-    <!-- Formulario principal -->
+    <!-- FORMULARIO PRINCIPAL -->
     <div class="max-w-md mx-auto bg-white p-4 rounded-xl shadow-md space-y-5 my-4">
 
         <div class="text-center">
@@ -129,70 +104,55 @@
 
             <!-- DATOS DEL USUARIO -->
             <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-3">
-
                 <h2 class="font-bold text-blue-900 text-xs border-b pb-1 uppercase">
                     Datos del Usuario
                 </h2>
 
                 <div>
-                    <label class="block text-xs font-medium text-gray-700">
-                        Código de empleado
-                    </label>
+                    <label class="block text-xs font-medium text-gray-700">Código de empleado</label>
                     <input type="text" id="codigoEmpleado" value="19281"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border text-xs bg-white"
+                           class="mt-1 block w-full rounded-md p-2 border text-xs bg-white"
                            required />
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-gray-700">
-                        Nombre completo
-                    </label>
+                    <label class="block text-xs font-medium text-gray-700">Nombre completo</label>
                     <input type="text" id="nombre" value="DANIEL ALBERTO ALVAREZ OCHOA"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border text-xs bg-white font-semibold"
+                           class="mt-1 block w-full rounded-md p-2 border text-xs bg-white font-semibold"
                            required />
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-gray-700">
-                        Departamento / Área / Tienda
-                    </label>
+                    <label class="block text-xs font-medium text-gray-700">Departamento / Área / Tienda</label>
                     <input type="text" id="departamento" value="VENTA TELEFÓNICA OCCIDENTE"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border text-xs bg-white"
+                           class="mt-1 block w-full rounded-md p-2 border text-xs bg-white"
                            required />
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-gray-700">
-                        Cargo
-                    </label>
+                    <label class="block text-xs font-medium text-gray-700">Cargo</label>
                     <input type="text" id="cargo" value="REPRESENTANTE DE VENTAS"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border text-xs bg-white"
+                           class="mt-1 block w-full rounded-md p-2 border text-xs bg-white"
                            required />
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-gray-700">
-                        Usuario Correo corporativo
-                    </label>
-
+                    <label class="block text-xs font-medium text-gray-700">Usuario Correo corporativo</label>
                     <div class="flex items-center mt-1">
                         <input type="text" id="correoUser" value="ALVAREZD"
-                               class="block w-full rounded-l-md border-gray-300 shadow-sm p-2 border text-xs bg-white font-semibold"
+                               class="block w-full min-w-0 rounded-l-md p-2 border text-xs bg-white font-semibold"
                                placeholder="usuario" required />
 
-                        <span class="inline-flex items-center px-2 py-2 rounded-r-md border border-l-0 border-gray-300 bg-gray-200 text-gray-600 text-xs font-bold">
+                        <span class="inline-flex items-center px-2 py-2 rounded-r-md border border-l-0 bg-gray-200 text-gray-600 text-xs font-bold">
                             @freundsa.com
                         </span>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-gray-700">
-                        Estado del equipo
-                    </label>
-
+                    <label class="block text-xs font-medium text-gray-700">Estado del equipo</label>
                     <select id="estado"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border text-xs bg-white font-semibold">
+                            class="mt-1 block w-full rounded-md p-2 border text-xs bg-white font-semibold">
                         <option value="NUEVO" selected>NUEVO</option>
                         <option value="USADO">USADO</option>
                         <option value="REASIGNADO">REASIGNADO</option>
@@ -204,66 +164,49 @@
 
             <!-- HARDWARE -->
             <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-3">
-
                 <h2 class="font-bold text-blue-900 text-xs border-b pb-1 uppercase">
                     Detalles del Equipo (Laptop)
                 </h2>
 
                 <div>
-                    <label class="block text-xs font-medium text-gray-700">
-                        Laptop (Marca / Modelo / Serie)
-                    </label>
-
+                    <label class="block text-xs font-medium text-gray-700">Laptop (Marca / Modelo / Serie)</label>
                     <div class="grid grid-cols-3 gap-1 mt-1">
                         <input type="text" id="laptopMarca" value="LENOVO"
-                               class="border p-1 rounded text-xs bg-white" placeholder="Marca" />
-
+                               class="border p-2 rounded text-xs bg-white min-w-0" placeholder="Marca" />
                         <input type="text" id="laptopModelo" value="THINKPAD E14 GEN 7"
-                               class="border p-1 rounded text-xs bg-white" placeholder="Modelo" />
-
+                               class="border p-2 rounded text-xs bg-white min-w-0" placeholder="Modelo" />
                         <input type="text" id="laptopSerie" value="PF-5WQPNE"
-                               class="border p-1 rounded text-xs bg-white" placeholder="Serie" />
+                               class="border p-2 rounded text-xs bg-white min-w-0" placeholder="Serie" />
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-gray-700">
-                        Cargador (Marca / Modelo / Serie)
-                    </label>
-
+                    <label class="block text-xs font-medium text-gray-700">Cargador (Marca / Modelo / Serie)</label>
                     <div class="grid grid-cols-3 gap-1 mt-1">
                         <input type="text" id="cargadorMarca" value="LENOVO"
-                               class="border p-1 rounded text-xs bg-white" placeholder="Marca" />
-
+                               class="border p-2 rounded text-xs bg-white min-w-0" placeholder="Marca" />
                         <input type="text" id="cargadorModelo" value="TYPE-C"
-                               class="border p-1 rounded text-xs bg-white" placeholder="Modelo" />
-
+                               class="border p-2 rounded text-xs bg-white min-w-0" placeholder="Modelo" />
                         <input type="text" id="cargadorSerie" value="ADLX65YCC2E"
-                               class="border p-1 rounded text-xs bg-white" placeholder="Serie" />
+                               class="border p-2 rounded text-xs bg-white min-w-0" placeholder="Serie" />
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-gray-700">
-                        Cable de Seguridad (Marca / Modelo / Serie)
-                    </label>
-
+                    <label class="block text-xs font-medium text-gray-700">Cable de Seguridad (Marca / Modelo / Serie)</label>
                     <div class="grid grid-cols-3 gap-1 mt-1">
                         <input type="text" id="cableMarca" value="LENOVO"
-                               class="border p-1 rounded text-xs bg-white" placeholder="Marca" />
-
+                               class="border p-2 rounded text-xs bg-white min-w-0" placeholder="Marca" />
                         <input type="text" id="cableModelo" value="NANO"
-                               class="border p-1 rounded text-xs bg-white" placeholder="Modelo" />
-
+                               class="border p-2 rounded text-xs bg-white min-w-0" placeholder="Modelo" />
                         <input type="text" id="cableSerie" value=""
-                               class="border p-1 rounded text-xs bg-white" placeholder="N/S" />
+                               class="border p-2 rounded text-xs bg-white min-w-0" placeholder="N/S" />
                     </div>
                 </div>
             </div>
 
             <!-- SOFTWARE -->
             <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-3">
-
                 <h2 class="font-bold text-blue-900 text-xs border-b pb-1 uppercase">
                     5. Softwares Instalados
                 </h2>
@@ -273,121 +216,48 @@
                 </p>
 
                 <div class="grid grid-cols-2 gap-2 text-xs">
-
-                    <label class="flex items-center space-x-1.5">
-                        <input type="checkbox" id="sw_win11" checked class="rounded text-blue-600" />
-                        <span>Windows 11</span>
-                    </label>
-
-                    <label class="flex items-center space-x-1.5">
-                        <input type="checkbox" id="sw_bitlocker" checked class="rounded text-blue-600" />
-                        <span>BitLocker</span>
-                    </label>
-
-                    <label class="flex items-center space-x-1.5">
-                        <input type="checkbox" id="sw_trend" checked class="rounded text-blue-600" />
-                        <span>Trend Micro OfficeScan</span>
-                    </label>
-
-                    <label class="flex items-center space-x-1.5">
-                        <input type="checkbox" id="sw_chrome" checked class="rounded text-blue-600" />
-                        <span>Google Chrome</span>
-                    </label>
-
-                    <label class="flex items-center space-x-1.5">
-                        <input type="checkbox" id="sw_acrobat" checked class="rounded text-blue-600" />
-                        <span>Acrobat Reader</span>
-                    </label>
-
-                    <label class="flex items-center space-x-1.5">
-                        <input type="checkbox" id="sw_rapid7" checked class="rounded text-blue-600" />
-                        <span>Rapid7</span>
-                    </label>
-
-                    <label class="flex items-center space-x-1.5">
-                        <input type="checkbox" id="sw_libreoffice" checked class="rounded text-blue-600" />
-                        <span>Libre Office</span>
-                    </label>
-
-                    <label class="flex items-center space-x-1.5">
-                        <input type="checkbox" id="sw_firefox" class="rounded text-blue-600" />
-                        <span>Mozilla Firefox</span>
-                    </label>
-
-                    <label class="flex items-center space-x-1.5">
-                        <input type="checkbox" id="sw_zoom" checked class="rounded text-blue-600" />
-                        <span>Zoom</span>
-                    </label>
-
-                    <label class="flex items-center space-x-1.5">
-                        <input type="checkbox" id="sw_endpoint" checked class="rounded text-blue-600" />
-                        <span>Endpoint Central</span>
-                    </label>
-
-                    <label class="flex items-center space-x-1.5">
-                        <input type="checkbox" id="sw_office365" class="rounded text-blue-600" />
-                        <span>Microsoft Office 365</span>
-                    </label>
-
-                    <label class="flex items-center space-x-1.5">
-                        <input type="checkbox" id="sw_netskope" checked class="rounded text-blue-600" />
-                        <span>Netskope</span>
-                    </label>
-
-                    <label class="flex items-center space-x-1.5">
-                        <input type="checkbox" id="sw_cortex" class="rounded text-blue-600" />
-                        <span>Cortex XDR</span>
-                    </label>
-
-                    <label class="flex items-center space-x-1.5">
-                        <input type="checkbox" id="sw_vpn" checked class="rounded text-blue-600" />
-                        <span>VPN</span>
-                    </label>
-
-                    <label class="flex items-center space-x-1.5">
-                        <input type="checkbox" id="sw_gfi" class="rounded text-blue-600" />
-                        <span>GFI Endpoint Security</span>
-                    </label>
-
-                    <label class="flex items-center space-x-1.5">
-                        <input type="checkbox" id="sw_citrix" class="rounded text-blue-600" />
-                        <span>Citrix Workspace</span>
-                    </label>
-
+                    <label class="flex items-center space-x-1.5"><input type="checkbox" id="sw_win11" checked class="rounded text-blue-600" /><span>Windows 11</span></label>
+                    <label class="flex items-center space-x-1.5"><input type="checkbox" id="sw_bitlocker" checked class="rounded text-blue-600" /><span>BitLocker</span></label>
+                    <label class="flex items-center space-x-1.5"><input type="checkbox" id="sw_trend" checked class="rounded text-blue-600" /><span>Trend Micro OfficeScan</span></label>
+                    <label class="flex items-center space-x-1.5"><input type="checkbox" id="sw_chrome" checked class="rounded text-blue-600" /><span>Google Chrome</span></label>
+                    <label class="flex items-center space-x-1.5"><input type="checkbox" id="sw_acrobat" checked class="rounded text-blue-600" /><span>Acrobat Reader</span></label>
+                    <label class="flex items-center space-x-1.5"><input type="checkbox" id="sw_rapid7" checked class="rounded text-blue-600" /><span>Rapid7</span></label>
+                    <label class="flex items-center space-x-1.5"><input type="checkbox" id="sw_libreoffice" checked class="rounded text-blue-600" /><span>Libre Office</span></label>
+                    <label class="flex items-center space-x-1.5"><input type="checkbox" id="sw_firefox" class="rounded text-blue-600" /><span>Mozilla Firefox</span></label>
+                    <label class="flex items-center space-x-1.5"><input type="checkbox" id="sw_zoom" checked class="rounded text-blue-600" /><span>Zoom</span></label>
+                    <label class="flex items-center space-x-1.5"><input type="checkbox" id="sw_endpoint" checked class="rounded text-blue-600" /><span>Endpoint Central</span></label>
+                    <label class="flex items-center space-x-1.5"><input type="checkbox" id="sw_office365" class="rounded text-blue-600" /><span>Microsoft Office 365</span></label>
+                    <label class="flex items-center space-x-1.5"><input type="checkbox" id="sw_netskope" checked class="rounded text-blue-600" /><span>Netskope</span></label>
+                    <label class="flex items-center space-x-1.5"><input type="checkbox" id="sw_cortex" class="rounded text-blue-600" /><span>Cortex XDR</span></label>
+                    <label class="flex items-center space-x-1.5"><input type="checkbox" id="sw_vpn" checked class="rounded text-blue-600" /><span>VPN</span></label>
+                    <label class="flex items-center space-x-1.5"><input type="checkbox" id="sw_gfi" class="rounded text-blue-600" /><span>GFI Endpoint Security</span></label>
+                    <label class="flex items-center space-x-1.5"><input type="checkbox" id="sw_citrix" class="rounded text-blue-600" /><span>Citrix Workspace</span></label>
                 </div>
             </div>
 
             <!-- RESPONSABLES -->
             <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-3">
-
                 <h2 class="font-bold text-blue-900 text-xs border-b pb-1 uppercase">
                     Técnico Emisor
                 </h2>
 
                 <div>
-                    <label class="block text-xs font-medium text-gray-700">
-                        Nombre del Técnico
-                    </label>
-
+                    <label class="block text-xs font-medium text-gray-700">Nombre del Técnico</label>
                     <input type="text" id="tecnicoNombre" value="JONATHAN NAVAS"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border text-xs bg-white mb-1 font-semibold"
+                           class="mt-1 block w-full rounded-md p-2 border text-xs bg-white mb-1 font-semibold"
                            required />
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-gray-700">
-                        Usuario del Técnico (ej: JONATHANN)
-                    </label>
-
+                    <label class="block text-xs font-medium text-gray-700">Usuario del Técnico (ej: JONATHANN)</label>
                     <input type="text" id="tecnicoUser" value="JONATHANN"
-                           class="block w-full rounded-md border-gray-300 shadow-sm p-2 border text-xs bg-white"
+                           class="block w-full rounded-md p-2 border text-xs bg-white"
                            required />
                 </div>
             </div>
 
             <!-- FIRMAS DIGITALES -->
             <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-4">
-
                 <h2 class="font-bold text-blue-900 text-xs border-b pb-1 uppercase">
                     Área de Firmas Digitales
                 </h2>
@@ -396,13 +266,11 @@
                     <label class="block text-xs font-medium text-gray-700 mb-1">
                         Firma del Técnico Emisor
                     </label>
-
                     <div class="border rounded-md p-1 relative w-full bg-white">
                         <canvas id="canvasTecnico" class="signature-canvas w-full h-28"></canvas>
                     </div>
-
                     <button type="button" id="clearTecnicoBtn"
-                            class="mt-1 py-1 px-2 border border-red-300 rounded text-xs text-red-700 bg-red-50 hover:bg-red-100">
+                            class="mt-1 py-2 px-3 border border-red-300 rounded text-xs text-red-700 bg-red-50">
                         Borrar Firma Técnico
                     </button>
                 </div>
@@ -411,13 +279,11 @@
                     <label class="block text-xs font-medium text-gray-700 mb-1">
                         Firma del Colaborador (Usuario)
                     </label>
-
                     <div class="border rounded-md p-1 relative w-full bg-white">
                         <canvas id="canvasUsuario" class="signature-canvas w-full h-28"></canvas>
                     </div>
-
                     <button type="button" id="clearUsuarioBtn"
-                            class="mt-1 py-1 px-2 border border-red-300 rounded text-xs text-red-700 bg-red-50 hover:bg-red-100">
+                            class="mt-1 py-2 px-3 border border-red-300 rounded text-xs text-red-700 bg-red-50">
                         Borrar Firma Usuario
                     </button>
                 </div>
@@ -425,33 +291,31 @@
 
             <!-- BOTONES -->
             <div class="pt-2 space-y-2">
-
                 <button type="button" id="btnPrevisualizar"
-                        class="w-full flex justify-center py-3 px-4 border border-blue-200 rounded-lg shadow-sm text-sm font-bold text-blue-800 bg-blue-50 hover:bg-blue-100 focus:outline-none transition">
+                        class="w-full flex justify-center py-3 px-4 border border-blue-200 rounded-lg shadow-sm text-sm font-bold text-blue-800 bg-blue-50">
                     PREVISUALIZAR DOCUMENTO
                 </button>
 
                 <button type="submit"
-                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition">
+                        class="w-full flex justify-center py-3 px-4 rounded-lg shadow-md text-sm font-bold text-white bg-blue-600">
                     GENERAR PDF OFICIAL (5 PÁGINAS)
                 </button>
 
                 <button type="button" id="btnNuevoDoc"
-                        class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-md text-xs font-bold text-white bg-red-600 hover:bg-red-700 focus:outline-none transition">
+                        class="w-full flex justify-center py-3 px-4 rounded-lg shadow-md text-xs font-bold text-white bg-red-600">
                     NUEVO DOCUMENTO
                 </button>
 
                 <a href="https://invs99.github.io/FF/"
-                   class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-md text-xs font-bold text-white bg-cyan-500 hover:bg-cyan-600 text-center transition">
+                   class="w-full flex justify-center py-3 px-4 rounded-lg shadow-md text-xs font-bold text-white bg-cyan-500 text-center">
                     INICIO
                 </a>
             </div>
-
         </form>
     </div>
 
     <script>
-        // Modal de confirmación
+        // MODAL DE CONFIRMACIÓN
         const mostrarConfirmacion = (titulo, mensaje) => {
             return new Promise((resolve) => {
                 const modal = document.getElementById('confirmModal');
@@ -462,7 +326,6 @@
 
                 modalTitle.textContent = titulo;
                 modalMessage.textContent = mensaje;
-
                 modal.classList.remove('hidden');
 
                 const cleanup = () => {
@@ -486,63 +349,54 @@
             });
         };
 
-        // Convertir los campos de texto a mayúsculas
+        // MAYÚSCULAS AUTOMÁTICAS
         document.querySelectorAll('input[type="text"]').forEach(input => {
             input.addEventListener('input', () => {
                 input.value = input.value.toUpperCase();
             });
         });
 
-        // Configuración de las firmas
-        const setupCanvas = (canvasId, nombreFirma) => {
+        // FIRMAS COMPATIBLES CON TOQUE
+        function setupCanvas(canvasId, nombreFirma) {
             const canvas = document.getElementById(canvasId);
             const ctx = canvas.getContext('2d');
 
             let isDrawing = false;
             let hasSigned = false;
 
-            const drawPlaceholder = () => {
+            function drawPlaceholder() {
                 ctx.fillStyle = '#ffffff';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-
                 ctx.fillStyle = '#9CA3AF';
                 ctx.font = '12px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText('Firme aquí con su dedo', canvas.width / 2, canvas.height / 2);
-            };
+            }
 
-            const resize = () => {
-                const container = canvas.parentElement;
-                canvas.width = container.clientWidth - 8;
+            function resize() {
+                const width = Math.max(250, canvas.parentElement.clientWidth - 8);
+                canvas.width = width;
                 canvas.height = 100;
+
+                canvas.style.width = '100%';
+                canvas.style.height = '100px';
 
                 if (!hasSigned) {
                     drawPlaceholder();
                 }
-            };
+            }
 
-            window.addEventListener('load', resize);
-            window.addEventListener('resize', resize);
-
-            const getPos = (e) => {
+            function getPosition(event) {
                 const rect = canvas.getBoundingClientRect();
-
-                const clientX = e.touches && e.touches.length > 0
-                    ? e.touches[0].clientX
-                    : e.clientX;
-
-                const clientY = e.touches && e.touches.length > 0
-                    ? e.touches[0].clientY
-                    : e.clientY;
-
                 return {
-                    x: clientX - rect.left,
-                    y: clientY - rect.top
+                    x: (event.clientX - rect.left) * (canvas.width / rect.width),
+                    y: (event.clientY - rect.top) * (canvas.height / rect.height)
                 };
-            };
+            }
 
-            const start = (e) => {
+            function startDrawing(event) {
+                event.preventDefault();
                 isDrawing = true;
 
                 if (!hasSigned) {
@@ -551,22 +405,20 @@
                     hasSigned = true;
                 }
 
-                const pos = getPos(e);
+                const pos = getPosition(event);
                 ctx.beginPath();
                 ctx.moveTo(pos.x, pos.y);
-            };
 
-            const stop = () => {
-                if (isDrawing) {
-                    isDrawing = false;
-                    ctx.beginPath();
-                }
-            };
+                try {
+                    canvas.setPointerCapture(event.pointerId);
+                } catch (err) {}
+            }
 
-            const draw = (e) => {
+            function draw(event) {
                 if (!isDrawing) return;
 
-                const pos = getPos(e);
+                event.preventDefault();
+                const pos = getPosition(event);
 
                 ctx.lineWidth = 2.5;
                 ctx.lineCap = 'round';
@@ -575,37 +427,44 @@
 
                 ctx.lineTo(pos.x, pos.y);
                 ctx.stroke();
-            };
+            }
 
-            canvas.addEventListener('mousedown', start);
-            canvas.addEventListener('mouseup', stop);
-            canvas.addEventListener('mouseleave', stop);
-            canvas.addEventListener('mousemove', draw);
+            function stopDrawing(event) {
+                if (!isDrawing) return;
 
-            canvas.addEventListener('touchstart', (e) => {
-                start(e);
-                e.preventDefault();
-            }, { passive: false });
+                isDrawing = false;
+                ctx.beginPath();
 
-            canvas.addEventListener('touchend', (e) => {
-                stop();
-                e.preventDefault();
-            }, { passive: false });
+                if (event && event.pointerId !== undefined) {
+                    try {
+                        canvas.releasePointerCapture(event.pointerId);
+                    } catch (err) {}
+                }
+            }
 
-            canvas.addEventListener('touchmove', (e) => {
-                draw(e);
-                e.preventDefault();
-            }, { passive: false });
+            // Pointer Events: funcionan con ratón, dedo y lápiz táctil
+            canvas.addEventListener('pointerdown', startDrawing);
+            canvas.addEventListener('pointermove', draw);
+            canvas.addEventListener('pointerup', stopDrawing);
+            canvas.addEventListener('pointercancel', stopDrawing);
+            canvas.addEventListener('lostpointercapture', stopDrawing);
+
+            window.addEventListener('load', resize);
+            window.addEventListener('resize', () => {
+                // Evitar borrar una firma ya realizada al cambiar orientación.
+                if (!hasSigned) resize();
+            });
+
+            setTimeout(resize, 100);
 
             return {
-                canvas,
-                ctx,
+                canvas: canvas,
 
                 get hasSigned() {
                     return hasSigned;
                 },
 
-                clear: async (conConfirmacion = true) => {
+                clear: async function(conConfirmacion = true) {
                     if (hasSigned && conConfirmacion) {
                         const confirmado = await mostrarConfirmacion(
                             '¿Borrar firma?',
@@ -619,7 +478,7 @@
                     drawPlaceholder();
                 }
             };
-        };
+        }
 
         const sigTecnico = setupCanvas('canvasTecnico', 'el Técnico');
         const sigUsuario = setupCanvas('canvasUsuario', 'el Colaborador');
@@ -632,7 +491,7 @@
             sigUsuario.clear(true);
         });
 
-        // Botón NUEVO DOCUMENTO
+        // NUEVO DOCUMENTO
         document.getElementById('btnNuevoDoc').addEventListener('click', async () => {
             const confirmado = await mostrarConfirmacion(
                 '¿Nuevo documento?',
@@ -646,11 +505,16 @@
             }
         });
 
-        // Generador de PDF: permite previsualizar o descargar
-        async function generarPDF(descargar = true) {
+        // GENERADOR PDF
+        // Conserva el tamaño carta y el contenido del documento original.
+        async function generarPDF(descargar = true, ventanaPreview = null) {
             document.getElementById('loadingOverlay').classList.remove('hidden');
 
             try {
+                if (!window.jspdf || !window.jspdf.jsPDF) {
+                    throw new Error('No se pudo cargar jsPDF.');
+                }
+
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({ unit: 'mm', format: 'letter' });
 
@@ -678,16 +542,17 @@
                     if (response.ok) {
                         const blob = await response.blob();
 
-                        const base64Image = await new Promise((resolve) => {
+                        const base64Image = await new Promise((resolve, reject) => {
                             const reader = new FileReader();
                             reader.onloadend = () => resolve(reader.result);
+                            reader.onerror = reject;
                             reader.readAsDataURL(blob);
                         });
 
                         doc.addImage(base64Image, 'PNG', margin, y, 56, 26);
                     }
                 } catch (err) {
-                    // El PDF puede generarse aunque el logo no esté disponible.
+                    console.warn('No se pudo cargar el logo; se generará el PDF sin él.', err);
                 }
 
                 doc.setFont('times', 'bold');
@@ -709,11 +574,9 @@
                     doc.setFont('times', 'normal');
                     doc.setFontSize(14);
                     doc.setTextColor(0, 0, 0);
-
                     doc.text(label, margin + 25, metaY);
 
                     const lw = doc.getTextWidth(label);
-
                     doc.setTextColor(0, 150, 220);
                     doc.text(val, margin + 25 + lw + 2, metaY);
 
@@ -732,17 +595,13 @@
                 doc.autoTable({
                     startY: y,
                     margin: { left: margin, right: margin },
-
                     head: [['Rol', 'Nombre', 'Cargo', 'Fecha']],
-
                     body: [
                         ['Elaborador', 'Gerardo Chavez', 'Analista de seguridad', 'Noviembre 2025'],
                         ['Revisor', 'Fernando Girón', 'Jefe de seguridad', 'Noviembre 2025'],
                         ['Autorizado', 'Mario Santacruz', 'Gerente de Infraestructura', 'Noviembre 2025']
                     ],
-
                     theme: 'grid',
-
                     styles: {
                         font: 'times',
                         fontSize: 10,
@@ -750,7 +609,6 @@
                         halign: 'center',
                         textColor: [0, 0, 0]
                     },
-
                     headStyles: {
                         fillColor: [142, 198, 222],
                         textColor: [0, 0, 0],
@@ -768,7 +626,6 @@
                 doc.text('1.  OBJETIVO', margin, y);
 
                 y += 5;
-
                 doc.setFont('times', 'normal');
                 doc.setFontSize(10);
 
@@ -787,7 +644,6 @@
                 doc.text('2.  ALCANCE', margin, y);
 
                 y += 5;
-
                 doc.setFont('times', 'normal');
                 doc.setFontSize(10);
 
@@ -818,14 +674,9 @@
                     const endX = pageWidth - margin;
                     const lineLength = endX - startX;
 
-                    doc.setFont('times', 'normal');
-
-                    doc.text(
-                        value,
-                        startX + (lineLength / 2),
-                        y,
-                        { align: 'center' }
-                    );
+                    doc.text(value, startX + (lineLength / 2), y, {
+                        align: 'center'
+                    });
 
                     doc.setDrawColor(0, 0, 0);
                     doc.setLineWidth(0.3);
@@ -878,10 +729,7 @@
                     fullEmail
                 );
 
-                printInlineField(
-                    'Fecha de entrega:',
-                    fechaActualStr
-                );
+                printInlineField('Fecha de entrega:', fechaActualStr);
 
                 printInlineField(
                     'Estado:',
@@ -926,14 +774,7 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                 doc.autoTable({
                     startY: y,
                     margin: { left: margin, right: margin },
-
-                    head: [[
-                        'TIPO DE EQUIPO',
-                        'MARCA',
-                        'MODELO',
-                        'NUMERO DE SERIE'
-                    ]],
-
+                    head: [['TIPO DE EQUIPO', 'MARCA', 'MODELO', 'NUMERO DE SERIE']],
                     body: [
                         [
                             'Laptop/Desktop',
@@ -957,16 +798,13 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                         ['Monitor', '', '', ''],
                         ['Accesorios Adicionales', '', '', '']
                     ],
-
                     theme: 'grid',
-
                     styles: {
                         font: 'times',
                         fontSize: 9.5,
                         cellPadding: 1.8,
                         textColor: [0, 0, 0]
                     },
-
                     headStyles: {
                         fillColor: [155, 195, 230],
                         textColor: [0, 0, 0],
@@ -992,57 +830,25 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                 doc.autoTable({
                     startY: y,
                     margin: { left: margin, right: margin },
-
                     head: [['MARCA', 'NUMERO DE SERIE']],
-
                     body: [
-                        [
-                            getSW('sw_win11', 'Windows 11'),
-                            getSW('sw_bitlocker', 'BitLocker')
-                        ],
-                        [
-                            getSW('sw_trend', 'Tren Micro Office Scan'),
-                            getSW('sw_chrome', 'Google Chrome')
-                        ],
-                        [
-                            getSW('sw_acrobat', 'Acobar Reader'),
-                            getSW('sw_rapid7', 'Rapid7')
-                        ],
-                        [
-                            getSW('sw_libreoffice', 'Libre Office'),
-                            getSW('sw_firefox', 'Mozilla firefox')
-                        ],
-                        [
-                            getSW('sw_zoom', 'Zoom'),
-                            getSW('sw_endpoint', 'Endpoint Central.')
-                        ],
-                        [
-                            getSW('sw_office365', 'Microsoft Office 365'),
-                            getSW('sw_netskope', 'Netskope')
-                        ],
-                        [
-                            getSW('sw_cortex', 'Cortex XDR'),
-                            getSW('sw_vpn', 'VPN')
-                        ],
-                        [
-                            getSW('sw_gfi', 'GFI Endpoint Security'),
-                            ''
-                        ],
-                        [
-                            getSW('sw_citrix', 'Citrix workspace'),
-                            ''
-                        ]
+                        [getSW('sw_win11', 'Windows 11'), getSW('sw_bitlocker', 'BitLocker')],
+                        [getSW('sw_trend', 'Tren Micro Office Scan'), getSW('sw_chrome', 'Google Chrome')],
+                        [getSW('sw_acrobat', 'Acobar Reader'), getSW('sw_rapid7', 'Rapid7')],
+                        [getSW('sw_libreoffice', 'Libre Office'), getSW('sw_firefox', 'Mozilla firefox')],
+                        [getSW('sw_zoom', 'Zoom'), getSW('sw_endpoint', 'Endpoint Central.')],
+                        [getSW('sw_office365', 'Microsoft Office 365'), getSW('sw_netskope', 'Netskope')],
+                        [getSW('sw_cortex', 'Cortex XDR'), getSW('sw_vpn', 'VPN')],
+                        [getSW('sw_gfi', 'GFI Endpoint Security'), ''],
+                        [getSW('sw_citrix', 'Citrix workspace'), '']
                     ],
-
                     theme: 'grid',
-
                     styles: {
                         font: 'times',
                         fontSize: 9.5,
                         cellPadding: 1.5,
                         textColor: [0, 0, 0]
                     },
-
                     headStyles: {
                         fillColor: [155, 195, 230],
                         textColor: [0, 0, 0],
@@ -1062,9 +868,7 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                 doc.autoTable({
                     startY: y,
                     margin: { left: margin, right: margin },
-
                     head: [['Número', 'Descripción']],
-
                     body: [
                         [
                             '1',
@@ -1079,16 +883,13 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                             'Todos los dispositivos móviles utilizados en entornos no supervisados o de acceso compartido deben estar asegurados físicamente mediante un cable de seguridad aprobado.'
                         ]
                     ],
-
                     theme: 'grid',
-
                     styles: {
                         font: 'times',
                         fontSize: 9.5,
                         cellPadding: 1.8,
                         textColor: [0, 0, 0]
                     },
-
                     headStyles: {
                         fillColor: [155, 195, 230],
                         textColor: [0, 0, 0],
@@ -1105,9 +906,7 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                 doc.autoTable({
                     startY: y,
                     margin: { left: margin, right: margin },
-
                     head: [['Número', 'Descripción']],
-
                     body: [
                         [
                             '4',
@@ -1150,16 +949,13 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                             'Cualquier falla en los computadores o en la red debe reportarse inmediatamente ya que podría causar problemas serios como pérdida de la información o indisponibilidad de los servicios.'
                         ]
                     ],
-
                     theme: 'grid',
-
                     styles: {
                         font: 'times',
                         fontSize: 9.5,
                         cellPadding: 1.8,
                         textColor: [0, 0, 0]
                     },
-
                     headStyles: {
                         fillColor: [155, 195, 230],
                         textColor: [0, 0, 0],
@@ -1182,9 +978,7 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                 doc.autoTable({
                     startY: y,
                     margin: { left: margin, right: margin },
-
                     head: [['Número', 'Descripción']],
-
                     body: [
                         [
                             '1',
@@ -1195,16 +989,13 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                             'Cualquier empleado que incumpla esta política será sujeto a una acción disciplinaria, cuya consecuencia pueden llegar hasta la terminación del contrato de empleo.'
                         ]
                     ],
-
                     theme: 'grid',
-
                     styles: {
                         font: 'times',
                         fontSize: 9.5,
                         cellPadding: 1.8,
                         textColor: [0, 0, 0]
                     },
-
                     headStyles: {
                         fillColor: [155, 195, 230],
                         textColor: [0, 0, 0],
@@ -1213,12 +1004,10 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                     }
                 });
 
-                // BLOQUE DE FIRMAS
+                // FIRMAS EN LA PÁGINA 5
                 y = pageHeight - 45;
 
-                // Firma del técnico
                 const tecX = margin;
-
                 doc.setDrawColor(0, 0, 0);
 
                 if (sigTecnico.hasSigned) {
@@ -1227,16 +1016,12 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                 }
 
                 doc.line(tecX, y, tecX + 65, y);
-
                 doc.setFont('times', 'normal');
                 doc.setFontSize(8);
 
-                const tNombre =
-                    `TÉCNICO: ${document.getElementById('tecnicoNombre').value.toUpperCase()}`;
+                const tNombre = `TÉCNICO: ${document.getElementById('tecnicoNombre').value.toUpperCase()}`;
 
-                let tUser =
-                    document.getElementById('tecnicoUser').value.toUpperCase();
-
+                let tUser = document.getElementById('tecnicoUser').value.toUpperCase();
                 if (!tUser.startsWith('(')) {
                     tUser = `(${tUser})`;
                 }
@@ -1245,7 +1030,6 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                 doc.text(tUser, tecX, y + 8.5);
                 doc.text('TÉCNICO DE SOPORTE FREUND', tecX, y + 12.5);
 
-                // Firma del usuario
                 const usrX = pageWidth - margin - 65;
 
                 if (sigUsuario.hasSigned) {
@@ -1255,19 +1039,14 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
 
                 doc.line(usrX, y, usrX + 65, y);
 
-                const uNombre =
-                    `USUARIO: ${document.getElementById('nombre').value.toUpperCase()}`;
-
+                const uNombre = `USUARIO: ${document.getElementById('nombre').value.toUpperCase()}`;
                 const uUser = `( ${userMail} )`;
-
-                const uDepto =
-                    `DEPARTAMENTO: ${document.getElementById('departamento').value.toUpperCase()}`;
+                const uDepto = `DEPARTAMENTO: ${document.getElementById('departamento').value.toUpperCase()}`;
 
                 doc.text(uNombre, usrX, y + 4.5);
                 doc.text(uUser, usrX, y + 8.5);
                 doc.text(uDepto, usrX, y + 12.5);
 
-                // Nombre del archivo PDF
                 const fechaFormateada = hoy
                     .toLocaleDateString('es-ES', {
                         day: '2-digit',
@@ -1279,44 +1058,51 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                 const nombreArchivo =
                     `Laptop_${userMail.replace(/\s/g, '_')}_${fechaFormateada}.pdf`;
 
-                // Descargar o mostrar vista previa
+                // DESCARGAR O ABRIR VISTA PREVIA
                 if (descargar) {
                     doc.save(nombreArchivo);
                 } else {
                     const pdfBlob = doc.output('blob');
                     const pdfUrl = URL.createObjectURL(pdfBlob);
 
-                    const frame = document.getElementById('previewFrame');
-                    const oldUrl = frame.dataset.pdfUrl;
-
-                    if (oldUrl) {
-                        URL.revokeObjectURL(oldUrl);
+                    if (ventanaPreview && !ventanaPreview.closed) {
+                        ventanaPreview.location.href = pdfUrl;
+                    } else {
+                        const enlace = document.createElement('a');
+                        enlace.href = pdfUrl;
+                        enlace.download = nombreArchivo;
+                        document.body.appendChild(enlace);
+                        enlace.click();
+                        enlace.remove();
                     }
 
-                    frame.dataset.pdfUrl = pdfUrl;
-                    frame.src = pdfUrl;
-
-                    document.getElementById('previewModal').classList.remove('hidden');
+                    // No revocar inmediatamente: Chrome puede necesitar tiempo para cargar el PDF.
                 }
 
                 document.getElementById('loadingOverlay').classList.add('hidden');
 
             } catch (err) {
-                console.error(err);
+                console.error('Error al generar PDF:', err);
 
                 document.getElementById('loadingOverlay').classList.add('hidden');
 
-                alert('Ocurrió un error al generar el PDF.');
+                if (ventanaPreview && !ventanaPreview.closed) {
+                    ventanaPreview.close();
+                }
+
+                alert(
+                    'Ocurrió un error al generar el PDF. Verifique su conexión a Internet e inténtelo nuevamente.'
+                );
             }
         }
 
-        // Descargar PDF oficial
-        document.getElementById('documentForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        // BOTÓN PARA DESCARGAR EL PDF
+        document.getElementById('documentForm').addEventListener('submit', function(event) {
+            event.preventDefault();
             generarPDF(true);
         });
 
-        // Previsualizar el PDF antes de descargarlo
+        // VISTA PREVIA ADAPTADA PARA ANDROID CHROME
         document.getElementById('btnPrevisualizar').addEventListener('click', function() {
             const form = document.getElementById('documentForm');
 
@@ -1324,23 +1110,36 @@ El equipo informático asignado al colaborador es propiedad de la empresa y se e
                 return;
             }
 
-            generarPDF(false);
-        });
+            let ventanaPreview = null;
 
-        // Cerrar la vista previa y liberar el PDF temporal
-        document.getElementById('closePreviewBtn').addEventListener('click', function() {
-            const frame = document.getElementById('previewFrame');
-            const modal = document.getElementById('previewModal');
-
-            modal.classList.add('hidden');
-            frame.src = 'about:blank';
-
-            if (frame.dataset.pdfUrl) {
-                URL.revokeObjectURL(frame.dataset.pdfUrl);
-                delete frame.dataset.pdfUrl;
+            // Abrir la pestaña inmediatamente dentro del toque del usuario.
+            // Esto ayuda a evitar el bloqueo de ventanas emergentes en Chrome.
+            try {
+                ventanaPreview = window.open('about:blank', '_blank');
+            } catch (error) {
+                console.warn('Chrome no permitió abrir una pestaña nueva.', error);
             }
+
+            if (ventanaPreview) {
+                try {
+                    ventanaPreview.document.open();
+                    ventanaPreview.document.write(
+                        '<!doctype html><html lang="es"><head>' +
+                        '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+                        '<title>Preparando PDF</title></head>' +
+                        '<body style="font-family:Arial,sans-serif;padding:24px;text-align:center">' +
+                        '<h3>Generando documento...</h3>' +
+                        '<p>Espere unos segundos mientras se prepara el PDF.</p>' +
+                        '</body></html>'
+                    );
+                    ventanaPreview.document.close();
+                } catch (error) {
+                    console.warn('No se pudo mostrar el mensaje de espera.', error);
+                }
+            }
+
+            generarPDF(false, ventanaPreview);
         });
     </script>
-
 </body>
 </html>
