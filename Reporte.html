@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Reporte de Evidencia</title>
+    <title>Reporte de Evidencia - Freund</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- PDF.js para renderizar vista previa universal en alta definición -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -22,15 +24,15 @@
 
     <style>
         #signatureCanvas_reporte {
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
-            background-color: white;
+            border: 2px dashed #cbd5e1;
+            border-radius: 0.5rem;
+            background-color: #ffffff;
             cursor: crosshair;
             touch-action: none;
         }
 
         #signatureCanvasContainer_reporte {
-            min-height: 150px;
+            min-height: 160px;
         }
 
         .modal-overlay {
@@ -63,271 +65,245 @@
         .drag-drop-area.drag-over {
             border-color: #3b82f6;
         }
+
+        /* Máxima nitidez ultra clara en los canvas del visor de PDF */
+        .pdf-page-canvas {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            max-width: 100%;
+            height: auto !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            border-radius: 0.375rem;
+        }
     </style>
 </head>
 
-<body class="bg-gray-100 flex flex-col items-center justify-start min-h-screen p-4 font-sans">
+<body class="bg-slate-100 min-h-screen flex flex-col items-center justify-start py-6 px-3 font-sans text-slate-800">
 
-    <div id="loadingOverlay"
-        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-[998] hidden">
-        <div class="bg-white p-6 rounded-lg shadow-xl flex items-center space-x-3">
-            <svg class="animate-spin h-5 w-5 text-blue-600"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24">
-                <circle class="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    stroke-width="4">
-                </circle>
-                <path class="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                </path>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-[998] hidden">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl flex items-center space-x-4">
+            <svg class="animate-spin h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p class="text-gray-700">Generando PDF...</p>
+            <p id="loadingText" class="text-slate-700 font-medium">Generando PDF...</p>
         </div>
     </div>
 
-    <div id="confirmationModal_reporte"
-        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
-        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Confirmar</h3>
-            <p class="text-gray-700 text-center mb-6">
-                ¿Estás seguro que quieres limpiar el formulario? Los datos actuales se perderán.
-            </p>
-            <div class="flex space-x-4">
-                <button id="cancelClearButton_reporte"
-                    class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                    Cancelar
+    <!-- MODAL DE PREVISUALIZACIÓN NÍTIDA (ULTRA CLARA & SCROLL VERTICAL) -->
+    <div id="previewModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[1000] hidden p-2 sm:p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full h-[94vh] flex flex-col overflow-hidden border border-slate-200">
+            <!-- Encabezado Modal -->
+            <div class="flex justify-between items-center bg-slate-900 text-white p-3.5 px-5">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    <h3 class="font-bold text-xs sm:text-sm uppercase tracking-wider">Vista Previa (Desliza para ver todo)</h3>
+                </div>
+                <button type="button" id="closePreviewBtn" class="text-slate-400 hover:text-white text-2xl font-bold p-1 leading-none transition">&times;</button>
+            </div>
+
+            <!-- Área de Visualización Continua Optimizada -->
+            <div id="pdfContainer" class="flex-1 overflow-auto p-4 sm:p-8 bg-slate-200 flex flex-col items-center">
+                <!-- Páginas renderizadas dinámicamente en alta definición -->
+            </div>
+
+            <!-- Pie del Modal -->
+            <div class="p-3.5 px-5 bg-slate-50 border-t flex justify-end items-center space-x-3">
+                <button type="button" id="closePreviewBottomBtn" class="px-4 py-2.5 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 transition active:scale-95">
+                    Cerrar
                 </button>
-                <button id="confirmClearButton_reporte"
-                    class="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
-                    Confirmar
+                <button type="button" id="downloadFromPreviewBtn" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-600/30 transition active:scale-95 flex items-center space-x-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span>Descargar PDF Oficial</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="clearSignatureConfirmationModal_reporte"
-        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
-        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Confirmar</h3>
-            <p class="text-gray-700 text-center mb-6">
-                ¿Estás seguro que quieres borrar la firma?
-            </p>
-            <div class="flex space-x-4">
-                <button id="cancelClearSignatureButton_reporte"
-                    class="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+    <!-- Modal Limpiar Formulario -->
+    <div id="confirmationModal_reporte" class="fixed inset-0 bg-slate-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center modal-overlay hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
+            <h3 class="text-lg font-bold text-slate-800 mb-2 text-center">Nuevo Reporte</h3>
+            <p class="text-slate-600 text-sm text-center mb-6">¿Estás seguro que quieres limpiar el formulario? Los datos actuales se perderán.</p>
+            <div class="flex space-x-3">
+                <button id="cancelClearButton_reporte" class="flex-1 py-2.5 px-4 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 bg-white hover:bg-slate-50">
                     Cancelar
                 </button>
-                <button id="confirmClearSignatureButton_reporte"
-                    class="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
-                    Confirmar
+                <button id="confirmClearButton_reporte" class="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium text-white bg-red-600 hover:bg-red-700 shadow-md shadow-red-200">
+                    Sí, limpiar
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="cameraModal"
-        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
-        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-xl">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">
+    <!-- Modal Borrar Firma -->
+    <div id="clearSignatureConfirmationModal_reporte" class="fixed inset-0 bg-slate-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center modal-overlay hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
+            <h3 class="text-lg font-bold text-slate-800 mb-2 text-center">Borrar Firma</h3>
+            <p class="text-slate-600 text-sm text-center mb-6">¿Estás seguro que quieres borrar la firma actual?</p>
+            <div class="flex space-x-3">
+                <button id="cancelClearSignatureButton_reporte" class="flex-1 py-2.5 px-4 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 bg-white hover:bg-slate-50">
+                    Cancelar
+                </button>
+                <button id="confirmClearSignatureButton_reporte" class="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium text-white bg-red-600 hover:bg-red-700 shadow-md shadow-red-200">
+                    Borrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cámara -->
+    <div id="cameraModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center modal-overlay hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-xl">
+            <h3 class="text-lg font-bold text-slate-800 mb-4 text-center">
                 Tomar Foto para Evidencia
             </h3>
 
-            <div class="relative bg-black rounded-md overflow-hidden">
-                <video id="cameraVideo"
-                    class="camera-video"
-                    autoplay
-                    playsinline>
-                </video>
-
+            <div class="relative bg-black rounded-xl overflow-hidden mb-4">
+                <video id="cameraVideo" class="camera-video" autoplay playsinline></video>
                 <canvas id="cameraCanvas" class="hidden"></canvas>
-
-                <img id="cameraPreview"
-                    class="hidden w-full rounded-md"
-                    alt="Vista previa de la foto">
+                <img id="cameraPreview" class="hidden w-full rounded-xl" alt="Vista previa de la foto">
             </div>
 
-            <div class="camera-controls">
-                <button type="button"
-                    id="takePhotoButton"
-                    class="bg-green-500 text-white font-medium py-2 px-4 rounded-full shadow-lg hover:bg-green-600 transition disabled:bg-gray-400">
+            <div class="camera-controls mb-4">
+                <button type="button" id="takePhotoButton" class="bg-emerald-600 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg hover:bg-emerald-700 transition disabled:bg-slate-400">
                     Capturar
                 </button>
             </div>
 
-            <div class="flex justify-between mt-4">
-                <button type="button"
-                    id="cancelCameraButton"
-                    class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+            <div class="flex justify-between space-x-3">
+                <button type="button" id="cancelCameraButton" class="flex-1 py-2.5 px-4 border border-slate-300 rounded-xl text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 transition">
                     Cancelar
                 </button>
-
-                <button type="button"
-                    id="confirmImageButton"
-                    class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400"
-                    disabled>
+                <button type="button" id="confirmImageButton" class="flex-1 py-2.5 px-4 border border-transparent rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition disabled:bg-blue-300 shadow-md shadow-blue-600/30" disabled>
                     Usar Imagen
                 </button>
             </div>
         </div>
     </div>
 
-    <div id="extraNotesModal"
-        class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center modal-overlay hidden">
-        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg">
-            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">
+    <!-- Modal Notas Extra -->
+    <div id="extraNotesModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center modal-overlay hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg">
+            <h3 class="text-lg font-bold text-slate-800 mb-2 text-center">
                 Notas Extra del Reporte
             </h3>
+            <p class="text-slate-500 text-xs text-center mb-4">Escribe aquí cualquier nota general, conclusión o comentario importante.</p>
 
-            <textarea id="extraNotesInput"
-                rows="5"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                placeholder="Escribe aquí cualquier nota general, conclusión o comentario importante del reporte."></textarea>
+            <textarea id="extraNotesInput" rows="5" class="w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-3 border bg-slate-50 mb-4" placeholder="Escribe aquí observaciones generales..."></textarea>
 
-            <div class="flex justify-end mt-4">
-                <button type="button"
-                    id="closeExtraNotesButton"
-                    class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+            <div class="flex justify-end">
+                <button type="button" id="closeExtraNotesButton" class="py-2.5 px-5 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-600/30 transition">
                     Guardar y Cerrar
                 </button>
             </div>
         </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg mb-6 main-content">
+    <!-- Contenedor Principal App Card -->
+    <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-5 sm:p-8 w-full max-w-md mb-6 main-content">
 
-        <div class="flex justify-center mb-6">
-            <img src="https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png"
-                alt="Logo"
-                class="h-16 w-auto" />
+        <div class="flex flex-col items-center mb-6">
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 shadow-sm mb-3">
+                <img src="https://www.freundferreteria.com/img/logo.svg" alt="Logo" class="h-12 w-auto object-contain" />
+            </div>
+            <h1 class="text-xl font-bold text-slate-900 tracking-tight text-center">Generador de Reporte de Evidencia</h1>
+            <p class="text-xs text-slate-400 mt-0.5">Soporte Redes y Telecomunicaciones</p>
         </div>
-
-        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">
-            Generador de Reporte de Evidencia
-        </h1>
 
         <form id="documentForm_reporte" class="space-y-4">
 
-            <div class="space-y-4 border p-4 rounded-md bg-gray-50">
-                <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">
-                    Información del Reporte
-                </h2>
-
+            <!-- Información del Reporte -->
+            <div class="bg-slate-50/70 p-4 rounded-2xl border border-slate-100 space-y-3">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Información General</p>
                 <div>
-                    <label for="nombre_reporte"
-                        class="block text-sm font-medium text-gray-700">
+                    <label for="nombre_reporte" class="block text-xs font-semibold text-slate-600 mb-1">
                         Nombre del Reporte (Asunto)
                     </label>
-
-                    <input type="text"
-                        id="nombre_reporte"
-                        name="nombre_reporte"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                        required />
+                    <input type="text" id="nombre_reporte" name="nombre_reporte" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white" placeholder="Ej. Mantenimiento de Rack" required />
                 </div>
 
                 <div>
-                    <label for="nombre_tecnico"
-                        class="block text-sm font-medium text-gray-700">
+                    <label for="nombre_tecnico" class="block text-xs font-semibold text-slate-600 mb-1">
                         Nombre de quien Reporta
                     </label>
-
-                    <input type="text"
-                        id="nombre_tecnico"
-                        name="nombre_tecnico"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                        required />
+                    <input type="text" id="nombre_tecnico" name="nombre_tecnico" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white" placeholder="Ej. Juan Pérez" required />
                 </div>
 
                 <div>
-                    <label for="cargo_tecnico"
-                        class="block text-sm font-medium text-gray-700">
+                    <label for="cargo_tecnico" class="block text-xs font-semibold text-slate-600 mb-1">
                         Cargo
                     </label>
-
-                    <input type="text"
-                        id="cargo_tecnico"
-                        name="cargo_tecnico"
-                        placeholder="Ej. Técnico de Soporte"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border" />
+                    <input type="text" id="cargo_tecnico" name="cargo_tecnico" placeholder="Ej. Técnico de Soporte" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white" />
                 </div>
             </div>
 
-            <div class="space-y-4 border p-4 rounded-md bg-gray-50">
-                <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">
-                    Detalle de Reporte
-                </h2>
-
-                <div id="reportElementsContainer"
-                    class="space-y-6">
-                </div>
+            <!-- Detalle de Reporte -->
+            <div class="bg-slate-50/70 p-4 rounded-2xl border border-slate-100 space-y-3">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Detalles y Páginas de Evidencia</p>
+                <div id="reportElementsContainer" class="space-y-4"></div>
             </div>
 
-            <div class="space-y-4 border p-4 rounded-md bg-gray-50">
-                <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">
-                    Firma
-                </h2>
-
-                <div class="mt-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Firma Digital
-                    </label>
-
-                    <div id="signatureCanvasContainer_reporte"
-                        class="border rounded-md p-1 relative w-full h-auto">
-
-                        <canvas id="signatureCanvas_reporte"
-                            class="w-full">
-                        </canvas>
-                    </div>
-
-                    <button type="button"
-                        id="clearSignatureButton_reporte"
-                        class="mt-2 w-1/2 mx-auto flex justify-center py-2 px-4 border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-800 bg-green-200 hover:bg-green-300">
-                        Borrar Firma
+            <!-- Firma Digital -->
+            <div class="bg-slate-50/70 p-4 rounded-2xl border border-slate-100">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="text-xs font-semibold uppercase tracking-wider text-slate-400">Firma Digital</label>
+                    <button type="button" id="clearSignatureButton_reporte" class="text-xs font-medium text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg transition-colors">
+                        Borrar firma
                     </button>
                 </div>
+                <div id="signatureCanvasContainer_reporte" class="relative w-full">
+                    <canvas id="signatureCanvas_reporte" class="w-full h-36"></canvas>
+                </div>
             </div>
 
-            <div class="flex flex-col space-y-2 mt-4">
-
-                <button type="button"
-                    id="openExtraNotesButton"
-                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
-                    Notas Extra
+            <!-- Botones de Acción con Iconos Oficiales Unificados -->
+            <div class="space-y-2.5 pt-2">
+                <button type="button" id="openExtraNotesButton" class="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl text-sm font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 transition-colors shadow-sm">
+                    <svg class="w-4 h-4 text-amber-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    <span>Notas Extra</span>
                 </button>
 
-                <button type="submit"
-                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
-                    Generar Reporte PDF
+                <!-- Botón de Previsualización HD -->
+                <button type="button" id="btnPreviewDoc" class="w-full flex justify-center items-center space-x-2 py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-emerald-600/20 text-xs sm:text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none transition active:scale-95 uppercase tracking-wide">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    <span>Previsualizar Documento</span>
                 </button>
 
-                <button type="button"
-                    id="clearFormButton_reporte"
-                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
-                    Nuevo Reporte
+                <!-- Botón Generar PDF -->
+                <button type="submit" class="w-full flex justify-center items-center space-x-2 py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-blue-600/20 text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition active:scale-95">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span>Generar Reporte PDF</span>
                 </button>
-
-                <a href="index.html"
-                    class="w-full flex justify-center py-1.5 px-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-sky-500 hover:bg-sky-600 no-underline">
-                    Inicio
+                
+                <!-- Botón Nuevo Reporte / Limpiar -->
+                <button type="button" id="clearFormButton_reporte" class="w-full flex justify-center items-center space-x-2 py-3 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-red-600 hover:bg-red-700 focus:outline-none transition active:scale-95">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    <span>Nuevo Reporte / Limpiar</span>
+                </button>
+                
+                <!-- Botón Inicio -->
+                <a href="index.html" class="w-full flex justify-center items-center space-x-2 py-3 px-4 border border-transparent rounded-xl shadow-md text-xs font-bold text-white bg-cyan-500 hover:bg-cyan-600 text-center transition active:scale-95 no-underline">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    <span>Ir al Inicio</span>
                 </a>
             </div>
 
         </form>
     </div>
 
-    <div id="messageBox"
-        class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 hidden">
-        Documento generado con éxito.
+    <!-- Notificaciones flotantes -->
+    <div id="messageBox" class="fixed bottom-4 right-4 bg-emerald-600 text-white text-sm px-5 py-3 rounded-2xl shadow-xl z-50 hidden transition-all">
+        Reporte generado con éxito.
     </div>
 
 <script>
+    // Configurar PDF.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+    let currentPdfDoc = null;
     let reportElements = [];
     let elementCounter = 0;
     let currentElementIdForCamera = null;
@@ -347,65 +323,48 @@
     function getExifOrientation(file) {
         return new Promise(resolve => {
             const reader = new FileReader();
-
             reader.onload = function(e) {
                 try {
                     const view = new DataView(e.target.result);
-
                     if (view.getUint16(0, false) !== 0xFFD8) {
                         resolve(1);
                         return;
                     }
-
                     const length = view.byteLength;
                     let offset = 2;
-
                     while (offset < length) {
                         if (offset + 4 > length) break;
-
                         const marker = view.getUint16(offset, false);
                         const segmentLength = view.getUint16(offset + 2, false);
-
                         if (segmentLength < 2) break;
-
                         if (marker === 0xFFE1) {
                             if (offset + 10 > length) break;
-
                             if (view.getUint32(offset + 6, false) !== 0x45786966) {
                                 resolve(1);
                                 return;
                             }
-
                             const tiffStart = offset + 12;
                             const little = view.getUint16(tiffStart, false) === 0x4949;
                             const firstIFDOffset = view.getUint32(tiffStart + 4, little);
                             const ifdOffset = tiffStart + firstIFDOffset;
-
                             if (ifdOffset + 2 > length) break;
-
                             const tags = view.getUint16(ifdOffset, little);
-
                             for (let i = 0; i < tags; i++) {
                                 const entryOffset = ifdOffset + 2 + (i * 12);
-
                                 if (entryOffset + 12 > length) break;
-
                                 if (view.getUint16(entryOffset, little) === 0x0112) {
                                     resolve(view.getUint16(entryOffset + 8, little));
                                     return;
                                 }
                             }
                         }
-
                         offset += 2 + segmentLength;
                     }
                 } catch (error) {
                     console.warn(error);
                 }
-
                 resolve(1);
             };
-
             reader.onerror = () => resolve(1);
             reader.readAsArrayBuffer(file.slice(0, 65536));
         });
@@ -414,10 +373,8 @@
     function fixOrientationResizeAndCompress(imageURL, orientation = 1) {
         return new Promise(resolve => {
             const img = new Image();
-
             img.onload = function() {
                 const MAX_WIDTH = 1200;
-
                 let width = img.width;
                 let height = img.height;
 
@@ -439,42 +396,18 @@
                 }
 
                 switch (orientation) {
-                    case 2:
-                        ctx.translate(width, 0);
-                        ctx.scale(-1, 1);
-                        break;
-                    case 3:
-                        ctx.translate(width, height);
-                        ctx.rotate(Math.PI);
-                        break;
-                    case 4:
-                        ctx.translate(0, height);
-                        ctx.scale(1, -1);
-                        break;
-                    case 5:
-                        ctx.rotate(Math.PI / 2);
-                        ctx.scale(1, -1);
-                        break;
-                    case 6:
-                        ctx.translate(height, 0);
-                        ctx.rotate(Math.PI / 2);
-                        break;
-                    case 7:
-                        ctx.translate(height, width);
-                        ctx.rotate(Math.PI / 2);
-                        ctx.scale(-1, 1);
-                        break;
-                    case 8:
-                        ctx.translate(0, width);
-                        ctx.rotate(-Math.PI / 2);
-                        break;
+                    case 2: ctx.translate(width, 0); ctx.scale(-1, 1); break;
+                    case 3: ctx.translate(width, height); ctx.rotate(Math.PI); break;
+                    case 4: ctx.translate(0, height); ctx.scale(1, -1); break;
+                    case 5: ctx.rotate(Math.PI / 2); ctx.scale(1, -1); break;
+                    case 6: ctx.translate(height, 0); ctx.rotate(Math.PI / 2); break;
+                    case 7: ctx.translate(height, width); ctx.rotate(Math.PI / 2); ctx.scale(-1, 1); break;
+                    case 8: ctx.translate(0, width); ctx.rotate(-Math.PI / 2); break;
                 }
 
                 ctx.drawImage(img, 0, 0, width, height);
-
-                resolve(canvas.toDataURL('image/jpeg', 0.72));
+                resolve(canvas.toDataURL('image/jpeg', 0.85));
             };
-
             img.onerror = () => resolve(imageURL);
             img.src = imageURL;
         });
@@ -482,7 +415,7 @@
 
     async function processUploadedFile(file, elementId) {
         if (!file.type.startsWith('image/')) {
-            showMessage('Selecciona un archivo de imagen.', 'error');
+            showMessage('Selecciona un archivo de imagen válido.', 'error');
             return;
         }
 
@@ -491,33 +424,19 @@
 
         const url = URL.createObjectURL(file);
         const orientation = await getExifOrientation(file);
-
-        const processedURL = await fixOrientationResizeAndCompress(
-            url,
-            orientation
-        );
+        const processedURL = await fixOrientationResizeAndCompress(url, orientation);
 
         element.image = processedURL;
 
         const elementDiv = document.getElementById(elementId);
-
         if (elementDiv) {
-            const previewDiv = elementDiv.querySelector(
-                `[data-preview-id="${elementId}"]`
-            );
-
+            const previewDiv = elementDiv.querySelector(`[data-preview-id="${elementId}"]`);
             if (previewDiv) {
                 previewDiv.classList.remove('hidden');
-
                 const img = previewDiv.querySelector('img');
-
                 if (img) img.src = processedURL;
             }
-
-            const fileInput = elementDiv.querySelector(
-                'input[data-type="image"]'
-            );
-
+            const fileInput = elementDiv.querySelector('input[data-type="image"]');
             if (fileInput) fileInput.value = '';
         }
 
@@ -527,17 +446,11 @@
 
     openExtraNotesButton.addEventListener('click', () => {
         extraNotesModal.classList.remove('hidden');
-
-        extraNotesInput.value =
-            localStorage.getItem(NOTES_KEY) || '';
+        extraNotesInput.value = localStorage.getItem(NOTES_KEY) || '';
     });
 
     closeExtraNotesButton.addEventListener('click', () => {
-        localStorage.setItem(
-            NOTES_KEY,
-            extraNotesInput.value
-        );
-
+        localStorage.setItem(NOTES_KEY, extraNotesInput.value);
         extraNotesModal.classList.add('hidden');
         saveFormData();
     });
@@ -560,56 +473,39 @@
 
         cameraPreview.classList.add('hidden');
         cameraPreview.src = '';
-        cameraVideo.style.display = 'none';
+        cameraVideo.style.display = 'block';
 
         try {
-            if (!navigator.mediaDevices ||
-                !navigator.mediaDevices.getUserMedia) {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 throw new Error('La cámara no está disponible.');
             }
 
             stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: {
-                        ideal: 'environment'
-                    }
-                },
+                video: { facingMode: { ideal: 'environment' } },
                 audio: false
             });
 
             cameraVideo.srcObject = stream;
             cameraModal.classList.remove('hidden');
-
             await cameraVideo.play();
-            cameraVideo.style.display = 'block';
-
         } catch (error) {
             console.error(error);
-
-            alert(
-                'No se pudo acceder a la cámara. ' +
-                'Asegúrate de tener permisos.'
-            );
-
+            alert('No se pudo acceder a la cámara. Asegúrate de otorgar permisos.');
             closeCameraModal();
         }
     }
 
     function closeCameraModal() {
         cameraModal.classList.add('hidden');
-
         if (stream) {
             stream.getTracks().forEach(track => track.stop());
             stream = null;
         }
-
         cameraVideo.pause();
         cameraVideo.srcObject = null;
         cameraVideo.style.display = 'none';
-
         cameraPreview.classList.add('hidden');
         cameraPreview.src = '';
-
         currentElementIdForCamera = null;
         capturedImage = null;
         confirmImageButton.disabled = true;
@@ -617,99 +513,46 @@
 
     takePhotoButton.addEventListener('click', () => {
         if (!stream) return;
-
         const videoWidth = cameraVideo.videoWidth;
         const videoHeight = cameraVideo.videoHeight;
-
         if (!videoWidth || !videoHeight) return;
 
         cameraCanvas.width = videoWidth;
         cameraCanvas.height = videoHeight;
-
         const ctx = cameraCanvas.getContext('2d');
+        ctx.drawImage(cameraVideo, 0, 0, videoWidth, videoHeight);
 
-        ctx.drawImage(
-            cameraVideo,
-            0,
-            0,
-            videoWidth,
-            videoHeight
-        );
-
-        capturedImage = cameraCanvas.toDataURL(
-            'image/jpeg',
-            0.82
-        );
-
+        capturedImage = cameraCanvas.toDataURL('image/jpeg', 0.85);
         cameraPreview.src = capturedImage;
         cameraVideo.style.display = 'none';
         cameraPreview.classList.remove('hidden');
         confirmImageButton.disabled = false;
     });
 
-    cancelCameraButton.addEventListener(
-        'click',
-        closeCameraModal
-    );
+    cancelCameraButton.addEventListener('click', closeCameraModal);
 
-    confirmImageButton.addEventListener(
-        'click',
-        async () => {
+    confirmImageButton.addEventListener('click', async () => {
+        if (!capturedImage || !currentElementIdForCamera) return;
+        const elementId = currentElementIdForCamera;
 
-            if (!capturedImage ||
-                !currentElementIdForCamera) {
-                return;
-            }
+        const processedURL = await fixOrientationResizeAndCompress(capturedImage, 1);
+        const element = reportElements.find(e => e.id === elementId);
 
-            const elementId =
-                currentElementIdForCamera;
-
-            const processedURL =
-                await fixOrientationResizeAndCompress(
-                    capturedImage,
-                    1
-                );
-
-            const element =
-                reportElements.find(
-                    e => e.id === elementId
-                );
-
-            if (element) {
-                element.image = processedURL;
-
-                const elementDiv =
-                    document.getElementById(elementId);
-
-                if (elementDiv) {
-                    const previewDiv =
-                        elementDiv.querySelector(
-                            `[data-preview-id="${elementId}"]`
-                        );
-
-                    if (previewDiv) {
-                        previewDiv.classList.remove('hidden');
-
-                        const img =
-                            previewDiv.querySelector('img');
-
-                        if (img) img.src = processedURL;
-                    }
-
-                    const fileInput =
-                        elementDiv.querySelector(
-                            'input[data-type="image"]'
-                        );
-
-                    if (fileInput) fileInput.value = '';
+        if (element) {
+            element.image = processedURL;
+            const elementDiv = document.getElementById(elementId);
+            if (elementDiv) {
+                const previewDiv = elementDiv.querySelector(`[data-preview-id="${elementId}"]`);
+                if (previewDiv) {
+                    previewDiv.classList.remove('hidden');
+                    const img = previewDiv.querySelector('img');
+                    if (img) img.src = processedURL;
                 }
-
-                saveFormData();
             }
-
-            closeCameraModal();
+            saveFormData();
         }
-    );
+        closeCameraModal();
+    });
 
     function escapeHTML(value) {
         return String(value ?? '')
@@ -722,109 +565,58 @@
 
     function addReportElement(elementData = {}) {
         elementCounter++;
-
         const id = `el_${elementCounter}`;
+        const container = document.getElementById('reportElementsContainer');
 
-        const container =
-            document.getElementById(
-                'reportElementsContainer'
-            );
-
-        const newElement =
-            document.createElement('div');
-
+        const newElement = document.createElement('div');
         newElement.id = id;
-
-        newElement.classList.add(
-            'p-3',
-            'border',
-            'rounded-md',
-            'bg-white',
-            'shadow-sm'
-        );
+        newElement.classList.add('p-4', 'border', 'border-slate-200', 'rounded-2xl', 'bg-white', 'shadow-sm', 'space-y-3');
 
         newElement.innerHTML = `
-            <div class="flex justify-between items-center mb-2 border-b pb-2">
-                <h3 class="font-medium text-gray-700">
-                    Página #${elementCounter}
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 class="font-bold text-xs uppercase tracking-wider text-slate-500">
+                    Página de Evidencia #${elementCounter}
                 </h3>
-
-                <button type="button"
-                    onclick="removeReportElement('${id}')"
-                    class="text-red-500 hover:text-red-700 text-sm">
+                <button type="button" onclick="removeReportElement('${id}')" class="text-xs font-medium text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-1 rounded-lg transition-colors">
                     Eliminar
                 </button>
             </div>
 
-            <div class="mb-3">
-                <label class="block text-sm font-medium text-gray-700">
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">
                     Sub-Tema o Breve Descripción
                 </label>
-
-                <input type="text"
-                    data-type="description"
-                    value="${escapeHTML(
-                        elementData.description || ''
-                    )}"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                    placeholder="Ej: Estado del Rack Principal">
+                <input type="text" data-type="description" value="${escapeHTML(elementData.description || '')}" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white" placeholder="Ej: Estado del Rack Principal">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700">
-                    Foto (Arrastra o Selecciona)
+                <label class="block text-xs font-semibold text-slate-600 mb-1">
+                    Foto de Evidencia (Cámara o Galería)
                 </label>
-
-                <div data-dnd-id="${id}"
-                    class="drag-drop-area flex flex-col items-center justify-center p-4 mt-1">
-
+                <div data-dnd-id="${id}" class="drag-drop-area flex flex-col items-center justify-center p-3 mt-1 bg-slate-50 rounded-xl">
                     <div class="flex space-x-2 w-full">
-
-                        <button type="button"
-                            data-action="capture"
-                            data-element-id="${id}"
-                            class="flex-1 flex items-center justify-center py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-yellow-50 hover:bg-yellow-100 transition">
-                            📷 Tomar Foto
+                        <button type="button" data-action="capture" data-element-id="${id}" class="flex-1 flex items-center justify-center py-2 px-3 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 transition shadow-sm">
+                            📷 Cámara
                         </button>
-
-                        <input type="file"
-                            data-type="image"
-                            accept="image/*"
-                            class="flex-1 block w-full text-sm text-gray-500">
+                        <input type="file" data-type="image" accept="image/*" class="flex-1 block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-2 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
                     </div>
                 </div>
 
-                <div data-preview-id="${id}"
-                    class="mt-2 ${
-                        elementData.image ? '' : 'hidden'
-                    }">
-
-                    <img src="${
-                        elementData.image || ''
-                    }"
-                        class="w-32 h-32 object-cover rounded-md border p-1"
-                        alt="Preview">
+                <div data-preview-id="${id}" class="mt-3 text-center ${elementData.image ? '' : 'hidden'}">
+                    <img src="${elementData.image || ''}" class="h-28 w-auto mx-auto rounded-xl border border-slate-200 object-cover shadow-sm" alt="Preview">
                 </div>
             </div>
 
-            <div class="mt-3">
-                <label class="block text-sm font-medium text-gray-700">
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">
                     Detalles Adicionales de la Foto
                 </label>
-
-                <textarea data-type="details"
-                    rows="2"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-                    placeholder="Observaciones, valores o comentarios específicos sobre la imagen subida.">${escapeHTML(
-                        elementData.details || ''
-                    )}</textarea>
+                <textarea data-type="details" rows="2" class="block w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-2.5 border bg-white" placeholder="Observaciones específicas sobre la imagen...">${escapeHTML(elementData.details || '')}</textarea>
             </div>
 
-            <div class="pt-3 border-t mt-3">
-                <button type="button"
-                    onclick="addReportElement()"
-                    class="w-full bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-md hover:bg-blue-700 transition">
-                    + Añadir Otra Página
+            <div class="pt-2">
+                <button type="button" onclick="addReportElement()" class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold py-2.5 px-4 rounded-xl transition border border-blue-200">
+                    + Añadir Otra Página de Evidencia
                 </button>
             </div>
         `;
@@ -837,477 +629,202 @@
             image: elementData.image || '',
             details: elementData.details || ''
         };
-
         reportElements.push(newElementObject);
 
-        const descInput =
-            newElement.querySelector(
-                'input[data-type="description"]'
-            );
+        const descInput = newElement.querySelector('input[data-type="description"]');
+        const detailsInput = newElement.querySelector('textarea[data-type="details"]');
+        const imageInput = newElement.querySelector('input[data-type="image"]');
+        const captureButton = newElement.querySelector('button[data-action="capture"]');
+        const dndArea = newElement.querySelector(`[data-dnd-id="${id}"]`);
 
-        const detailsInput =
-            newElement.querySelector(
-                'textarea[data-type="details"]'
-            );
-
-        const imageInput =
-            newElement.querySelector(
-                'input[data-type="image"]'
-            );
-
-        const captureButton =
-            newElement.querySelector(
-                'button[data-action="capture"]'
-            );
-
-        const dndArea =
-            newElement.querySelector(
-                `[data-dnd-id="${id}"]`
-            );
-
-        dndArea.addEventListener('dragover', event => {
-            event.preventDefault();
-            dndArea.classList.add('drag-over');
-        });
-
-        dndArea.addEventListener('dragleave', event => {
-            event.preventDefault();
+        dndArea.addEventListener('dragover', e => { e.preventDefault(); dndArea.classList.add('drag-over'); });
+        dndArea.addEventListener('dragleave', e => { e.preventDefault(); dndArea.classList.remove('drag-over'); });
+        dndArea.addEventListener('drop', e => {
+            e.preventDefault();
             dndArea.classList.remove('drag-over');
-        });
-
-        dndArea.addEventListener('drop', event => {
-            event.preventDefault();
-            dndArea.classList.remove('drag-over');
-
-            const files = event.dataTransfer.files;
-
-            if (files.length &&
-                files[0].type.startsWith('image/')) {
-
-                processUploadedFile(
-                    files[0],
-                    id
-                );
+            if (e.dataTransfer.files.length && e.dataTransfer.files[0].type.startsWith('image/')) {
+                processUploadedFile(e.dataTransfer.files[0], id);
             }
         });
 
-        captureButton.addEventListener(
-            'click',
-            () => openCamera(id)
-        );
-
+        captureButton.addEventListener('click', () => openCamera(id));
         descInput.addEventListener('input', () => {
-            const element =
-                reportElements.find(
-                    e => e.id === id
-                );
-
-            if (element) {
-                element.description =
-                    descInput.value;
-
-                saveFormData();
-            }
+            const el = reportElements.find(item => item.id === id);
+            if (el) { el.description = descInput.value; saveFormData(); }
         });
-
         detailsInput.addEventListener('input', () => {
-            const element =
-                reportElements.find(
-                    e => e.id === id
-                );
-
-            if (element) {
-                element.details =
-                    detailsInput.value;
-
-                saveFormData();
-            }
+            const el = reportElements.find(item => item.id === id);
+            if (el) { el.details = detailsInput.value; saveFormData(); }
         });
-
-        imageInput.addEventListener('change', event => {
-            const file = event.target.files[0];
-
-            if (file) {
-                processUploadedFile(file, id);
-            }
+        imageInput.addEventListener('change', e => {
+            if (e.target.files[0]) processUploadedFile(e.target.files[0], id);
         });
 
         saveFormData();
     }
 
     function removeReportElement(id) {
-        const element =
-            document.getElementById(id);
-
+        const element = document.getElementById(id);
         if (element) element.remove();
-
-        reportElements =
-            reportElements.filter(
-                e => e.id !== id
-            );
+        reportElements = reportElements.filter(e => e.id !== id);
 
         const saved = [...reportElements];
-
         reportElements = [];
         elementCounter = 0;
+        document.getElementById('reportElementsContainer').innerHTML = '';
 
-        document.getElementById(
-            'reportElementsContainer'
-        ).innerHTML = '';
-
-        saved.forEach(
-            el => addReportElement(el)
-        );
-
-        if (!reportElements.length) {
-            addReportElement();
-        }
-
+        saved.forEach(el => addReportElement(el));
+        if (!reportElements.length) addReportElement();
         saveFormData();
     }
 
-    function showMessage(
-        message,
-        type = 'success'
-    ) {
-        const messageBox =
-            document.getElementById(
-                'messageBox'
-            );
-
+    function showMessage(message, type = 'success') {
+        const messageBox = document.getElementById('messageBox');
         messageBox.textContent = message;
-
-        messageBox.className =
-            type === 'success'
-                ? 'fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50'
-                : 'fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-
+        messageBox.className = type === 'success'
+            ? 'fixed bottom-4 right-4 bg-emerald-600 text-white text-sm px-5 py-3 rounded-2xl shadow-xl z-50'
+            : 'fixed bottom-4 right-4 bg-rose-600 text-white text-sm px-5 py-3 rounded-2xl shadow-xl z-50';
         messageBox.classList.remove('hidden');
-
-        setTimeout(
-            () => messageBox.classList.add('hidden'),
-            3000
-        );
+        setTimeout(() => messageBox.classList.add('hidden'), 3000);
     }
 
-    const canvas =
-        document.getElementById(
-            'signatureCanvas_reporte'
-        );
-
-    const ctx =
-        canvas.getContext('2d');
-
+    const canvas = document.getElementById('signatureCanvas_reporte');
+    const ctx = canvas.getContext('2d');
     let isDrawing = false;
     let lastX = 0;
     let lastY = 0;
     let hasSigned = false;
 
-    function drawPlaceholder() {
-        if (hasSigned) return;
-
+    function fillWhiteBackground() {
         ctx.save();
-
-        ctx.fillStyle = '#E5E7EB';
-        ctx.font = '24px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
-        ctx.fillText(
-            'Firma del Reporteador',
-            canvas.width / 2,
-            canvas.height / 2
-        );
-
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.restore();
     }
 
+    function drawPlaceholder() {
+        if (!hasSigned) {
+            fillWhiteBackground();
+            ctx.save();
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '14px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Firme aquí con su dedo o lápiz', canvas.width / 2, canvas.height / 2);
+            ctx.restore();
+        }
+    }
+
     function resizeCanvas() {
-        const container =
-            document.getElementById(
-                'signatureCanvasContainer_reporte'
-            );
-
-        const width =
-            Math.max(
-                300,
-                container.offsetWidth
-            );
-
+        const container = document.getElementById('signatureCanvasContainer_reporte');
+        const width = Math.max(300, container.offsetWidth);
         const height = 150;
 
-        const oldSignature =
-            hasSigned
-                ? canvas.toDataURL('image/png')
-                : null;
-
+        const oldSignature = hasSigned ? canvas.toDataURL('image/png') : null;
         canvas.width = width;
         canvas.height = height;
-
-        ctx.fillStyle = 'white';
-
-        ctx.fillRect(
-            0,
-            0,
-            width,
-            height
-        );
+        fillWhiteBackground();
 
         if (oldSignature) {
             const img = new Image();
-
             img.onload = () => {
-                ctx.drawImage(
-                    img,
-                    0,
-                    0,
-                    width,
-                    height
-                );
+                fillWhiteBackground();
+                ctx.drawImage(img, 0, 0, width, height);
             };
-
             img.src = oldSignature;
         } else {
             drawPlaceholder();
         }
     }
 
-    window.addEventListener(
-        'resize',
-        resizeCanvas
-    );
+    window.addEventListener('resize', resizeCanvas);
 
     function getPointerPosition(e) {
-        const rect =
-            canvas.getBoundingClientRect();
-
-        const source =
-            e.touches
-                ? e.touches[0]
-                : e;
-
-        return {
-            x:
-                source.clientX -
-                rect.left,
-
-            y:
-                source.clientY -
-                rect.top
-        };
+        const rect = canvas.getBoundingClientRect();
+        const source = e.touches ? e.touches[0] : e;
+        return { x: source.clientX - rect.left, y: source.clientY - rect.top };
     }
 
     function startDrawing(e) {
         e.preventDefault();
-
-        const point =
-            getPointerPosition(e);
-
+        const point = getPointerPosition(e);
         isDrawing = true;
         lastX = point.x;
         lastY = point.y;
 
         if (!hasSigned) {
-            ctx.clearRect(
-                0,
-                0,
-                canvas.width,
-                canvas.height
-            );
-
-            ctx.fillStyle = 'white';
-
-            ctx.fillRect(
-                0,
-                0,
-                canvas.width,
-                canvas.height
-            );
-
+            fillWhiteBackground();
             hasSigned = true;
         }
     }
 
     function draw(e) {
         if (!isDrawing) return;
-
         e.preventDefault();
-
-        const point =
-            getPointerPosition(e);
-
+        const point = getPointerPosition(e);
         ctx.beginPath();
-
-        ctx.moveTo(
-            lastX,
-            lastY
-        );
-
-        ctx.lineTo(
-            point.x,
-            point.y
-        );
-
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(point.x, point.y);
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 2.5;
         ctx.lineCap = 'round';
-
         ctx.stroke();
-
         lastX = point.x;
         lastY = point.y;
     }
 
-    function stopDrawing() {
-        isDrawing = false;
-    }
+    function stopDrawing() { isDrawing = false; }
 
-    canvas.addEventListener(
-        'mousedown',
-        startDrawing
-    );
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing);
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', stopDrawing);
 
-    canvas.addEventListener(
-        'mousemove',
-        draw
-    );
-
-    canvas.addEventListener(
-        'mouseup',
-        stopDrawing
-    );
-
-    canvas.addEventListener(
-        'mouseleave',
-        stopDrawing
-    );
-
-    canvas.addEventListener(
-        'touchstart',
-        startDrawing,
-        { passive: false }
-    );
-
-    canvas.addEventListener(
-        'touchmove',
-        draw,
-        { passive: false }
-    );
-
-    canvas.addEventListener(
-        'touchend',
-        stopDrawing
-    );
-
-    const form =
-        document.getElementById(
-            'documentForm_reporte'
-        );
+    const form = document.getElementById('documentForm_reporte');
 
     function saveFormData() {
         const data = {
-            nombre_reporte:
-                document.getElementById(
-                    'nombre_reporte'
-                ).value,
-
-            nombre_tecnico:
-                document.getElementById(
-                    'nombre_tecnico'
-                ).value,
-
-            cargo_tecnico:
-                document.getElementById(
-                    'cargo_tecnico'
-                ).value,
-
-            signature:
-                hasSigned
-                    ? canvas.toDataURL('image/png')
-                    : null,
-
-            reportElements:
-                reportElements,
-
-            extraNotes:
-                extraNotesInput.value
+            nombre_reporte: document.getElementById('nombre_reporte').value,
+            nombre_tecnico: document.getElementById('nombre_tecnico').value,
+            cargo_tecnico: document.getElementById('cargo_tecnico').value,
+            signature: hasSigned ? canvas.toDataURL('image/png') : null,
+            reportElements: reportElements,
+            extraNotes: extraNotesInput.value
         };
-
-        localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(data)
-        );
-
-        localStorage.setItem(
-            NOTES_KEY,
-            extraNotesInput.value
-        );
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        localStorage.setItem(NOTES_KEY, extraNotesInput.value);
     }
 
     function loadFormData() {
-        const saved =
-            localStorage.getItem(
-                STORAGE_KEY
-            );
+        const saved = localStorage.getItem(STORAGE_KEY);
+        const savedNotes = localStorage.getItem(NOTES_KEY);
 
-        const savedNotes =
-            localStorage.getItem(
-                NOTES_KEY
-            );
-
-        if (savedNotes !== null) {
-            extraNotesInput.value =
-                savedNotes;
-        }
+        if (savedNotes !== null) extraNotesInput.value = savedNotes;
 
         if (!saved) {
             reportElements = [];
             elementCounter = 0;
-
             addReportElement();
             resizeCanvas();
-
             return;
         }
 
         try {
-            const data =
-                JSON.parse(saved);
-
-            document.getElementById(
-                'nombre_reporte'
-            ).value =
-                data.nombre_reporte || '';
-
-            document.getElementById(
-                'nombre_tecnico'
-            ).value =
-                data.nombre_tecnico || '';
-
-            document.getElementById(
-                'cargo_tecnico'
-            ).value =
-                data.cargo_tecnico || '';
-
-            extraNotesInput.value =
-                data.extraNotes ||
-                savedNotes ||
-                '';
+            const data = JSON.parse(saved);
+            document.getElementById('nombre_reporte').value = data.nombre_reporte || '';
+            document.getElementById('nombre_tecnico').value = data.nombre_tecnico || '';
+            document.getElementById('cargo_tecnico').value = data.cargo_tecnico || '';
+            extraNotesInput.value = data.extraNotes || savedNotes || '';
 
             reportElements = [];
             elementCounter = 0;
+            document.getElementById('reportElementsContainer').innerHTML = '';
 
-            document.getElementById(
-                'reportElementsContainer'
-            ).innerHTML = '';
-
-            if (
-                Array.isArray(data.reportElements) &&
-                data.reportElements.length
-            ) {
-                data.reportElements.forEach(
-                    el => addReportElement(el)
-                );
+            if (Array.isArray(data.reportElements) && data.reportElements.length) {
+                data.reportElements.forEach(el => addReportElement(el));
             } else {
                 addReportElement();
             }
@@ -1316,1203 +833,469 @@
 
             if (data.signature) {
                 hasSigned = true;
-
                 const img = new Image();
-
                 img.onload = () => {
-                    ctx.drawImage(
-                        img,
-                        0,
-                        0,
-                        canvas.width,
-                        canvas.height
-                    );
+                    fillWhiteBackground();
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 };
-
                 img.src = data.signature;
             } else {
                 hasSigned = false;
-
-                ctx.clearRect(
-                    0,
-                    0,
-                    canvas.width,
-                    canvas.height
-                );
-
-                ctx.fillStyle = 'white';
-
-                ctx.fillRect(
-                    0,
-                    0,
-                    canvas.width,
-                    canvas.height
-                );
-
+                fillWhiteBackground();
                 drawPlaceholder();
             }
-
         } catch (error) {
             console.error(error);
-
             reportElements = [];
             elementCounter = 0;
-
-            document.getElementById(
-                'reportElementsContainer'
-            ).innerHTML = '';
-
+            document.getElementById('reportElementsContainer').innerHTML = '';
             addReportElement();
             resizeCanvas();
         }
     }
 
-    form.addEventListener(
-        'input',
-        saveFormData
-    );
+    form.addEventListener('input', saveFormData);
 
-    const logoUrl =
-        'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
+    const logoUrl = 'https://raw.githubusercontent.com/invs99/FF/refs/heads/SEGUNDA/freund1.png';
 
     async function getLogoBase64() {
         try {
-            const response =
-                await fetch(logoUrl);
-
+            const response = await fetch(logoUrl);
             if (!response.ok) return null;
-
-            const blob =
-                await response.blob();
-
-            return await new Promise(
-                (resolve, reject) => {
-                    const reader =
-                        new FileReader();
-
-                    reader.onloadend =
-                        () => resolve(
-                            reader.result
-                        );
-
-                    reader.onerror =
-                        reject;
-
-                    reader.readAsDataURL(blob);
-                }
-            );
-
+            const blob = await response.blob();
+            return await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
         } catch (error) {
-            console.warn(
-                'No se pudo cargar el logo.',
-                error
-            );
-
+            console.warn('No se pudo cargar el logo.', error);
             return null;
         }
     }
 
-    async function addHeader(
-        doc,
-        pageNum,
-        totalPages,
-        logoBase64,
-        reportName,
-        data
-    ) {
+    async function addHeader(doc, pageNum, totalPages, logoBase64, reportName, data) {
         const margin = 15;
-
-        const pageWidth =
-            doc.internal.pageSize.getWidth();
-
+        const pageWidth = doc.internal.pageSize.getWidth();
         const headerY = 10;
-
         const logoWidth = 34;
         const logoHeight = 17;
 
         if (logoBase64) {
-            doc.addImage(
-                logoBase64,
-                'PNG',
-                margin,
-                headerY,
-                logoWidth,
-                logoHeight
-            );
+            doc.addImage(logoBase64, 'PNG', margin, headerY, logoWidth, logoHeight);
         }
 
-        const rightX =
-            pageWidth - margin;
-
-        doc.setFont(
-            'helvetica',
-            'normal'
-        );
-
+        const rightX = pageWidth - margin;
+        doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
+        doc.text('Tiendas 01.001.0001.0001', rightX, headerY + 2, null, null, 'right');
+        doc.text('Soporte Redes', pageWidth - 33, headerY + 7, null, null, 'center');
+        doc.text('y Telecomunicaciones', pageWidth - 33, headerY + 11, null, null, 'center');
+        doc.text(`Fecha de Reporte: ${new Date().toLocaleDateString('es-SV')}`, rightX, headerY + 16, null, null, 'right');
 
-        doc.text(
-            'Tiendas 01.001.0001.0001',
-            rightX,
-            headerY + 2,
-            null,
-            null,
-            'right'
-        );
-
-        doc.text(
-            'soporte redes',
-            pageWidth - 33,
-            headerY + 7,
-            null,
-            null,
-            'center'
-        );
-
-        doc.text(
-            'y telecomunicaciones',
-            pageWidth - 33,
-            headerY + 11,
-            null,
-            null,
-            'center'
-        );
-
-        doc.text(
-            `Fecha de Reporte: ${
-                new Date().toLocaleDateString('es-SV')
-            }`,
-            rightX,
-            headerY + 16,
-            null,
-            null,
-            'right'
-        );
-
-        doc.setFont(
-            'helvetica',
-            'bold'
-        );
-
+        doc.setFont('helvetica', 'bold');
         doc.setFontSize(15);
+        const title = (reportName || 'REPORTE DE EVIDENCIA').trim().toUpperCase();
+        const titleLeft = margin + logoWidth + 7;
+        const titleRight = pageWidth - 72;
+        const titleWidth = titleRight - titleLeft;
+        const titleLines = doc.splitTextToSize(title, titleWidth);
+        const titleX = titleLeft + (titleWidth / 2);
 
-        const title =
-            (
-                reportName ||
-                'REPORTE DE EVIDENCIA'
-            )
-            .trim()
-            .toUpperCase();
+        doc.text(titleLines, titleX, headerY + 7, { align: 'center', baseline: 'middle' });
 
-        const titleLeft =
-            margin +
-            logoWidth +
-            7;
-
-        const titleRight =
-            pageWidth - 72;
-
-        const titleWidth =
-            titleRight -
-            titleLeft;
-
-        const titleLines =
-            doc.splitTextToSize(
-                title,
-                titleWidth
-            );
-
-        const titleX =
-            titleLeft +
-            (titleWidth / 2);
-
-        doc.text(
-            titleLines,
-            titleX,
-            headerY + 7,
-            {
-                align: 'center',
-                baseline: 'middle'
-            }
-        );
-
-        const titleHeight =
-            Math.max(
-                12,
-                titleLines.length * 6
-            );
-
-        const lineY =
-            Math.max(
-                headerY + logoHeight,
-                headerY + 18,
-                headerY + 7 + titleHeight
-            ) + 5;
+        const titleHeight = Math.max(12, titleLines.length * 6);
+        const lineY = Math.max(headerY + logoHeight, headerY + 18, headerY + 7 + titleHeight) + 5;
 
         doc.setDrawColor(0, 0, 0);
         doc.setLineWidth(0.3);
-
-        doc.line(
-            margin,
-            lineY,
-            pageWidth - margin,
-            lineY
-        );
+        doc.line(margin, lineY, pageWidth - margin, lineY);
 
         if (pageNum === 1) {
             const infoY = lineY + 6;
+            const nombre = (data && data.nombre_tecnico ? data.nombre_tecnico : '').trim();
+            const fecha = new Date().toLocaleDateString('es-SV');
 
-            const nombre =
-                (
-                    data &&
-                    data.nombre_tecnico
-                        ? data.nombre_tecnico
-                        : ''
-                ).trim();
-
-            const fecha =
-                new Date().toLocaleDateString(
-                    'es-SV'
-                );
-
-            doc.setFont(
-                'helvetica',
-                'normal'
-            );
-
+            doc.setFont('helvetica', 'normal');
             doc.setFontSize(9);
-
-            doc.text(
-                `Reporta: ${
-                    nombre || 'No especificado'
-                }`,
-                margin,
-                infoY
-            );
-
-            doc.text(
-                `Fecha: ${fecha}`,
-                margin,
-                infoY + 5
-            );
-
+            doc.text(`Reporta: ${nombre || 'No especificado'}`, margin, infoY);
+            doc.text(`Fecha: ${fecha}`, margin, infoY + 5);
             return infoY + 12;
         }
 
         return lineY + 9;
     }
 
-    function addFooter(
-        doc,
-        data,
-        pageNum,
-        totalPages,
-        signatureCanvas,
-        signed
-    ) {
+    function addFooter(doc, data, pageNum, totalPages, signatureCanvas, signed) {
         const margin = 15;
-
-        const pageWidth =
-            doc.internal.pageSize.getWidth();
-
-        const pageHeight =
-            doc.internal.pageSize.getHeight();
-
-        const baselineY =
-            pageHeight - 14;
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const baselineY = pageHeight - 14;
 
         if (pageNum === totalPages) {
             const signatureX = margin;
             const signatureWidth = 52;
 
             if (signed) {
+                // Filtro para asegurar firma completamente transparente en el PDF
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = signatureCanvas.width;
+                tempCanvas.height = signatureCanvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(signatureCanvas, 0, 0);
+
+                const imgData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                const dataPixels = imgData.data;
+                for (let i = 0; i < dataPixels.length; i += 4) {
+                    if (dataPixels[i] > 240 && dataPixels[i + 1] > 240 && dataPixels[i + 2] > 240) {
+                        dataPixels[i + 3] = 0;
+                    }
+                }
+                tempCtx.putImageData(imgData, 0, 0);
+
                 const maxSignatureHeight = 15;
-
-                const ratio =
-                    signatureCanvas.height /
-                    signatureCanvas.width;
-
-                let signatureHeight =
-                    signatureWidth * ratio;
-
-                signatureHeight =
-                    Math.min(
-                        signatureHeight,
-                        maxSignatureHeight
-                    );
+                const ratio = tempCanvas.height / tempCanvas.width;
+                let signatureHeight = signatureWidth * ratio;
+                signatureHeight = Math.min(signatureHeight, maxSignatureHeight);
 
                 doc.addImage(
-                    signatureCanvas.toDataURL(
-                        'image/png'
-                    ),
+                    tempCanvas.toDataURL('image/png'),
                     'PNG',
                     signatureX,
-                    baselineY -
-                        signatureHeight -
-                        4,
+                    baselineY - signatureHeight - 4,
                     signatureWidth,
                     signatureHeight
                 );
             }
 
-            const signatureLineY =
-                baselineY - 2;
-
+            const signatureLineY = baselineY - 2;
             doc.setLineWidth(0.3);
+            doc.line(signatureX, signatureLineY, signatureX + signatureWidth, signatureLineY);
 
-            doc.line(
-                signatureX,
-                signatureLineY,
-                signatureX + signatureWidth,
-                signatureLineY
-            );
-
-            doc.setFont(
-                'helvetica',
-                'normal'
-            );
-
+            doc.setFont('helvetica', 'normal');
             doc.setFontSize(8);
+            const tecnico = (data.nombre_tecnico || '').trim();
+            doc.text(tecnico || 'Firma', signatureX, baselineY + 2.5);
 
-            const tecnico =
-                (
-                    data.nombre_tecnico ||
-                    ''
-                ).trim();
-
-            doc.text(
-                tecnico || 'Firma',
-                signatureX,
-                baselineY + 2.5
-            );
-
-            const cargo =
-                (
-                    data.cargo_tecnico ||
-                    ''
-                ).trim();
-
+            const cargo = (data.cargo_tecnico || '').trim();
             if (cargo) {
                 doc.setFontSize(7);
-
-                doc.text(
-                    cargo,
-                    signatureX,
-                    baselineY + 6
-                );
+                doc.text(cargo, signatureX, baselineY + 6);
             }
         }
 
-        doc.setFont(
-            'helvetica',
-            'normal'
-        );
-
+        doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
-
-        doc.text(
-            `Página ${pageNum} de ${totalPages}`,
-            pageWidth - margin,
-            baselineY,
-            null,
-            null,
-            'right'
-        );
+        doc.text(`Página ${pageNum} de ${totalPages}`, pageWidth - margin, baselineY, null, null, 'right');
     }
 
-    /*
-     * CORRECCIÓN PRINCIPAL:
-     *
-     * Las notas generales se agregan directamente
-     * después de los detalles adicionales en la última
-     * página.
-     *
-     * No se genera una página adicional.
-     */
-    function addExtraNotesToPage(
-        doc,
-        notes,
-        y,
-        margin,
-        maxY
-    ) {
-        if (!notes || !notes.trim()) {
-            return y;
-        }
+    function addExtraNotesToPage(doc, notes, y, margin, maxY) {
+        if (!notes || !notes.trim()) return y;
 
-        const pageWidth =
-            doc.internal.pageSize.getWidth();
-
-        const boxWidth =
-            pageWidth -
-            (margin * 2);
-
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const boxWidth = pageWidth - (margin * 2);
         const padding = 3;
-
         const titleHeight = 7;
         const lineHeight = 5;
+        const availableHeight = maxY - y;
 
-        const availableHeight =
-            maxY - y;
+        if (availableHeight <= 8) return y;
 
-        if (availableHeight <= 8) {
-            return y;
-        }
+        const lines = doc.splitTextToSize(notes.trim(), boxWidth - (padding * 2));
+        const maxLines = Math.max(1, Math.floor((availableHeight - titleHeight - padding) / lineHeight));
+        let visibleLines = lines.slice(0, maxLines);
 
-        const lines =
-            doc.splitTextToSize(
-                notes.trim(),
-                boxWidth - (padding * 2)
-            );
-
-        const maxLines =
-            Math.max(
-                1,
-                Math.floor(
-                    (
-                        availableHeight -
-                        titleHeight -
-                        padding
-                    ) / lineHeight
-                )
-            );
-
-        let visibleLines =
-            lines.slice(
-                0,
-                maxLines
-            );
-
-        if (visibleLines.length < lines.length &&
-            visibleLines.length > 0) {
-
-            let last =
-                visibleLines[
-                    visibleLines.length - 1
-                ];
-
+        if (visibleLines.length < lines.length && visibleLines.length > 0) {
+            let last = visibleLines[visibleLines.length - 1];
             if (!last.endsWith('...')) {
-                visibleLines[
-                    visibleLines.length - 1
-                ] = last.replace(
-                    /\s+$/,
-                    ''
-                ) + '...';
+                visibleLines[visibleLines.length - 1] = last.replace(/\s+$/, '') + '...';
             }
         }
 
-        const contentHeight =
-            titleHeight +
-            (
-                visibleLines.length *
-                lineHeight
-            );
+        const contentHeight = titleHeight + (visibleLines.length * lineHeight);
+        const boxHeight = Math.max(20, contentHeight + 5);
 
-        const boxHeight =
-            Math.max(
-                20,
-                contentHeight + 5
-            );
+        if (y + boxHeight > maxY) return y;
 
-        if (y + boxHeight > maxY) {
-            return y;
-        }
+        doc.setFillColor(240, 240, 240);
+        doc.setDrawColor(0, 0, 0);
+        doc.rect(margin, y, boxWidth, boxHeight, 'FD');
 
-        doc.setFillColor(
-            240,
-            240,
-            240
-        );
-
-        doc.setDrawColor(
-            0,
-            0,
-            0
-        );
-
-        doc.rect(
-            margin,
-            y,
-            boxWidth,
-            boxHeight,
-            'FD'
-        );
-
-        doc.setFont(
-            'helvetica',
-            'bold'
-        );
-
+        doc.setFont('helvetica', 'bold');
         doc.setFontSize(9);
+        doc.text('NOTAS GENERALES DEL REPORTE:', margin + padding, y + 5);
 
-        doc.text(
-            'NOTAS GENERALES DEL REPORTE:',
-            margin + padding,
-            y + 5
-        );
-
-        doc.setFont(
-            'helvetica',
-            'normal'
-        );
-
+        doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
+        doc.text(visibleLines, margin + padding, y + 11);
 
-        doc.text(
-            visibleLines,
-            margin + padding,
-            y + 11
-        );
-
-        return y +
-            boxHeight +
-            5;
+        return y + boxHeight + 5;
     }
 
-    form.addEventListener(
-        'submit',
-        async function(e) {
-            e.preventDefault();
+    // FUNCIÓN CENTRALIZADA PARA CONSTRUIR EL PDF
+    async function buildPdfDoc() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'letter',
+            compress: true
+        });
 
-            const loadingOverlay =
-                document.getElementById(
-                    'loadingOverlay'
-                );
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
 
-            loadingOverlay.classList.remove(
-                'hidden'
-            );
+        const reportName = data.nombre_reporte || 'REPORTE DE EVIDENCIA';
+        const extraNotes = extraNotesInput.value.trim();
+        const elements = reportElements.filter(el => el.description || el.image || el.details);
+        const logoBase64 = await getLogoBase64();
 
-            try {
-                const { jsPDF } = window.jspdf;
+        const margin = 15;
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const footerTop = pageHeight - 30;
+        const totalPages = Math.max(1, elements.length);
 
-                const doc =
-                    new jsPDF({
-                        orientation: 'portrait',
-                        unit: 'mm',
-                        format: 'letter',
-                        compress: true
-                    });
+        if (elements.length === 0) {
+            let y = await addHeader(doc, 1, totalPages, logoBase64, reportName, data);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text('INFORMACIÓN Y RESUMEN', margin, y);
+            y += 7;
 
-                const formData =
-                    new FormData(e.target);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.text(`Generado por: ${data.nombre_tecnico || 'No especificado'}`, margin, y);
+            y += 6;
 
-                const data =
-                    Object.fromEntries(
-                        formData.entries()
-                    );
+            y = addExtraNotesToPage(doc, extraNotes, y + 3, margin, footerTop - 2);
+            addFooter(doc, data, 1, totalPages, canvas, hasSigned);
+        }
 
-                const reportName =
-                    data.nombre_reporte ||
-                    'REPORTE DE EVIDENCIA';
+        for (let i = 0; i < elements.length; i++) {
+            const element = elements[i];
+            const pageNum = i + 1;
 
-                const extraNotes =
-                    extraNotesInput.value.trim();
+            if (i > 0) doc.addPage();
+            doc.setPage(pageNum);
 
-                const elements =
-                    reportElements.filter(
-                        el =>
-                            el.description ||
-                            el.image ||
-                            el.details
-                    );
+            let y = await addHeader(doc, pageNum, totalPages, logoBase64, reportName, data);
 
-                const logoBase64 =
-                    await getLogoBase64();
+            if (element.description && element.description.trim()) {
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(11);
+                const descriptionLines = doc.splitTextToSize(element.description.trim(), pageWidth - (margin * 2));
+                doc.text(descriptionLines, margin, y);
+                y += descriptionLines.length * 5 + 4;
+            }
 
-                const margin = 15;
+            if (element.image) {
+                const img = new Image();
+                await new Promise(resolve => {
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                    img.src = element.image;
+                });
 
-                const pageWidth =
-                    doc.internal.pageSize.getWidth();
+                if (img.width && img.height) {
+                    let imgWidth = img.width;
+                    let imgHeight = img.height;
+                    const maxWidth = pageWidth - (margin * 2);
 
-                const pageHeight =
-                    doc.internal.pageSize.getHeight();
+                    const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', maxWidth - 6);
+                    const detailsHeight = 17 + (detailsLines.length * 5);
 
-                const footerTop =
-                    pageHeight - 30;
+                    let reservedBottom = footerTop - y - detailsHeight - 7;
+                    if (pageNum === totalPages && extraNotes) reservedBottom -= 28;
 
-                const totalPages =
-                    Math.max(
-                        1,
-                        elements.length
-                    );
+                    const maxHeight = Math.max(35, reservedBottom);
+                    const ratio = Math.min(1, maxWidth / imgWidth, maxHeight / imgHeight);
+                    imgWidth *= ratio;
+                    imgHeight *= ratio;
 
-                /*
-                 * SIN ELEMENTOS
-                 */
-                if (elements.length === 0) {
-                    let y =
-                        await addHeader(
-                            doc,
-                            1,
-                            totalPages,
-                            logoBase64,
-                            reportName,
-                            data
-                        );
-
-                    doc.setFont(
-                        'helvetica',
-                        'bold'
-                    );
-
-                    doc.setFontSize(12);
-
-                    doc.text(
-                        'INFORMACIÓN Y RESUMEN',
-                        margin,
-                        y
-                    );
-
-                    y += 7;
-
-                    doc.setFont(
-                        'helvetica',
-                        'normal'
-                    );
-
-                    doc.setFontSize(9);
-
-                    doc.text(
-                        `Generado por: ${
-                            data.nombre_tecnico ||
-                            'No especificado'
-                        }`,
-                        margin,
-                        y
-                    );
-
-                    y += 6;
-
-                    /*
-                     * Las notas se ponen debajo de la información
-                     * y antes del pie/firma.
-                     */
-                    y =
-                        addExtraNotesToPage(
-                            doc,
-                            extraNotes,
-                            y + 3,
-                            margin,
-                            footerTop - 2
-                        );
-
-                    addFooter(
-                        doc,
-                        data,
-                        1,
-                        totalPages,
-                        canvas,
-                        hasSigned
-                    );
+                    const imgX = (pageWidth - imgWidth) / 2;
+                    doc.addImage(element.image, 'JPEG', imgX, y, imgWidth, imgHeight);
+                    y += imgHeight + 5;
                 }
+            }
 
-                /*
-                 * PÁGINAS DE EVIDENCIA
-                 */
-                for (
-                    let i = 0;
-                    i < elements.length;
-                    i++
-                ) {
-                    const element =
-                        elements[i];
+            const detailsBoxY = y;
+            const detailsBoxWidth = pageWidth - (margin * 2);
 
-                    const pageNum =
-                        i + 1;
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.text('Detalles Adicionales:', margin + 3, y + 5);
+            y += 10;
 
-                    if (i > 0) {
-                        doc.addPage();
-                    }
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
 
-                    doc.setPage(pageNum);
+            const detailsLines = doc.splitTextToSize(element.details || 'Sin detalles.', detailsBoxWidth - 6);
+            let reservedForNotes = (pageNum === totalPages && extraNotes) ? 28 : 0;
+            const maxDetailLines = Math.max(1, Math.floor((footerTop - y - reservedForNotes - 5) / 5));
+            const visibleDetailsLines = detailsLines.slice(0, maxDetailLines);
 
-                    let y =
-                        await addHeader(
-                            doc,
-                            pageNum,
-                            totalPages,
-                            logoBase64,
-                            reportName,
-                            data
-                        );
+            doc.text(visibleDetailsLines, margin + 3, y);
+            y += visibleDetailsLines.length * 5 + 3;
 
-                    /*
-                     * SUBTEMA
-                     */
-                    if (
-                        element.description &&
-                        element.description.trim()
-                    ) {
-                        doc.setFont(
-                            'helvetica',
-                            'bold'
-                        );
+            const detailsBoxHeight = y - detailsBoxY;
+            doc.setDrawColor(0, 0, 0);
+            doc.rect(margin, detailsBoxY, detailsBoxWidth, detailsBoxHeight);
 
-                        doc.setFontSize(11);
-
-                        const descriptionLines =
-                            doc.splitTextToSize(
-                                element.description.trim(),
-                                pageWidth -
-                                (margin * 2)
-                            );
-
-                        doc.text(
-                            descriptionLines,
-                            margin,
-                            y
-                        );
-
-                        y +=
-                            descriptionLines.length *
-                            5 +
-                            4;
-                    }
-
-                    /*
-                     * IMAGEN
-                     */
-                    if (element.image) {
-                        const img =
-                            new Image();
-
-                        await new Promise(
-                            resolve => {
-                                img.onload = resolve;
-                                img.onerror = resolve;
-                                img.src = element.image;
-                            }
-                        );
-
-                        if (
-                            img.width &&
-                            img.height
-                        ) {
-                            let imgWidth =
-                                img.width;
-
-                            let imgHeight =
-                                img.height;
-
-                            const maxWidth =
-                                pageWidth -
-                                (margin * 2);
-
-                            const detailsLines =
-                                doc.splitTextToSize(
-                                    element.details ||
-                                    'Sin detalles.',
-                                    maxWidth - 6
-                                );
-
-                            const detailsHeight =
-                                17 +
-                                (
-                                    detailsLines.length *
-                                    5
-                                );
-
-                            /*
-                             * Reservamos espacio también para
-                             * las notas en la última página.
-                             */
-                            let reservedBottom =
-                                footerTop -
-                                y -
-                                detailsHeight -
-                                7;
-
-                            if (
-                                pageNum === totalPages &&
-                                extraNotes
-                            ) {
-                                reservedBottom -= 28;
-                            }
-
-                            const maxHeight =
-                                Math.max(
-                                    35,
-                                    reservedBottom
-                                );
-
-                            const ratio =
-                                Math.min(
-                                    1,
-                                    maxWidth /
-                                        imgWidth,
-                                    maxHeight /
-                                        imgHeight
-                                );
-
-                            imgWidth *= ratio;
-                            imgHeight *= ratio;
-
-                            const imgX =
-                                (
-                                    pageWidth -
-                                    imgWidth
-                                ) / 2;
-
-                            doc.addImage(
-                                element.image,
-                                'JPEG',
-                                imgX,
-                                y,
-                                imgWidth,
-                                imgHeight
-                            );
-
-                            y +=
-                                imgHeight +
-                                5;
-                        }
-                    }
-
-                    /*
-                     * DETALLES ADICIONALES
-                     */
-                    const detailsBoxY =
-                        y;
-
-                    const detailsBoxWidth =
-                        pageWidth -
-                        (margin * 2);
-
-                    doc.setFont(
-                        'helvetica',
-                        'bold'
-                    );
-
-                    doc.setFontSize(9);
-
-                    doc.text(
-                        'Detalles Adicionales:',
-                        margin + 3,
-                        y + 5
-                    );
-
-                    y += 10;
-
-                    doc.setFont(
-                        'helvetica',
-                        'normal'
-                    );
-
-                    doc.setFontSize(8);
-
-                    const detailsLines =
-                        doc.splitTextToSize(
-                            element.details ||
-                            'Sin detalles.',
-                            detailsBoxWidth - 6
-                        );
-
-                    /*
-                     * En la última página dejamos espacio
-                     * para las notas generales.
-                     */
-                    let reservedForNotes = 0;
-
-                    if (
-                        pageNum === totalPages &&
-                        extraNotes
-                    ) {
-                        reservedForNotes = 28;
-                    }
-
-                    const maxDetailLines =
-                        Math.max(
-                            1,
-                            Math.floor(
-                                (
-                                    footerTop -
-                                    y -
-                                    reservedForNotes -
-                                    5
-                                ) / 5
-                            )
-                        );
-
-                    const visibleDetailsLines =
-                        detailsLines.slice(
-                            0,
-                            maxDetailLines
-                        );
-
-                    doc.text(
-                        visibleDetailsLines,
-                        margin + 3,
-                        y
-                    );
-
-                    y +=
-                        visibleDetailsLines.length *
-                        5 +
-                        3;
-
-                    const detailsBoxHeight =
-                        y -
-                        detailsBoxY;
-
-                    doc.setDrawColor(
-                        0,
-                        0,
-                        0
-                    );
-
-                    doc.rect(
-                        margin,
-                        detailsBoxY,
-                        detailsBoxWidth,
-                        detailsBoxHeight
-                    );
-
-                    /*
-                     * =====================================================
-                     * NOTAS GENERALES DEL REPORTE
-                     *
-                     * AQUÍ ESTÁ EL CAMBIO:
-                     *
-                     * Se colocan justo debajo de Detalles Adicionales
-                     * en la última página.
-                     *
-                     * No se agrega una página nueva.
-                     * =====================================================
-                     */
-                    if (
-                        pageNum === totalPages &&
-                        extraNotes
-                    ) {
-                        y += 5;
-
-                        addExtraNotesToPage(
-                            doc,
-                            extraNotes,
-                            y,
-                            margin,
-                            footerTop - 1
-                        );
-                    }
-                }
-
-                /*
-                 * PIES DE PÁGINA
-                 */
-                for (
-                    let p = 1;
-                    p <= totalPages;
-                    p++
-                ) {
-                    doc.setPage(p);
-
-                    addFooter(
-                        doc,
-                        data,
-                        p,
-                        totalPages,
-                        canvas,
-                        hasSigned
-                    );
-                }
-
-                const safeFileName =
-                    (
-                        data.nombre_reporte ||
-                        'reporte'
-                    )
-                    .replace(
-                        /[^a-z0-9áéíóúñü\s_-]/gi,
-                        ''
-                    )
-                    .trim()
-                    .replace(
-                        /\s+/g,
-                        '_'
-                    )
-                    .substring(
-                        0,
-                        40
-                    );
-
-                doc.save(
-                    `${safeFileName}_${Date.now()}.pdf`
-                );
-
-                loadingOverlay.classList.add(
-                    'hidden'
-                );
-
-                showMessage(
-                    'Reporte generado con éxito.',
-                    'success'
-                );
-
-            } catch (error) {
-                console.error(
-                    'Error al generar PDF:',
-                    error
-                );
-
-                loadingOverlay.classList.add(
-                    'hidden'
-                );
-
-                showMessage(
-                    'Error al generar el documento.',
-                    'error'
-                );
+            if (pageNum === totalPages && extraNotes) {
+                y += 5;
+                addExtraNotesToPage(doc, extraNotes, y, margin, footerTop - 1);
             }
         }
-    );
 
-    document.getElementById(
-        'clearFormButton_reporte'
-    ).addEventListener(
-        'click',
-        () => {
-            document.getElementById(
-                'confirmationModal_reporte'
-            ).classList.remove('hidden');
+        for (let p = 1; p <= totalPages; p++) {
+            doc.setPage(p);
+            addFooter(doc, data, p, totalPages, canvas, hasSigned);
         }
-    );
 
-    document.getElementById(
-        'cancelClearButton_reporte'
-    ).addEventListener(
-        'click',
-        () => {
-            document.getElementById(
-                'confirmationModal_reporte'
-            ).classList.add('hidden');
+        return doc;
+    }
+
+    function guardarPdf(doc) {
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        const safeFileName = (data.nombre_reporte || 'reporte')
+            .replace(/[^a-z0-9áéíóúñü\s_-]/gi, '')
+            .trim()
+            .replace(/\s+/g, '_')
+            .substring(0, 40);
+
+        doc.save(`${safeFileName}_${Date.now()}.pdf`);
+    }
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        document.getElementById('loadingText').textContent = 'Generando Reporte PDF...';
+        loadingOverlay.classList.remove('hidden');
+
+        try {
+            const doc = await buildPdfDoc();
+            guardarPdf(doc);
+            loadingOverlay.classList.add('hidden');
+            showMessage('Reporte generado con éxito.', 'success');
+        } catch (error) {
+            console.error('Error al generar PDF:', error);
+            loadingOverlay.classList.add('hidden');
+            showMessage('Error al generar el documento.', 'error');
         }
-    );
+    });
 
-    document.getElementById(
-        'confirmClearButton_reporte'
-    ).addEventListener(
-        'click',
-        () => {
-            form.reset();
+    // RENDERIZADO VERTICAL CONTINUO EN ULTRA ALTA DEFINICIÓN (HD 2.5x)
+    async function renderVerticalPreview(pdfDocObj) {
+        const container = document.getElementById('pdfContainer');
+        container.innerHTML = ''; 
 
-            reportElements = [];
-            elementCounter = 0;
+        for (let i = 1; i <= pdfDocObj.numPages; i++) {
+            const page = await pdfDocObj.getPage(i);
+            const canvas = document.createElement('canvas');
+            canvas.className = 'pdf-page-canvas bg-white';
+            container.appendChild(canvas);
 
-            document.getElementById(
-                'reportElementsContainer'
-            ).innerHTML = '';
+            const ctx = canvas.getContext('2d');
+            const viewport = page.getViewport({ scale: 2.5 });
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
 
-            addReportElement();
-
-            ctx.clearRect(
-                0,
-                0,
-                canvas.width,
-                canvas.height
-            );
-
-            ctx.fillStyle = 'white';
-
-            ctx.fillRect(
-                0,
-                0,
-                canvas.width,
-                canvas.height
-            );
-
-            hasSigned = false;
-
-            drawPlaceholder();
-
-            extraNotesInput.value = '';
-
-            localStorage.removeItem(
-                STORAGE_KEY
-            );
-
-            localStorage.removeItem(
-                NOTES_KEY
-            );
-
-            document.getElementById(
-                'confirmationModal_reporte'
-            ).classList.add('hidden');
-
-            showMessage(
-                'Formulario limpiado. Listo para un nuevo reporte.',
-                'success'
-            );
+            await page.render({
+                canvasContext: ctx,
+                viewport: viewport
+            }).promise;
         }
-    );
+    }
 
-    document.getElementById(
-        'clearSignatureButton_reporte'
-    ).addEventListener(
-        'click',
-        () => {
-            document.getElementById(
-                'clearSignatureConfirmationModal_reporte'
-            ).classList.remove('hidden');
+    // BOTÓN: PREVISUALIZAR DOCUMENTO HD
+    document.getElementById('btnPreviewDoc').addEventListener('click', async () => {
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
         }
-    );
 
-    document.getElementById(
-        'cancelClearSignatureButton_reporte'
-    ).addEventListener(
-        'click',
-        () => {
-            document.getElementById(
-                'clearSignatureConfirmationModal_reporte'
-            ).classList.add('hidden');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        document.getElementById('loadingText').textContent = 'Cargando vista previa ultra nítida...';
+        loadingOverlay.classList.remove('hidden');
+
+        try {
+            currentPdfDoc = await buildPdfDoc();
+            const pdfArrayBuffer = currentPdfDoc.output('arraybuffer');
+            const pdfPdfDocObj = await pdfjsLib.getDocument({ data: pdfArrayBuffer }).promise;
+            await renderVerticalPreview(pdfPdfDocObj);
+            
+            loadingOverlay.classList.add('hidden');
+            document.getElementById('previewModal').classList.remove('hidden');
+        } catch (err) {
+            console.error(err);
+            loadingOverlay.classList.add('hidden');
+            showMessage('Ocurrió un error al previsualizar el PDF.', 'error');
         }
-    );
+    });
 
-    document.getElementById(
-        'confirmClearSignatureButton_reporte'
-    ).addEventListener(
-        'click',
-        () => {
-            ctx.clearRect(
-                0,
-                0,
-                canvas.width,
-                canvas.height
-            );
+    const cerrarModalPreview = () => {
+        document.getElementById('previewModal').classList.add('hidden');
+    };
+    document.getElementById('closePreviewBtn').addEventListener('click', cerrarModalPreview);
+    document.getElementById('closePreviewBottomBtn').addEventListener('click', cerrarModalPreview);
 
-            ctx.fillStyle = 'white';
-
-            ctx.fillRect(
-                0,
-                0,
-                canvas.width,
-                canvas.height
-            );
-
-            hasSigned = false;
-
-            drawPlaceholder();
-            saveFormData();
-
-            document.getElementById(
-                'clearSignatureConfirmationModal_reporte'
-            ).classList.add('hidden');
-
-            showMessage(
-                'Firma borrada.',
-                'success'
-            );
+    document.getElementById('downloadFromPreviewBtn').addEventListener('click', () => {
+        if (currentPdfDoc) {
+            guardarPdf(currentPdfDoc);
         }
-    );
+    });
 
-    window.addEventListener(
-        'load',
-        () => {
-            setTimeout(
-                resizeCanvas,
-                100
-            );
-        }
-    );
+    document.getElementById('clearFormButton_reporte').addEventListener('click', () => {
+        document.getElementById('confirmationModal_reporte').classList.remove('hidden');
+    });
+
+    document.getElementById('cancelClearButton_reporte').addEventListener('click', () => {
+        document.getElementById('confirmationModal_reporte').classList.add('hidden');
+    });
+
+    document.getElementById('confirmClearButton_reporte').addEventListener('click', () => {
+        form.reset();
+        reportElements = [];
+        elementCounter = 0;
+        document.getElementById('reportElementsContainer').innerHTML = '';
+        addReportElement();
+
+        fillWhiteBackground();
+        hasSigned = false;
+        drawPlaceholder();
+        extraNotesInput.value = '';
+
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(NOTES_KEY);
+
+        document.getElementById('confirmationModal_reporte').classList.add('hidden');
+        showMessage('Formulario limpiado. Listo para un nuevo reporte.', 'success');
+    });
+
+    document.getElementById('clearSignatureButton_reporte').addEventListener('click', () => {
+        document.getElementById('clearSignatureConfirmationModal_reporte').classList.remove('hidden');
+    });
+
+    document.getElementById('cancelClearSignatureButton_reporte').addEventListener('click', () => {
+        document.getElementById('clearSignatureConfirmationModal_reporte').classList.add('hidden');
+    });
+
+    document.getElementById('confirmClearSignatureButton_reporte').addEventListener('click', () => {
+        fillWhiteBackground();
+        hasSigned = false;
+        drawPlaceholder();
+        saveFormData();
+
+        document.getElementById('clearSignatureConfirmationModal_reporte').classList.add('hidden');
+        showMessage('Firma borrada.', 'success');
+    });
+
+    window.addEventListener('load', () => {
+        setTimeout(resizeCanvas, 100);
+    });
 </script>
 
 </body>
